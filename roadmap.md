@@ -950,6 +950,25 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - Duplicate check before add — `friends.some(f => f.url === url)`
 - `friends.html` script order: `auth.js` → `github-api.js` → `nav.js` → `friends.js`
 
+### `template/guestbook.js`
+- Approved posts rendered from `guestbook.json` via raw static fetch — no API
+- `escHtml()` applied to all post text before innerHTML — XSS protection
+- Visitor flow: unauthenticated → welcoming modal with owner's display name in headline. Authenticated non-member → same modal (platform membership check via `username.github.io/site-config.json`). Authenticated member → post form directly
+- Post submission: image compressed to WebP, committed to `assets/posts/pending/`, Issue opened with JSON payload in fenced code block — parseable on moderation side
+- `parseIssuePayload()` extracts JSON from fenced code block in issue body — structured, not free-text
+- Approve: moves image `pending/` → `posts/`, appends entry to `guestbook.json`, closes Issue
+- Reject: deletes pending image, closes Issue with `rejected` label — nothing touches public page
+- `ghPost` and `ghPatch` added to `github-api.js` in this step; `ghDelete` signature fixed to accept body object instead of bare sha string
+- `guestbook.html` script order: `auth.js` → `github-api.js` → `nav.js` → `guestbook.js`
+
+### `template/games.js` + `games/`
+- `window.Games` registry pattern — each game file registers `{ start(canvas), stop() }`, orchestrator handles all picker/viewport/back logic
+- Adding a new game = one new file + one tile button, zero changes to orchestrator
+- All 5 games: Snake (120ms tick, WASD + arrows), Tetris (7 tetrominoes, level speed, hard drop), Breakout (mouse + keyboard, angle deflection, lives), Space Invaders (chase AI, shields with 3 HP states, wave speed increase), Pac-Man (tile map, 4 ghosts, power pellets, tunnel wrap)
+- High scores in `localStorage` — device only, zero repo impact
+- `image-rendering: pixelated` on canvas — crisp pixel art scaling
+- `games.html` script order: `auth.js` → `nav.js` → all 5 game files → `games.js`
+
 ---
 
 ## Build Order
@@ -967,8 +986,8 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 11. `music.html` + `music.js` — player (play/pause/seek/volume), MP3 upload (20MB cap), track metadata saved to `site-config.json`, `regenerateRSS` on upload, live player update without reload. Music CSS in `styles.css`. Committed as `664cfde`.
 12. `videos.html` + `videos.js` — YouTube embed grid, add/remove URLs saved to `site-config.json`, Enter key support, 16:9 iframe wrapper CSS. Committed as `f23eb63`.
 13. `friends.html` + `friends.js` + `friends.json` — `normalisedUrl()` accepts bare username/partial/full URL, fetches friend profile via raw static `username.github.io/site-config.json` (no API calls), `onerror` fallback on avatar, saves to `friends.json` via `commitFile`. Friends card CSS in `styles.css`. Committed as `e7e85e8`.
-14. `guestbook.html` + `guestbook.js` — Issues API moderation + notifications badge + visitor modal (Log In / Create My Page) + returning user experience
-15. `games.html` + all 5 games (Tetris, Pac-Man, Snake, Breakout, Space Invaders)
+14. `guestbook.html` + `guestbook.js` — Issues API moderation + visitor modal + platform membership check + approve/reject flow + `ghPost`/`ghPatch` added to `github-api.js`. Committed as `f6dcd87`.
+15. `games.html` + all 5 games — `window.Games` registry, `games.js` orchestrator. Snake, Tetris, Breakout, Space Invaders, Pac-Man — all Canvas API, no libraries, high scores in localStorage. Committed as `8171e81`.
 16. `404.html`
 17. `robots.txt` + `sitemap.xml` + `rss.xml` auto-generation logic — all three regenerated together on page toggle or mode change
 18. Marketing/onboarding `index.html` + `onboard.js` — OAuth flow, deploy, animated poller
