@@ -794,6 +794,65 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 
 ---
 
+## Deployed Infrastructure (Live)
+
+### GitHub App
+- App name: `autonom-page`
+- App ID: `5417193`
+- Permissions: Contents (R/W), Issues (R/W), Pages (R/W), Metadata (read-only)
+- Callback URL: `https://autonom.page/callback`
+- Installation URL: `https://github.com/apps/autonom-page/installations/new`
+
+### AWS Lambda — `autonom-oauth-proxy`
+- Runtime: Node.js 22.x
+- Region: `us-east-1`
+- Account: `170377509849`
+- Handler: `index.handler`
+- Timeout: 10s, Memory: 128MB
+- IAM Role: `autonom-lambda-role` (AWSLambdaBasicExecutionRole)
+- Env vars: `ALLOWED_ORIGIN`, `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY`
+
+### API Gateway
+- API ID: `f8rcwlcsz8`
+- Endpoint: `https://f8rcwlcsz8.execute-api.us-east-1.amazonaws.com/prod/token`
+- Route: `POST /token`
+- Throttling: 10 RPS, burst 50
+
+### Domain
+- `autonom.page` — registered on Squarespace, $20/yr flat
+- Point to GitHub Pages via CNAME once onboarding page is built
+
+### Repository
+- `https://github.com/Shannon-Goddard/autonom-page`
+- Personal account, public repo
+- Branch: `main`
+
+---
+
+## Implementation Notes (For Context Recovery)
+
+### `lambda/oauth-proxy/index.js`
+- `GITHUB_PRIVATE_KEY.replace(/\\n/g, '\n')` — Lambda env vars store newlines as literal `\n`, this restores real PEM format
+- JWT `iat` set 60 seconds in the past — GitHub recommendation to account for clock skew
+- Origin validated server-side before processing — CORS headers alone are not sufficient
+- Returns only `token` and `expires_at` — never echoes request body back
+- Single dependency: `jsonwebtoken` — `https` is Node built-in
+
+### `template/auth.js`
+- Exposes `window.Autonom` as public API — all other JS files call `Autonom.toast()`, `Autonom.getToken()`, `Autonom.isOwner()` etc.
+- `applyBusinessMode()` runs synchronously before render — visitor input removed from DOM, not just hidden with CSS
+- `REPO_OWNER` derived from `location.hostname.split('.')[0]` — works for any `username.github.io` deployment
+- `callback.html` handles the post-install redirect — grabs `installation_id` from URL params, calls Lambda, stores token, redirects to `index.html`
+- Toast system: 4 second auto-dismiss, optional retry button, uses `aria-live` region for screen readers
+
+### `template/nav.js`
+- `MutationObserver` on `document.body` watches for `edit-mode` class added by `auth.js` — logout button appears without nav.js needing to know auth timing
+- `cache: 'no-store'` on `site-config.json` fetch is belt — `sw.js` network-first bypass is suspenders
+- Focus trap: Tab/Shift+Tab cycle only within open drawer, Escape closes and returns focus to hamburger button
+- Logout button hidden by default, revealed only when `edit-mode` class is present on body
+
+---
+
 ## Build Order
 
 1. AWS Lambda OAuth proxy (`oauth-proxy`) + API Gateway throttling — prerequisite for everything
