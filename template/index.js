@@ -255,6 +255,29 @@
       document.getElementById('first-time-wizard')?.classList.add('hidden');
       await Autonom.saveConfig(config, { firstTimeSetup: false }, 'Dismiss setup wizard');
     });
+
+    // Wizard save
+    document.getElementById('wizard-cover-btn')?.addEventListener('click', () =>
+      document.getElementById('wizard-cover-input')?.click()
+    );
+    document.getElementById('wizard-cover-input')?.addEventListener('change', e => {
+      if (e.target.files[0]) Autonom.handleCoverPhotoUpload(e.target.files[0]);
+    });
+    document.getElementById('wizard-save')?.addEventListener('click', async () => {
+      const status = document.getElementById('wizard-status')?.value.trim();
+      const pages  = {};
+      ['gallery','music','friends','guestbook','games'].forEach(k => {
+        const el = document.getElementById(`wiz-${k}`);
+        if (el) pages[k] = el.checked;
+      });
+      const updates = { firstTimeSetup: false, pages: { ...config.pages, ...pages } };
+      if (status) { updates.status = status; setText('status', status); }
+      await Autonom.saveConfig(config, updates, 'First-time setup');
+      if (status) await Autonom.regenerateRSS(config);
+      await Autonom.regenerateSitemap(config);
+      document.getElementById('first-time-wizard')?.classList.add('hidden');
+      Autonom.toast('Page set up — looking good!', 'success');
+    });
   }
 
   // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -276,6 +299,9 @@
       Autonom.loadStorageMeter();
       Autonom.loadNotificationsBadge();
       Autonom.renderQRCode();
+      if (config.firstTimeSetup) {
+        document.getElementById('first-time-wizard')?.classList.remove('hidden');
+      }
     }
   }
 

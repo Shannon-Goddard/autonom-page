@@ -146,8 +146,33 @@
   </main>
 
   <div id="first-time-wizard" class="hidden" role="dialog" aria-modal="true" aria-label="Welcome setup wizard">
-    <h2>Welcome! Let's set up your page.</h2>
-    <button id="wizard-dismiss" aria-label="Dismiss setup wizard">Skip for now</button>
+    <div id="wizard-box" class="glass">
+      <h2>Welcome to your page ✦</h2>
+      <p>Let's get you set up. You can skip any step.</p>
+      <div class="wizard-step">
+        <label for="wizard-status">Set a status</label>
+        <input type="text" id="wizard-status" placeholder="What's on your mind?" aria-label="Status" />
+      </div>
+      <div class="wizard-step">
+        <label>Upload a cover photo</label>
+        <button id="wizard-cover-btn" aria-label="Upload cover photo">Choose Photo</button>
+        <input type="file" id="wizard-cover-input" accept="image/*" class="hidden" aria-label="Cover photo file" />
+      </div>
+      <div class="wizard-step">
+        <label>Choose which pages to show</label>
+        <div class="wizard-toggles">
+          <label><input type="checkbox" id="wiz-gallery"   checked /> Gallery</label>
+          <label><input type="checkbox" id="wiz-music"     checked /> Music</label>
+          <label><input type="checkbox" id="wiz-friends"   checked /> Friends</label>
+          <label><input type="checkbox" id="wiz-guestbook" checked /> Guestbook</label>
+          <label><input type="checkbox" id="wiz-games"     checked /> Games</label>
+        </div>
+      </div>
+      <div class="wizard-actions">
+        <button id="wizard-save" aria-label="Save and finish setup">Save &amp; Finish</button>
+        <button id="wizard-dismiss" class="btn-ghost" aria-label="Dismiss setup wizard">Skip for now</button>
+      </div>
+    </div>
   </div>
 
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>

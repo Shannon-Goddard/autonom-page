@@ -870,6 +870,48 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - `self.skipWaiting()` + `self.clients.claim()` — new SW takes over immediately without waiting for tab close
 - Shell cache keyed as `shell-v1` — bump version string to force full shell refresh on major deploys
 
+### `template/github-api.js`
+- Foundation module — all other modules call `Autonom.commitFile()`, `Autonom.saveConfig()`, etc.
+- `ghGet` / `ghPut` / `ghDelete` are thin wrappers around `fetch` with auth header — single place to update if GitHub API changes
+- `getFileSHA` fetches current SHA before every write — required by GitHub API to avoid 409 conflicts
+- `saveConfig` takes `(configRef, updates, commitMsg)` — mutates config in place, increments `configVersion`, commits `site-config.json` in one call
+- Extends `window.Autonom` via `Object.assign` — load order: must come after `auth.js`
+
+### `template/media.js`
+- `compressToWebP` uses Canvas API — draws image at scaled dimensions to hit `maxKb` target, no external library
+- `generateFavicon` draws 32x32 Canvas from profile photo, exports as data URL, commits as `favicon.ico`
+- `handleProfilePhotoUpload`: compress → commit `profile.webp` → generate favicon → commit `favicon.ico` — two commits, one user action
+- `handleCoverPhotoUpload`: compress → commit `cover.webp` — single commit
+- Extends `window.Autonom` — depends on `github-api.js` being loaded first
+
+### `template/feeds.js`
+- `regenerateRSS`, `regenerateSitemap`, `regenerateRobots` all take `config` as param — no internal state
+- All three called together whenever page toggles or mode changes — keeps all three in sync in one edit session
+- `regenerateSitemap` pings Google after commit: `https://www.google.com/ping?sitemap=...` — fire and forget
+- `regenerateRobots` sets `Disallow: /` when directory toggle is OFF — true off-grid behavior
+- Extends `window.Autonom` — depends on `github-api.js`
+
+### `template/business.js`
+- `populateBusinessForm` reads `config.businessProfile` and fills form fields — called on edit mode unlock
+- `saveBusinessProfile` writes form values to `config.businessProfile`, calls `generateJSONLD`, then `rewriteIndexHead`
+- `generateJSONLD` maps Business Type dropdown to Schema.org `@type` — returns full JSON-LD string
+- `rewriteIndexHead` fetches current `index.html`, removes old JSON-LD block, injects new block before `</head>`, rewrites OG/Twitter tags — single GitHub API commit for both changes
+- Extends `window.Autonom` — depends on `github-api.js`
+
+### `template/admin.js`
+- `loadStorageMeter` calls GitHub repo size API — warns at 500MB, prompts cleanup at 800MB
+- `renderQRCode` sets `<img src>` to `api.qrserver.com` URL — no JS library, no Canvas, just an image tag
+- `handleShare` writes `location.href` to clipboard — single line, no library
+- `loadNotificationsBadge` fetches open Issues labeled `pending-post` — count shown as badge in edit mode
+- `handleExport` opens GitHub's native zip download URL directly — no JSZip needed, GitHub generates the archive
+- Extends `window.Autonom` — depends on `github-api.js`
+
+### `template/index.js` (refactored orchestrator)
+- Lean ~200 lines — loads config, renders DOM, wires all event listeners, calls module functions
+- No business logic — delegates everything to the appropriate module
+- Script load order in `index.html`: `theme.js` → `auth.js` → `github-api.js` → `media.js` → `feeds.js` → `business.js` → `admin.js` → `nav.js` → `index.js`
+- `window.Autonom` pattern: `auth.js` creates the object, every subsequent module extends it via `Object.assign` — no globals, no tight coupling
+
 ---
 
 ## Build Order
@@ -881,8 +923,8 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 5. `theme.js` — theme engine, runs before render
 6. `manifest.json` + PWA icons + default `favicon.ico` — app name, theme color, icons
 7. `sw.js` — Service Worker, shell cache, network-first strategy, offline fallback, configVersion cache invalidation
-8. `index.html` profile page — layout, edit mode, customization panel, admin utilities, share/QR, last updated timestamp, favicon auto-generation on photo upload, Personal/Business mode toggle, OG tag auto-rewrite on bio/name edit, business profile form + JSON-LD generation
-9. First-time setup wizard overlay
+8. `index.html` profile page — layout, edit mode, customization panel, admin utilities, share/QR, last updated timestamp, favicon auto-generation on photo upload, Personal/Business mode toggle, OG tag auto-rewrite on bio/name edit, business profile form + JSON-LD generation. **Refactored into 6 modules:** `github-api.js`, `media.js`, `feeds.js`, `business.js`, `admin.js`, `index.js` (orchestrator). Committed as `9d2cf19`.
+9. First-time setup wizard overlay — `dismissWizard()` logic already wired in `index.js`. Step 9 is CSS styling only.
 10. `gallery.html`
 11. `music.html`
 12. `videos.html`
