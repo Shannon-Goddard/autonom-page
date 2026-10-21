@@ -851,6 +851,18 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - Focus trap: Tab/Shift+Tab cycle only within open drawer, Escape closes and returns focus to hamburger button
 - Logout button hidden by default, revealed only when `edit-mode` class is present on body
 
+### `template/theme.js`
+- Reads `localStorage` cache first and applies instantly — then fetches fresh config in background — prevents flash of unstyled content on repeat visits
+- `AutonomTheme.applyTheme()` exposed on `window` — `index.js` calls it live when owner saves theme changes without a page reload
+- Sets `data-theme` attribute on `<html>` — `styles.css` CSS variables cascade automatically from there
+- Caches only theme-relevant fields to localStorage — not the full config
+
+### `template/styles.css`
+- CSS custom properties on `:root` (dark) and `[data-theme="light"]` — single attribute flip switches entire theme
+- `.glass` utility class for glassmorphism surfaces — used on customization panel and modals
+- `.hidden` utility maps to `display: none !important` — used by auth.js and nav.js to show/hide elements
+- Toast slide-in animation via `@keyframes slideIn` — matches bottom-right fixed position container
+
 ---
 
 ## Build Order
