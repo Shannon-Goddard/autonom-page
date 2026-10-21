@@ -31,7 +31,38 @@
     return res.json();
   }
 
-  async function ghDelete(path, sha) {
+  async function ghPost(path, body) {
+    const res = await fetch(`${GITHUB_API}${path}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `token ${Autonom.getToken()}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `POST ${path} failed: ${res.status}`);
+    }
+    return res.json();
+  }
+
+  async function ghPatch(path, body) {
+    const res = await fetch(`${GITHUB_API}${path}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `token ${Autonom.getToken()}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`PATCH ${path} failed: ${res.status}`);
+    return res.json();
+  }
+
+  async function ghDelete(path, body) {
     const res = await fetch(`${GITHUB_API}${path}`, {
       method: 'DELETE',
       headers: {
@@ -39,10 +70,10 @@
         Accept: 'application/vnd.github+json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: 'Delete file', sha }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`DELETE ${path} failed: ${res.status}`);
-    return res.json();
+    return res.status === 200 ? res.json() : null;
   }
 
   async function getFileSHA(filePath) {
@@ -88,6 +119,8 @@
     REPO,
     OWNER,
     ghGet,
+    ghPost,
+    ghPatch,
     ghPut,
     ghDelete,
     getFileSHA,

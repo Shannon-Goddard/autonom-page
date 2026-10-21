@@ -912,6 +912,44 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - Script load order in `index.html`: `theme.js` → `auth.js` → `github-api.js` → `media.js` → `feeds.js` → `business.js` → `admin.js` → `nav.js` → `index.js`
 - `window.Autonom` pattern: `auth.js` creates the object, every subsequent module extends it via `Object.assign` — no globals, no tight coupling
 
+### `template/index.html` first-time wizard (step 9)
+- Three steps in one overlay: set status, upload cover photo, toggle pages on/off
+- Full-screen backdrop with `fadeIn` animation, `.glass` box centered max 480px
+- Shown only when `config.firstTimeSetup === true` and `Autonom.isOwner()` — never visible to public
+- Save: writes status + page toggles to `site-config.json`, triggers `regenerateRSS` + `regenerateSitemap`, hides overlay
+- Dismiss (skip): writes `firstTimeSetup: false` only, no other changes
+- `.btn-ghost` class for skip button — visually distinct from primary save
+
+### `template/gallery.js`
+- `loadPhotos()` reads `assets/gallery/` via GitHub contents API — no hardcoded list, picks up any `.webp` file
+- `uploadPhotos()` loops files, runs each through `Autonom.compressToWebP(file, 200)`, commits with timestamp-prefixed filename
+- `deletePhoto()` fetches SHA first via `getFileSHA`, then calls `ghDelete` — correct GitHub API flow, avoids 409
+- Delete button rendered only for owner, fades in on hover via CSS — clean public view
+- `gallery.html` script order: `auth.js` → `github-api.js` → `media.js` → `nav.js` → `gallery.js`
+
+### `template/music.js`
+- Reads `currentTrack` from `site-config.json` on load — player hidden entirely if no track uploaded
+- Native `<audio>` element kept `display:none` — driven entirely via JS controls
+- Upload: 20MB cap with toast warning, filename sanitized (`/[^a-z0-9._-]/gi`), raw `arrayBuffer()` passed to `commitFile`
+- Saves `currentTrack` to `site-config.json` and calls `regenerateRSS` on upload — track change = feed update
+- Player updates live after upload — no page reload needed
+- `music.html` script order: `auth.js` → `github-api.js` → `nav.js` → `music.js`
+
+### `template/videos.js`
+- Reads `config.videos` array from `site-config.json` — same `youtubeId()` regex as `index.js`
+- Add/remove both call `saveConfig` and re-render in place — no reload
+- Enter key on URL input triggers add — keyboard UX
+- 16:9 iframe wrapper via `padding-bottom: 56.25%` CSS trick — no JS sizing needed
+- `videos.html` script order: `auth.js` → `github-api.js` → `nav.js` → `videos.js`
+
+### `template/friends.js`
+- `normalisedUrl()` accepts bare `username`, `username.github.io`, or full URL — owner doesn't need exact format
+- `fetchFriendProfile()` hits `username.github.io/site-config.json` via raw static CDN — zero API calls, no rate limit impact
+- `onerror` on avatar img falls back to local `assets/profile.webp` silently — broken image never shown
+- `saveFriends()` commits `friends.json` directly via `commitFile` — separate file from `site-config.json`, not routed through `saveConfig`
+- Duplicate check before add — `friends.some(f => f.url === url)`
+- `friends.html` script order: `auth.js` → `github-api.js` → `nav.js` → `friends.js`
+
 ---
 
 ## Build Order
@@ -924,12 +962,12 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 6. `manifest.json` + PWA icons + default `favicon.ico` — app name, theme color, icons
 7. `sw.js` — Service Worker, shell cache, network-first strategy, offline fallback, configVersion cache invalidation
 8. `index.html` profile page — layout, edit mode, customization panel, admin utilities, share/QR, last updated timestamp, favicon auto-generation on photo upload, Personal/Business mode toggle, OG tag auto-rewrite on bio/name edit, business profile form + JSON-LD generation. **Refactored into 6 modules:** `github-api.js`, `media.js`, `feeds.js`, `business.js`, `admin.js`, `index.js` (orchestrator). Committed as `9d2cf19`.
-9. First-time setup wizard overlay — `dismissWizard()` logic already wired in `index.js`. Step 9 is CSS styling only.
-10. `gallery.html`
-11. `music.html`
-12. `videos.html`
-13. `friends.html` + `friends.json` — raw static URL fetching only, no API calls
-14. `guestbook.html` + Issues API moderation + notifications badge + visitor modal (Log In / Create My Page) + returning user experience
+9. First-time setup wizard overlay — CSS + full 3-step wizard HTML (status, cover photo, page toggles). `dismissWizard()` and `saveWizard()` wired in `index.js`. Shown only to owner when `firstTimeSetup: true`. Committed as `3061e98`.
+10. `gallery.html` + `gallery.js` — photo grid, WebP upload (200kb cap), delete with SHA fetch, owner-only controls. Gallery CSS in `styles.css`. Committed as `3061e98`.
+11. `music.html` + `music.js` — player (play/pause/seek/volume), MP3 upload (20MB cap), track metadata saved to `site-config.json`, `regenerateRSS` on upload, live player update without reload. Music CSS in `styles.css`. Committed as `664cfde`.
+12. `videos.html` + `videos.js` — YouTube embed grid, add/remove URLs saved to `site-config.json`, Enter key support, 16:9 iframe wrapper CSS. Committed as `f23eb63`.
+13. `friends.html` + `friends.js` + `friends.json` — `normalisedUrl()` accepts bare username/partial/full URL, fetches friend profile via raw static `username.github.io/site-config.json` (no API calls), `onerror` fallback on avatar, saves to `friends.json` via `commitFile`. Friends card CSS in `styles.css`. Committed as `e7e85e8`.
+14. `guestbook.html` + `guestbook.js` — Issues API moderation + notifications badge + visitor modal (Log In / Create My Page) + returning user experience
 15. `games.html` + all 5 games (Tetris, Pac-Man, Snake, Breakout, Space Invaders)
 16. `404.html`
 17. `robots.txt` + `sitemap.xml` + `rss.xml` auto-generation logic — all three regenerated together on page toggle or mode change

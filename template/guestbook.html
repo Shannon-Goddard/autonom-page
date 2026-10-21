@@ -26,12 +26,16 @@
 
     <!-- Visitor modal — shown to unauthenticated visitors -->
     <div id="visitor-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Join to post">
-      <h2>Want to post on this page?</h2>
-      <p>You'll need your own free page to do it.</p>
-      <button id="modal-login" aria-label="Log in with GitHub">Log In</button>
-      <button id="modal-signup" aria-label="Create your own page">Create My Page</button>
-      <p>It's free. You get your own page too.</p>
-      <button id="modal-close" aria-label="Close modal">&#x2715;</button>
+      <div id="visitor-modal-box">
+        <button id="modal-close" aria-label="Close modal">&#x2715;</button>
+        <h2>Want to post on this page?</h2>
+        <p>You'll need your own free page to do it.</p>
+        <div class="modal-btns">
+          <button id="modal-login" aria-label="Log in with GitHub">Log In</button>
+          <button id="modal-signup" aria-label="Create your own page">Create My Page</button>
+        </div>
+        <p>It's free. You get your own page too.</p>
+      </div>
     </div>
 
     <!-- Post form — shown to authenticated platform users -->
@@ -56,6 +60,7 @@
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <script src="auth.js"></script>
+  <script src="github-api.js"></script>
   <script src="nav.js"></script>
   <script src="guestbook.js"></script>
 </body>
