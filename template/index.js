@@ -173,6 +173,47 @@
     populateCustomizationPanel();
   }
 
+  // ─── DNS Helper ───────────────────────────────────────────────────────────────
+  function showDNSHelper(domain) {
+    const helper  = document.getElementById('dns-helper');
+    const intro   = document.getElementById('dns-helper-intro');
+    const records = document.getElementById('dns-records');
+    if (!helper || !intro || !records) return;
+
+    const isApex = !domain.startsWith('www.');
+    const owner  = Autonom.OWNER;
+
+    intro.textContent = isApex
+      ? `Point your apex domain (${domain}) to GitHub Pages using these A records:`
+      : `Point ${domain} to GitHub Pages using this CNAME record:`;
+
+    if (isApex) {
+      const ips = ['185.199.108.153','185.199.109.153','185.199.110.153','185.199.111.153'];
+      records.innerHTML = `
+        <table class="dns-table" aria-label="DNS A records">
+          <thead><tr><th>Type</th><th>Host</th><th>Value</th></tr></thead>
+          <tbody>${ips.map(ip =>
+            `<tr><td>A</td><td>@</td><td class="dns-val">${ip}</td></tr>`
+          ).join('')}</tbody>
+        </table>
+        <p class="dns-note">Set all four A records. Use <code>@</code> or leave Host blank for apex domains.</p>`;
+    } else {
+      const sub = domain.split('.')[0];
+      records.innerHTML = `
+        <table class="dns-table" aria-label="DNS CNAME record">
+          <thead><tr><th>Type</th><th>Host</th><th>Value</th></tr></thead>
+          <tbody><tr>
+            <td>CNAME</td>
+            <td>${sub}</td>
+            <td class="dns-val">${owner}.github.io</td>
+          </tr></tbody>
+        </table>
+        <p class="dns-note">Set the CNAME value to <code>${owner}.github.io</code>.</p>`;
+    }
+
+    helper.classList.remove('hidden');
+  }
+
   // ─── Wire Events ──────────────────────────────────────────────────────────────
   function wireEvents() {
     // Profile photo
@@ -244,12 +285,33 @@
 
     // Custom domain
     document.getElementById('save-custom-domain')?.addEventListener('click', async () => {
-      const domain = document.getElementById('custom-domain')?.value?.trim();
+      const domain = document.getElementById('custom-domain')?.value?.trim().toLowerCase();
       if (!domain) return;
       await Autonom.saveConfig(config, { customDomain: domain }, 'Set custom domain');
       await Autonom.commitFile('CNAME', domain, 'Add CNAME for custom domain');
       Autonom.toast(`Custom domain set to ${domain}`, 'success');
+      showDNSHelper(domain);
     });
+
+    // Verify DNS
+    document.getElementById('verify-dns')?.addEventListener('click', async () => {
+      const domain = document.getElementById('custom-domain')?.value?.trim();
+      const result = document.getElementById('dns-verify-result');
+      if (!domain || !result) return;
+      result.textContent = 'Checking...';
+      result.className = '';
+      try {
+        await fetch(`https://${domain}`, { method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
+        result.textContent = '\u2713 Domain is resolving. GitHub Pages may still be building \u2014 check back in a few minutes if the site isn\'t live yet.';
+        result.className = 'dns-ok';
+      } catch {
+        result.textContent = '\u2717 Domain not resolving yet \u2014 DNS changes can take up to 48 hours to propagate.';
+        result.className = 'dns-fail';
+      }
+    });
+
+    // Show DNS helper if domain already set
+    if (config.customDomain) showDNSHelper(config.customDomain);
 
     // Wizard dismiss
     document.getElementById('wizard-dismiss')?.addEventListener('click', async () => {
@@ -277,7 +339,7 @@
       if (status) await Autonom.regenerateRSS(config);
       await Autonom.regenerateSitemap(config);
       document.getElementById('first-time-wizard')?.classList.add('hidden');
-      Autonom.toast('Page set up — looking good!', 'success');
+      Autonom.toast('Page set up \u2014 looking good!', 'success');
     });
   }
 

@@ -776,3 +776,65 @@ main {
   transition: opacity var(--transition);
 }
 .not-found-home:hover { opacity: 0.85; text-decoration: none; }
+
+/* ─── DNS Helper ─────────────────────────────────────────────────────────────── */
+#dns-helper {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+#dns-helper-intro { color: var(--text-muted); }
+
+.dns-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.dns-table th {
+  text-align: left;
+  padding: 0.3rem 0.6rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+.dns-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.dns-val {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+  user-select: all;
+}
+
+.dns-note {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.dns-note code {
+  background: var(--surface-2);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+
+#verify-dns {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  padding: 0.4rem 1rem;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+#dns-verify-result { font-size: 0.85rem; }
+.dns-ok   { color: #04AA6D; }
+.dns-fail { color: var(--accent); }

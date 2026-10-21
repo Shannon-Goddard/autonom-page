@@ -137,6 +137,12 @@
         </label>
         <input type="text" id="custom-domain" placeholder="www.yourdomain.com" aria-label="Custom domain" />
         <button id="save-custom-domain" aria-label="Save custom domain">Save Domain</button>
+        <div id="dns-helper" class="hidden" aria-label="DNS configuration instructions">
+          <p id="dns-helper-intro"></p>
+          <div id="dns-records"></div>
+          <button id="verify-dns" aria-label="Verify DNS propagation">Verify DNS</button>
+          <p id="dns-verify-result" aria-live="polite"></p>
+        </div>
         <div id="notifications-badge" aria-label="Pending post notifications"></div>
       </div>
 
