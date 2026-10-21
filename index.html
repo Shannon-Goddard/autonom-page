@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data:; connect-src https:;" />
+  <title>Autonom — Own Your Web Presence</title>
+
+  <meta property="og:title" content="Autonom — Own Your Web Presence" />
+  <meta property="og:description" content="Your personal website, hosted free on GitHub. No subscriptions. No algorithms. Yours forever." />
+  <meta property="og:image" content="https://autonom.page/assets/icon-512.png" />
+  <meta property="og:url" content="https://autonom.page" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Autonom — Own Your Web Presence" />
+  <meta name="twitter:description" content="Your personal website, hosted free on GitHub. No subscriptions. No algorithms. Yours forever." />
+  <meta name="twitter:image" content="https://autonom.page/assets/icon-512.png" />
+
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="onboard.css" />
+</head>
+<body>
+
+  <!-- ─── Hero ──────────────────────────────────────────────────────────────── -->
+  <header id="hero">
+    <div class="hero-inner">
+      <img src="assets/icon-512.png" alt="Autonom logo" class="hero-logo" />
+      <h1>Autonom</h1>
+      <p class="hero-tagline">Your personal website. Hosted free. Owned by you.</p>
+      <p class="hero-sub">No subscriptions. No algorithms. No platform that can delete you.<br>
+        Your content lives in your own GitHub repository — forever.</p>
+      <a href="#get-started" class="btn-primary hero-cta" aria-label="Get started with Autonom">Get Started — It's Free</a>
+    </div>
+  </header>
+
+  <!-- ─── Features ──────────────────────────────────────────────────────────── -->
+  <section id="features" aria-label="Features">
+    <div class="section-inner">
+      <div class="feature-grid">
+        <div class="feature-card glass">
+          <span class="feature-icon">🎨</span>
+          <h3>MySpace-level customization</h3>
+          <p>Themes, backgrounds, custom CSS. Make it yours.</p>
+        </div>
+        <div class="feature-card glass">
+          <span class="feature-icon">📷</span>
+          <h3>Gallery, music, videos</h3>
+          <p>Share photos, your current track, and YouTube links.</p>
+        </div>
+        <div class="feature-card glass">
+          <span class="feature-icon">👥</span>
+          <h3>Friends &amp; guestbook</h3>
+          <p>Connect with other Autonom users. Let friends post to your page.</p>
+        </div>
+        <div class="feature-card glass">
+          <span class="feature-icon">💼</span>
+          <h3>Business mode</h3>
+          <p>Flip to a professional showcase with one click. JSON-LD SEO included.</p>
+        </div>
+        <div class="feature-card glass">
+          <span class="feature-icon">📱</span>
+          <h3>Installable PWA</h3>
+          <p>Friends can add your page to their home screen like an app.</p>
+        </div>
+        <div class="feature-card glass">
+          <span class="feature-icon">🎮</span>
+          <h3>Built-in games</h3>
+          <p>Tetris, Snake, Pac-Man, Breakout, Space Invaders. Because why not.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FAQ ───────────────────────────────────────────────────────────────── -->
+  <section id="faq" aria-label="Frequently asked questions">
+    <div class="section-inner">
+      <h2>Questions</h2>
+      <div class="accordion">
+
+        <details class="faq-item">
+          <summary>What is GitHub?</summary>
+          <p>GitHub is a free service where developers store code. Autonom uses it as your personal file storage and web host — you don't need to know how to code to use it.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Why do I need a GitHub account?</summary>
+          <p>GitHub Pages is the free hosting that powers your site. Your photos, music, and content all live in a repository on your GitHub account — not on our servers. That means we can never delete your content, and you own it completely.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>How do I create a GitHub account?</summary>
+          <p>Go to <a href="https://github.com/signup" target="_blank" rel="noopener" aria-label="Sign up for GitHub">github.com/signup</a> — it takes about two minutes. You just need an email address.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Is this really free?</summary>
+          <p>Yes. GitHub Pages is free for public repositories. Autonom itself is free. The only optional cost is a custom domain (like yourname.com) from any registrar — that's between you and them, nothing to do with us.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>What does Autonom store about me?</summary>
+          <p>Only your GitHub username and your public site URL — so other users can find you in the directory. That's it. All your content lives in your own GitHub repository. We have no access to it.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Can I take my site and leave?</summary>
+          <p>Yes, any time. Your site is a standard GitHub Pages repository. You can export a full zip backup from your page's admin panel, or just keep using GitHub directly. Autonom is a convenience layer, not a lock-in.</p>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Get Started ────────────────────────────────────────────────────────── -->
+  <section id="get-started" aria-label="Get started">
+    <div class="section-inner">
+      <h2>Get Started</h2>
+
+      <!-- Step 1: TOS + GitHub connect -->
+      <div id="step-tos" class="onboard-card glass">
+        <h3>Before we begin</h3>
+        <ul class="tos-list">
+          <li>Autonom stores only your GitHub username and public URL.</li>
+          <li>All your content lives in your own GitHub repository.</li>
+          <li>You are solely responsible for everything you publish.</li>
+          <li>GitHub's <a href="https://docs.github.com/en/site-policy/github-terms/github-terms-of-service" target="_blank" rel="noopener">Terms of Service</a> apply to all repository content.</li>
+        </ul>
+        <label class="tos-check">
+          <input type="checkbox" id="tos-agree" aria-label="I agree to the terms" />
+          I understand and agree
+        </label>
+        <button id="connect-github" class="btn-primary" disabled aria-label="Connect GitHub account">
+          Connect GitHub Account
+        </button>
+      </div>
+
+      <!-- Step 2: Profile form (shown after auth) -->
+      <div id="step-form" class="onboard-card glass hidden" aria-label="Set up your profile">
+        <h3>Set up your profile</h3>
+        <p class="form-hint">This is what visitors will see on your page. You can change everything later.</p>
+        <div class="form-group">
+          <label for="input-name">Display name</label>
+          <input type="text" id="input-name" placeholder="Your name" aria-label="Display name" maxlength="60" />
+        </div>
+        <div class="form-group">
+          <label for="input-bio">Bio</label>
+          <textarea id="input-bio" placeholder="A short bio..." aria-label="Bio" maxlength="200" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="input-photo">Profile photo <span class="optional">(optional)</span></label>
+          <input type="file" id="input-photo" accept="image/*" aria-label="Profile photo" />
+        </div>
+        <button id="deploy-btn" class="btn-primary" aria-label="Deploy your site">
+          Deploy My Site
+        </button>
+      </div>
+
+      <!-- Step 3: Progress checklist (shown during deploy) -->
+      <div id="step-progress" class="onboard-card glass hidden" aria-label="Deployment progress" aria-live="polite">
+        <h3>Building your site...</h3>
+        <ul class="progress-list" id="progress-list">
+          <li id="prog-repo"    class="prog-item">Creating your repository</li>
+          <li id="prog-files"   class="prog-item">Deploying template files</li>
+          <li id="prog-pages"   class="prog-item">Enabling GitHub Pages</li>
+          <li id="prog-build"   class="prog-item">Waiting for build</li>
+          <li id="prog-live"    class="prog-item">Your site is live!</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── Footer ────────────────────────────────────────────────────────────── -->
+  <footer id="site-footer">
+    <p>Built by <a href="https://github.com/Shannon-Goddard" target="_blank" rel="noopener">Shannon Goddard</a> with <a href="https://github.com/Shannon-Goddard/autonom-page" target="_blank" rel="noopener">Amazon Q</a>.</p>
+  </footer>
+
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="onboard.js"></script>
+</body>
+</html>
