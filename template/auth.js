@@ -191,6 +191,28 @@
     });
   }
 
+  // ─── Service Worker Registration ─────────────────────────────────────────────
+  async function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      await navigator.serviceWorker.register('/sw.js');
+
+      // Check configVersion — invalidate shell cache if it changed
+      const storedVersion = localStorage.getItem('autonom_config_version');
+      const config = await loadConfig();
+      if (config?.configVersion !== undefined) {
+        const current = String(config.configVersion);
+        if (storedVersion && storedVersion !== current) {
+          const reg = await navigator.serviceWorker.ready;
+          reg.active?.postMessage({ type: 'INVALIDATE_SHELL' });
+        }
+        localStorage.setItem('autonom_config_version', current);
+      }
+    } catch {
+      // SW registration failure is non-fatal
+    }
+  }
+
   // ─── Public API ──────────────────────────────────────────────────────────────
   window.Autonom = {
     toast,
@@ -206,4 +228,5 @@
   };
 
   init();
+  registerSW();
 })();
