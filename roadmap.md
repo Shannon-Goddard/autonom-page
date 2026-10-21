@@ -863,6 +863,13 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - `.hidden` utility maps to `display: none !important` — used by auth.js and nav.js to show/hide elements
 - Toast slide-in animation via `@keyframes slideIn` — matches bottom-right fixed position container
 
+### `template/sw.js`
+- `.json` and `.xml` bypass uses `url.endsWith()` checks — no query param tricks, enforced at fetch event level
+- `X-Autonom-Stale: true` response header set on cached fallback — page JS reads this to show "viewing cached version" indicator
+- `configVersion` invalidation: `auth.js` compares stored version in `localStorage` to fetched config on every load — posts `INVALIDATE_SHELL` message to SW if changed
+- `self.skipWaiting()` + `self.clients.claim()` — new SW takes over immediately without waiting for tab close
+- Shell cache keyed as `shell-v1` — bump version string to force full shell refresh on major deploys
+
 ---
 
 ## Build Order
