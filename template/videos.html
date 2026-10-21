@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data:; media-src 'self'; frame-src https://www.youtube.com;" />
+  <title>Videos</title>
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="theme.js"></script>
+
+  <nav id="nav-drawer" aria-label="Site navigation"></nav>
+  <button id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">&#9776;</button>
+
+  <main id="videos-page">
+    <h1>Videos</h1>
+
+    <div id="add-video-controls" class="hidden" aria-label="Add video controls">
+      <input type="url" id="video-url-input" placeholder="YouTube URL" aria-label="YouTube URL" />
+      <button id="add-video-btn" aria-label="Add video">Add Video</button>
+    </div>
+
+    <div id="videos-grid" aria-label="Videos grid"></div>
+  </main>
+
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="auth.js"></script>
+  <script src="nav.js"></script>
+  <script src="videos.js"></script>
+</body>
+</html>

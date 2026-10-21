@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data:; media-src 'self'; frame-src https://www.youtube.com;" />
+  <title>Friends</title>
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="theme.js"></script>
+
+  <nav id="nav-drawer" aria-label="Site navigation"></nav>
+  <button id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">&#9776;</button>
+
+  <main id="friends-page">
+    <h1>Friends</h1>
+
+    <div id="add-friend-controls" class="hidden" aria-label="Add friend controls">
+      <input type="url" id="friend-url-input" placeholder="username.github.io" aria-label="Friend's page URL" />
+      <button id="add-friend-btn" aria-label="Add friend">Add Friend</button>
+    </div>
+
+    <div id="friends-grid" aria-label="Friends grid"></div>
+  </main>
+
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="auth.js"></script>
+  <script src="nav.js"></script>
+  <script src="friends.js"></script>
+</body>
+</html>

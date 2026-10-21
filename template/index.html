@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data:; media-src 'self'; frame-src https://www.youtube.com;" />
+  <title>My Page</title>
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="My Page" />
+  <meta property="og:description" content="" />
+  <meta property="og:image" content="assets/profile.webp" />
+  <meta property="og:url" content="" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="My Page" />
+  <meta name="twitter:description" content="" />
+  <meta name="twitter:image" content="assets/profile.webp" />
+
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="theme.js"></script>
+
+  <nav id="nav-drawer" aria-label="Site navigation"></nav>
+  <button id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">&#9776;</button>
+
+  <main id="profile-page">
+
+    <section id="cover-section" aria-label="Cover photo">
+      <img id="cover-photo" src="assets/cover.webp" alt="Cover photo" />
+      <button id="edit-cover" class="edit-btn hidden" aria-label="Edit cover photo">Edit Cover</button>
+    </section>
+
+    <section id="profile-section" aria-label="Profile">
+      <img id="profile-photo" src="assets/profile.webp" alt="Profile photo" />
+      <button id="edit-profile-photo" class="edit-btn hidden" aria-label="Edit profile photo">Edit Photo</button>
+      <h1 id="display-name"></h1>
+      <p id="bio"></p>
+      <button id="edit-bio" class="edit-btn hidden" aria-label="Edit bio">Edit</button>
+      <p id="status"></p>
+      <button id="edit-status" class="edit-btn hidden" aria-label="Edit status">Edit Status</button>
+      <p id="last-updated" aria-label="Last updated"></p>
+    </section>
+
+    <section id="videos-section" aria-label="Videos">
+      <h2>Videos</h2>
+      <div id="videos-grid"></div>
+      <button id="edit-videos" class="edit-btn hidden" aria-label="Manage videos">Manage Videos</button>
+    </section>
+
+    <section id="customization-panel" class="hidden" aria-label="Customization panel">
+      <h2>Customize Your Page</h2>
+
+      <div id="theme-controls">
+        <label for="theme-toggle">Theme</label>
+        <select id="theme-toggle" aria-label="Select theme">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+
+      <div id="background-controls">
+        <label>Background</label>
+        <select id="bg-type" aria-label="Background type">
+          <option value="color">Solid Color</option>
+          <option value="image">Image</option>
+          <option value="gradient">Gradient</option>
+        </select>
+        <input type="color" id="bg-color" aria-label="Background color" value="#1a1a2e" />
+        <input type="file" id="bg-image" accept="image/*" aria-label="Background image" class="hidden" />
+      </div>
+
+      <div id="custom-css-controls">
+        <label for="custom-css">Custom CSS</label>
+        <textarea id="custom-css" aria-label="Custom CSS" placeholder="/* your styles here */"></textarea>
+      </div>
+
+      <div id="page-toggles" aria-label="Page visibility toggles">
+        <h3>Pages</h3>
+        <label><input type="checkbox" id="toggle-gallery" aria-label="Show gallery page" /> Gallery</label>
+        <label><input type="checkbox" id="toggle-music" aria-label="Show music page" /> Music</label>
+        <label><input type="checkbox" id="toggle-videos" aria-label="Show videos page" /> Videos</label>
+        <label><input type="checkbox" id="toggle-friends" aria-label="Show friends page" /> Friends</label>
+        <label><input type="checkbox" id="toggle-guestbook" aria-label="Show guestbook page" /> Guestbook</label>
+        <label><input type="checkbox" id="toggle-games" aria-label="Show games page" /> Games</label>
+      </div>
+
+      <div id="mode-toggle-controls">
+        <button id="mode-toggle-btn" aria-label="Switch site mode">Switch to Business Mode</button>
+      </div>
+
+      <div id="business-profile-form" class="hidden" aria-label="Business profile form">
+        <h3>Business Profile</h3>
+        <p class="pii-notice">This information will be publicly visible on your site and in your GitHub repository. Only enter details you are comfortable sharing publicly.</p>
+        <select id="business-type" aria-label="Business type">
+          <option value="">Select type...</option>
+          <option value="LocalBusiness">Local Business</option>
+          <option value="ProfessionalService">Freelancer / Professional</option>
+          <option value="Restaurant">Restaurant</option>
+          <option value="Store">Store</option>
+          <option value="EventVenue">Event Venue</option>
+        </select>
+        <input type="text" id="business-name" placeholder="Business name" aria-label="Business name" />
+        <input type="text" id="business-category" placeholder="Category (e.g. Graphic Design)" aria-label="Business category" />
+        <input type="text" id="business-city" placeholder="City" aria-label="City" />
+        <input type="text" id="business-region" placeholder="State / Region" aria-label="State or region" />
+        <input type="text" id="business-country" placeholder="Country" aria-label="Country" />
+        <input type="tel" id="business-phone" placeholder="Phone" aria-label="Phone number" />
+        <input type="email" id="business-email" placeholder="Email" aria-label="Business email" />
+        <select id="business-price-range" aria-label="Price range">
+          <option value="">Price range...</option>
+          <option value="$">$</option>
+          <option value="$$">$$</option>
+          <option value="$$$">$$$</option>
+          <option value="$$$$">$$$$</option>
+        </select>
+        <div id="services-input" aria-label="Services offered"></div>
+        <div id="hours-input" aria-label="Operating hours"></div>
+        <button id="save-business-profile" aria-label="Save business profile">Save Business Profile</button>
+      </div>
+
+      <div id="admin-utilities" aria-label="Admin utilities">
+        <h3>Admin</h3>
+        <div id="storage-meter" aria-label="Storage usage"></div>
+        <button id="export-backup" aria-label="Export and download backup">Export / Backup</button>
+        <button id="share-page" aria-label="Copy page URL to clipboard">Share My Page</button>
+        <div id="qr-code" aria-label="QR code for your page"></div>
+        <label>
+          <input type="checkbox" id="directory-toggle" aria-label="List in directory" />
+          List me in the directory
+        </label>
+        <input type="text" id="custom-domain" placeholder="www.yourdomain.com" aria-label="Custom domain" />
+        <button id="save-custom-domain" aria-label="Save custom domain">Save Domain</button>
+        <div id="notifications-badge" aria-label="Pending post notifications"></div>
+      </div>
+
+      <button id="save-customization" aria-label="Save all customization changes">Save Changes</button>
+    </section>
+
+  </main>
+
+  <div id="first-time-wizard" class="hidden" role="dialog" aria-modal="true" aria-label="Welcome setup wizard">
+    <h2>Welcome! Let's set up your page.</h2>
+    <button id="wizard-dismiss" aria-label="Dismiss setup wizard">Skip for now</button>
+  </div>
+
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="auth.js"></script>
+  <script src="nav.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

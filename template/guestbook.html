@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data:; media-src 'self'; frame-src https://www.youtube.com;" />
+  <title>Guestbook</title>
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="theme.js"></script>
+
+  <nav id="nav-drawer" aria-label="Site navigation"></nav>
+  <button id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">&#9776;</button>
+
+  <main id="guestbook-page">
+    <h1>Guestbook</h1>
+
+    <!-- Visitor post CTA -->
+    <div id="post-cta" aria-label="Post to this page">
+      <button id="post-btn" aria-label="Post to this page">Post to this page</button>
+    </div>
+
+    <!-- Visitor modal — shown to unauthenticated visitors -->
+    <div id="visitor-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Join to post">
+      <h2>Want to post on this page?</h2>
+      <p>You'll need your own free page to do it.</p>
+      <button id="modal-login" aria-label="Log in with GitHub">Log In</button>
+      <button id="modal-signup" aria-label="Create your own page">Create My Page</button>
+      <p>It's free. You get your own page too.</p>
+      <button id="modal-close" aria-label="Close modal">&#x2715;</button>
+    </div>
+
+    <!-- Post form — shown to authenticated platform users -->
+    <div id="post-form" class="hidden" aria-label="Submit a post">
+      <textarea id="post-text" placeholder="Write something..." aria-label="Post text" maxlength="500"></textarea>
+      <input type="file" id="post-image" accept="image/*" aria-label="Attach an image (optional)" />
+      <input type="url" id="post-video" placeholder="YouTube link (optional)" aria-label="Video link" />
+      <button id="submit-post" aria-label="Submit post">Submit</button>
+      <button id="cancel-post" aria-label="Cancel post">Cancel</button>
+    </div>
+
+    <!-- Owner moderation inbox — edit mode only -->
+    <div id="moderation-inbox" class="hidden" aria-label="Pending posts inbox">
+      <h2>Pending Posts</h2>
+      <div id="pending-posts-list"></div>
+    </div>
+
+    <!-- Approved posts -->
+    <div id="approved-posts" aria-label="Approved posts"></div>
+  </main>
+
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="auth.js"></script>
+  <script src="nav.js"></script>
+  <script src="guestbook.js"></script>
+</body>
+</html>

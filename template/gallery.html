@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data:; media-src 'self'; frame-src https://www.youtube.com;" />
+  <title>Gallery</title>
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <script src="theme.js"></script>
+
+  <nav id="nav-drawer" aria-label="Site navigation"></nav>
+  <button id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false">&#9776;</button>
+
+  <main id="gallery-page">
+    <h1>Gallery</h1>
+
+    <div id="upload-controls" class="hidden" aria-label="Upload photo controls">
+      <input type="file" id="photo-upload" accept="image/*" multiple aria-label="Upload photos" />
+      <button id="upload-btn" aria-label="Upload selected photos">Upload</button>
+    </div>
+
+    <div id="gallery-grid" aria-label="Photo gallery"></div>
+  </main>
+
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="auth.js"></script>
+  <script src="nav.js"></script>
+  <script src="gallery.js"></script>
+</body>
+</html>
