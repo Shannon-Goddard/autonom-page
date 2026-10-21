@@ -1,0 +1,819 @@
+# Project Roadmap: The Decentralized Personal Web OS
+
+---
+
+## Architectural Principles (Non-Negotiable)
+- Zero backend servers — GitHub Pages is the only host for user content
+- All user content lives exclusively in the user's own GitHub repository
+- Platform founder stores ONLY GitHub username + public URL in DynamoDB directory
+- All content liability belongs to the user — enforced via Terms of Service on onboarding page
+- OAuth tokens never touch any repo or config file — sessionStorage only, cleared on logout
+- Edit mode is driven entirely by GitHub OAuth state — no separate admin page, no pin
+- Platform uses a GitHub App (not OAuth App) for fine-grained, scoped, short-lived tokens
+- Broad repo-creation scope is requested only during onboarding, then dropped permanently
+- Edit mode re-prompts OAuth only when owner actively enters edit mode
+- A stateless AWS Lambda OAuth Proxy handles all token exchanges — client secret never touches the browser
+- Content Security Policy (CSP) meta tags included in every skeleton HTML file from day one
+- Guestbook/friend posts use GitHub Issues API — not Pull Requests — for cross-account submissions
+- All client-side reads use raw static URLs (`username.github.io/file.json`) — `api.github.com` is reserved strictly for authenticated write operations in edit mode
+- Every user site ships as an installable PWA via `manifest.json` and `sw.js`
+- All interactive elements include proper `aria-label` attributes and keyboard navigation support from day one
+- Every GitHub API call in edit mode has explicit success/failure toast notification feedback
+
+---
+
+## Phase 0: AWS OAuth Proxy Lambda (Prerequisite — Must Build First)
+
+### Why This Exists
+GitHub's OAuth Web Application Flow requires a client secret to exchange an authorization code for an access token. A client secret cannot exist in client-side JavaScript — anyone opening DevTools could steal it. This Lambda is the secure middleman.
+
+### GitHub App Installation Flow (Not Standard OAuth)
+This is a GitHub App, not a standard OAuth App. The flow is different and must be implemented correctly:
+- Onboarding "Get Started" link points to: `https://github.com/apps/[your-app-name]/installations/new`
+- GitHub redirects back to your callback URL with an `installation_id` parameter (not just a `code`)
+- The Lambda receives the `installation_id` and generates a short-lived installation access token by:
+  1. Generating a JWT signed with the GitHub App's private key (stored in Lambda environment variable)
+  2. Calling `POST /app/installations/{installation_id}/access_tokens` with that JWT
+  3. Returning the installation access token to the browser → stored in sessionStorage only
+- The GitHub App private key lives in Lambda environment variables — never in code, never in any repo
+
+### How It Works
+```
+[ User clicks "Get Started" → redirected to github.com/apps/[app-name]/installations/new ]
+              │
+              ▼
+[ GitHub redirects back with installation_id ]
+              │
+              ▼
+[ Browser sends installation_id to Lambda endpoint ]
+              │
+              ▼
+[ Lambda signs JWT with private key, calls GitHub /access_tokens endpoint ]
+              │
+              ▼
+[ Lambda returns installation access_token to browser → stored in sessionStorage only ]
+```
+
+### Infrastructure
+- Single AWS Lambda function (Node.js or Python, stateless)
+- API Gateway endpoint (HTTPS only)
+- GitHub App private key stored in Lambda environment variable (never in code)
+- CORS locked strictly to your onboarding domain — `Access-Control-Allow-Origin: https://yourdomain.com`
+- Allowed origin stored as Lambda environment variable — configurable without code redeploy if domain changes
+- `Access-Control-Allow-Methods: POST` only — no GET, no unnecessary OPTIONS beyond preflight
+- CORS must never be set to `*` — a wildcard allows any malicious site to route authorization codes through your proxy
+- This same Lambda extended in Phase 3 to handle DynamoDB directory writes
+
+### GitHub App Token Scopes
+- Onboarding scope: `contents:write`, `pages:write`, `metadata:read` — only for initial deploy
+- Edit mode scope: `contents:write` on their specific repo only
+- Token lifespan: sessionStorage, cleared on tab close or logout
+- After onboarding deploy completes: broad token cleared, user prompted to re-auth with narrow scope on next edit session
+
+---
+
+## Phase 1: Marketing & Onboarding Page (Your `index.html`)
+
+### Goal
+A clean, modern landing page that explains the platform, handles GitHub OAuth via the proxy Lambda, and deploys a fully built personal site to the user's GitHub Pages — redirecting only after confirmed deployment.
+
+### Pages / Files
+- `index.html` — marketing + onboarding UI
+- `onboard.js` — GitHub OAuth flow + repo creation logic + deployment poller
+- `template/` — the full site template pushed to the user's repo on deploy
+
+### Features
+- Hero section: platform pitch, value proposition, "own your web presence for free"
+- Accordion FAQ:
+  - "What is GitHub?" — plain English explanation
+  - "Why do I need a GitHub account?" — explains it's your free hosting provider
+  - "How do I create one?" — direct link to github.com/signup
+  - "Is this really free?" — explains GitHub Pages free tier
+- "Get Started" button → GitHub OAuth login via proxy Lambda
+- Simple input form collected before deploy: display name, bio, profile photo upload
+- Profile photo client-side compressed to WebP under 200kb before any API call
+
+### Onboarding Deploy Flow
+1. User clicks "Get Started" → redirected to `https://github.com/apps/[app-name]/installations/new`
+2. User installs the GitHub App on their account → GitHub redirects back with `installation_id`
+3. `onboard.js` sends `installation_id` to Lambda proxy → receives installation access token → stored in sessionStorage
+4. Form submitted → onboard.js runs:
+   - Creates `username.github.io` repo via GitHub REST API
+   - Pushes full template suite to repo
+   - Enables GitHub Pages via API
+5. Deployment poller starts — polls `GET /repos/{owner}/{repo}/pages/builds/latest` every 5 seconds
+6. Animated progress checklist shown to user during wait:
+   - ✅ GitHub account connected
+   - ✅ Repository created
+   - ✅ Template deployed
+   - ⏳ Building your site... (live spinner)
+   - ✅ Site is live!
+7. Redirect to `username.github.io` only after build status returns `built` or HTTP 200 confirmed
+8. Broad onboarding token cleared from sessionStorage immediately after redirect
+
+### Aesthetic
+- Glassmorphism, dark base, clean modern feel
+- Hints at the customization users will get on their own page
+- Fully responsive
+
+### Terms of Service (Displayed Before OAuth)
+- Platform stores only GitHub username and public URL in directory
+- All uploaded content is stored in the user's own GitHub repository
+- Platform has zero access to, control over, or liability for user content
+- User is solely responsible for all content they publish and all content they approve from friends
+- GitHub's own Terms of Service apply to all repository content
+- Must be acknowledged (checkbox) before "Get Started" activates
+
+---
+
+## Phase 2: User Profile Template (Deployed to `username.github.io`)
+
+### Goal
+A Facebook-style personal profile page with MySpace-level customization, full media sharing, GitHub OAuth-gated edit mode, and all pages shipped and toggleable from day one.
+
+### Files Deployed to User Repo
+```
+username.github.io/
+├── index.html           — Profile page
+├── gallery.html         — Photo gallery
+├── music.html           — Music player
+├── videos.html          — Video links
+├── friends.html         — Friends / address book
+├── guestbook.html       — Friend posts (Issues-based moderation)
+├── games.html           — Games page
+├── 404.html             — Custom styled 404
+├── manifest.json        — PWA manifest (app name, icons, theme color, display mode)
+├── sw.js                — Service Worker (caching strategy, offline fallback)
+├── robots.txt           — Crawl rules (allow all in personal/business, disallow all if off-grid)
+├── sitemap.xml          — Auto-generated, lists all active public pages
+├── site-config.json     — Master config (pages on/off, theme, bio, display name)
+├── friends.json         — Friend list (URLs, display names, photo paths)
+├── guestbook.json       — Approved posts (committed on approval)
+├── rss.xml              — Auto-generated RSS/Atom feed (updated on every post/status change)
+├── nav.js               — Shared navigation drawer (reads site-config.json)
+├── auth.js              — GitHub OAuth state, edit mode unlock, sessionStorage only
+├── theme.js             — Theme engine (light/dark, background, color picker)
+└── assets/
+    ├── profile.webp
+    ├── cover.webp
+    ├── favicon.ico       — Auto-generated 32x32 from profile photo via Canvas API
+    ├── icon-192.png      — PWA home screen icon
+    ├── icon-512.png      — PWA splash screen icon
+    ├── music/            — One active MP3 at a time
+    ├── gallery/          — Compressed WebP photos
+    └── posts/            — Approved friend post image assets
+```
+
+### `site-config.json` Structure
+```json
+{
+  "displayName": "",
+  "bio": "",
+  "status": "",
+  "theme": "dark",
+  "background": {
+    "type": "color",
+    "value": "#1a1a2e"
+  },
+  "pages": {
+    "gallery": true,
+    "music": true,
+    "videos": true,
+    "friends": true,
+    "guestbook": true,
+    "games": true
+  },
+  "directory": {
+    "listed": true
+  },
+  "customDomain": "",
+  "currentTrack": {
+    "filename": "",
+    "title": "",
+    "artist": ""
+  },
+  "videos": [],
+  "rss": {
+    "enabled": true
+  },
+  "lastUpdated": "",
+  "firstTimeSetup": true,
+  "mode": "personal",
+  "personalModeSnapshot": null,
+  "configVersion": 1,
+  "businessProfile": {
+    "enabled": false,
+    "type": "",
+    "name": "",
+    "category": "",
+    "address": {
+      "locality": "",
+      "region": "",
+      "country": ""
+    },
+    "phone": "",
+    "email": "",
+    "priceRange": "",
+    "services": [],
+    "hours": []
+  }
+}
+```
+
+### Content Security Policy
+Every skeleton HTML file includes:
+```html
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data:; media-src 'self'; frame-src https://www.youtube.com;">
+```
+- Allows inline styles (needed for theme engine + custom CSS)
+- Blocks inline script execution (XSS protection for custom CSS injection fields)
+- Allows YouTube iframes only for video embeds
+- Allows external images via HTTPS (for friend profile photos fetched from their repos)
+
+### OpenGraph & Twitter Card Meta Tags
+Every `index.html` template includes pre-populated OG and Twitter card meta tags:
+```html
+<meta property="og:title" content="[DisplayName]'s Web Space" />
+<meta property="og:description" content="[bio]" />
+<meta property="og:image" content="https://[username].github.io/assets/profile.webp" />
+<meta property="og:url" content="https://[username].github.io" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="[DisplayName]'s Web Space" />
+<meta name="twitter:description" content="[bio]" />
+<meta name="twitter:image" content="https://[username].github.io/assets/profile.webp" />
+```
+- Populated at deploy time with display name, bio, and profile photo URL
+- Auto-rewritten in `index.html` via GitHub API commit whenever owner updates display name or bio in edit mode
+- Ensures rich preview cards on iMessage, WhatsApp, Discord, X/Twitter, and any OG-aware platform
+- No server-side rendering needed — tags are static strings committed directly to the file
+
+---
+
+## Phase 2A: Profile Page (`index.html`)
+
+### Layout (Facebook-style)
+- Full-width cover photo across top
+- Profile photo overlapping cover, bottom-left
+- Display name + bio below profile photo
+- Current status / pinned text post
+- Video links section (YouTube embeds, owner-curated)
+- No public wall — profile is owner content only
+
+### Edit Mode (Owner Only — GitHub OAuth Gated)
+- Unlocks when authenticated GitHub user matches repo owner
+- Edit mode re-prompts OAuth if no active session — narrow scope (`contents:write` on their repo only)
+- Edit buttons appear on every section (cover, profile photo, bio, status, videos)
+- All edits commit directly to repo via GitHub REST API
+- Edit mode hidden entirely from public — no buttons, no overlays visible to visitors
+- Status update triggers `rss.xml` regeneration and commit
+
+### Profile & Cover Photo
+- Client-side resize + convert to WebP before upload
+- Hard cap: 200kb per image
+- Replaces existing file in repo on upload (no accumulation)
+
+### Customization Panel (Edit Mode Only)
+- Light / dark mode toggle
+- Background options:
+  - Solid color picker
+  - Single centered image upload
+  - Multiple scattered images upload
+  - Gradient presets
+- Custom CSS injection field for power users (CSP blocks script execution in CSS fields)
+- Page visibility toggles for all pages (writes to `site-config.json`)
+- All changes write to `site-config.json` and apply via `theme.js`
+
+### Admin Utilities (Edit Mode Only)
+- Storage meter: current repo size via GitHub API, warning at 500MB, prompt at 800MB
+- Export / Backup button: downloads a `.zip` of their entire repo using JSZip — proves true ownership, no server needed
+- Directory toggle: opt in/out of DynamoDB searchable directory
+- Custom domain field (see Phase 4)
+- Share My Page button: copies `username.github.io` URL to clipboard in one click
+- QR code generator: vanilla JS (no library), generates a downloadable/printable QR code pointing to their page — shareable in real life
+- Notifications badge: unread count pulled from open `pending-post` Issues via GitHub API — visible in edit mode so owner knows when posts are waiting without checking GitHub directly
+
+### First-Time Setup Wizard
+- Triggered once after onboarding deploy completes, before owner lands on their live page
+- One-time welcome overlay walks them through:
+  - Set your status
+  - Upload a cover photo
+  - Toggle pages on/off
+- Dismissible at any point
+- Never shows again — controlled by `firstTimeSetup: false` flag written to `site-config.json` on dismiss
+
+### Site Last Updated Timestamp
+- Small public-facing "Last updated: X days ago" displayed on profile page
+- Written to `site-config.json` as `lastUpdated` ISO timestamp on every edit/commit
+- Signals to visitors the site is active
+- Encourages owners to keep their page fresh
+
+### Favicon
+- Default platform favicon ships in template
+- When owner uploads a profile photo, Canvas API generates a 32x32 version and commits it as `favicon.ico` in the same upload commit
+- Browser tab shows their face or logo — feels polished and personal
+- Replaces on every profile photo update
+
+### Accessibility (a11y)
+- All interactive elements have `aria-label` attributes
+- Proper heading hierarchy (`h1` → `h2` → `h3`) enforced across all pages
+- Hamburger menu and edit mode panels fully keyboard navigable (focus trap in modals, Escape to close)
+- All images have descriptive `alt` attributes (populated from display name / caption fields)
+- Accessibility signals contribute to Google SEO ranking alongside JSON-LD structured data
+- Applies to both public view and edit mode UI
+
+### Error Handling & Toast Notifications
+- Every GitHub API call in edit mode has explicit success/failure feedback
+- Toast notification system (vanilla JS, no library) — slides in from bottom-right, auto-dismisses after 4 seconds
+- Success toasts: green — "Profile photo updated", "Post approved", "Settings saved"
+- Error toasts: red — "Save failed — please try again", "Token expired — please log in again", "File too large"
+- Token expiry errors automatically prompt re-auth rather than silently failing
+- Network errors on guestbook approval/reject show specific retry option
+- Applies to every edit mode action across all pages
+
+---
+
+## Phase 2I: PWA — Progressive Web App
+
+### `manifest.json`
+- Ships in every deployed template
+- Contains: app name (display name), short name, theme color (synced with their chosen theme), background color, display mode (`standalone`), start URL, icon paths
+- Enables "Add to Home Screen" on iOS and Android — friends can install the site as an app icon
+- `theme_color` updated via GitHub API commit whenever owner changes their theme color
+
+### `sw.js` — Service Worker & Caching Strategy
+
+**Cache-hard assets (shell cache — invalidated only on Service Worker version bump):**
+- `nav.js`, `auth.js`, `theme.js`
+- All HTML skeleton files
+- Game JS files
+- PWA icons
+
+**Network-first assets (always fetch fresh, fall back to cache if offline):**
+- All `.json` files — Service Worker fetch handler explicitly checks `url.endsWith('.json')` and bypasses cache entirely, goes straight to network
+- All `.xml` files — same explicit bypass: `url.endsWith('.xml')` skips cache, hits GitHub Pages CDN directly
+- No query param cache-busting needed — the bypass is enforced at the Service Worker fetch event level
+- All gallery images and MP3 — network first, cached on first load
+
+**Offline fallback:**
+- If network unavailable: shell assets, games, and cached music player load seamlessly
+- Gallery shows cached images if previously visited
+- `.json` and `.xml` files fall back to last cached version with a visible "You're viewing a cached version" indicator — never silently serves stale data
+
+**Cache-busting via `configVersion`:**
+- `site-config.json` includes `"configVersion": 1` — incremented by 1 on every edit mode commit
+- Service Worker compares stored version to fetched version on load
+- If version changed: shell cache invalidated and refreshed silently in background
+- Ensures visitors never see stale nav, theme, or page toggle states after owner makes changes
+
+**Install prompt:**
+- Subtle "Add to your home screen" banner shown to mobile visitors after 2nd visit
+- Dismissible, never shown again if dismissed (flag in localStorage)
+- Framed as: "Install [DisplayName]'s page as an app"
+
+---
+
+## Phase 2J: Personal / Business Mode
+
+### Overview
+A single toggle in the customization panel that shifts the entire site between two visibility presets. Switching modes never deletes any content — it only changes what is shown to visitors. The owner can switch back at any time and their previous state is fully restored.
+
+### Personal Mode (Default)
+- All pages on: profile, gallery, music, videos, friends, guestbook, games
+- Full interactive experience — visitors can post to guestbook, friends grid visible, music player active
+- MySpace/Facebook feel
+
+### Business Mode
+- Auto-hides on switch: music, games, friends, guestbook
+- Auto-shows on switch: profile, gallery, videos
+- Bio field becomes a professional summary, status becomes a tagline
+- "Last updated" timestamp hidden by default (feels less personal blog)
+- All visitor input stripped from DOM entirely — no post buttons, no forms, no interactive elements for non-owners
+- Guestbook if manually toggled back on becomes a read-only announcements page — owner posts only
+- Friends page if manually toggled back on becomes a read-only partners/team showcase — owner curated only
+- Pure showcase mode: visitors can browse, download, and watch — nothing else
+- Individual page toggles still fully functional on top of business mode defaults
+
+### Mode Switch Flow (Personal → Business)
+1. Owner clicks "Switch to Business Mode" in customization panel
+2. Confirm modal: "This will hide interactive features from visitors. You can switch back anytime."
+3. On confirm, single GitHub API commit writes three changes at once:
+   - Current `pages` object snapshot saved to `personalModeSnapshot`
+   - `pages` object overwritten with business mode defaults
+   - `mode` set to `"business"`
+4. Site immediately reflects business mode on next page load
+
+### Mode Switch Flow (Business → Personal)
+1. Owner clicks "Switch to Personal Mode" in customization panel
+2. No confirm needed — switching back is always safe
+3. Single GitHub API commit writes three changes at once:
+   - `personalModeSnapshot` restored to `pages` object exactly as it was
+   - `personalModeSnapshot` cleared to `null`
+   - `mode` set to `"personal"`
+4. Site immediately reflects previous personal state — no customizations lost
+
+### `auth.js` Behavior
+- Reads `mode` from `site-config.json` on every page load
+- If `"business"`: strips all visitor input UI from DOM before render, applies business layout adjustments
+- If `"personal"`: normal interactive behavior
+- Mode flag is read-only for non-owners — visitors cannot influence it
+
+### Business Profile Form (Edit Mode — Business Mode Only)
+When Business Mode is active, a configuration form unrolls in the customization panel:
+
+**Form Fields:**
+- Business Type (dropdown): Local Business, Freelancer/Professional, Restaurant, Store, Event Venue
+- Business Name
+- Category (text input, e.g. "Graphic Design", "Italian Cuisine")
+- Address / Service Area: City, State/Region, Country
+- Contact Phone
+- Contact Email
+- Price Range (dropdown): $, $$, $$$, $$$$
+- Services Offered (tag input — add/remove individual service tags)
+- Operating Hours (day-by-day selectors): each day has open/close time pickers, supports different weekend hours, supports "Closed" toggle per day
+
+**PII Notice (displayed above form):**
+> "This information will be publicly visible on your site and in your GitHub repository. Only enter details you are comfortable sharing publicly."
+
+**On Save:**
+1. Form values written to `businessProfile` object in `site-config.json`
+2. JSON-LD structured data block generated from form values
+3. Single GitHub API commit writes both `site-config.json` and rewrites `index.html` with updated JSON-LD block in `<head>` and updated OG tags
+
+### JSON-LD Structured Data (Auto-Generated)
+Business Type dropdown maps to Schema.org `@type`:
+| Business Type | Schema.org @type |
+|---|---|
+| Local Business | `LocalBusiness` |
+| Freelancer/Professional | `ProfessionalService` |
+| Restaurant | `Restaurant` |
+| Store | `Store` |
+| Event Venue | `EventVenue` |
+
+Generated block injected into `<head>` of `index.html`:
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "[mapped type]",
+  "name": "[businessName]",
+  "image": "https://[username].github.io/assets/profile.webp",
+  "url": "https://[username].github.io",
+  "telephone": "[phone]",
+  "email": "[email]",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "[city]",
+    "addressRegion": "[state]",
+    "addressCountry": "[country]"
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      "opens": "09:00",
+      "closes": "17:00"
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Saturday"],
+      "opens": "10:00",
+      "closes": "14:00"
+    }
+  ],
+  "priceRange": "[priceRange]"
+}
+</script>
+```
+- Block is fully regenerated and recommitted on every business profile save
+- If Business Mode is toggled OFF, JSON-LD block is removed from `index.html` in the same commit
+- Enables Google rich results, local business search cards, and knowledge panel eligibility
+- No server-side rendering needed — static string committed directly to file via GitHub API
+
+---
+
+## Phase 2K: Gallery Page (`gallery.html`)
+
+### Public View
+- Responsive photo grid
+- Click or tap-and-hold to save image to device (native browser behavior — raw GitHub URLs serve files directly)
+- Right-click save on desktop
+- No download button needed — native behavior handles it
+
+### Edit Mode
+- Upload photos — client-side compressed to WebP, hard cap 200kb per image
+- Delete individual photos (removes file from repo via GitHub API)
+- No hard photo count cap — compression math keeps it manageable
+- Storage meter visible (shared with admin utilities panel)
+
+---
+
+## Phase 2L: Music Page (`music.html`)
+
+### Public View
+- Retro cassette/deck styled MP3 player
+- Play, pause, seek, volume controls
+- Download button — direct download of raw MP3 from repo to user's device
+- Track title and artist displayed
+
+### Edit Mode
+- Upload one MP3 at a time — replaces previous track in `/assets/music/`
+- Client-side file size warning on upload (recommend under 10MB)
+- Track metadata fields (title, artist) — writes to `site-config.json`
+- "Current Track" framing — intentional, curated, feels like a MySpace profile song status
+
+---
+
+## Phase 2M: Videos Page (`videos.html`)
+
+### Public View
+- Grid of YouTube embed viewports
+- "Watch on YouTube" external link per video
+- Clean, responsive layout
+
+### Edit Mode
+- Add YouTube URL → generates embed, stores URL in `site-config.json`
+- Remove video links
+- No file storage — URLs only, zero repo size impact
+- Unlimited video links
+
+---
+
+## Phase 2N: Friends Page (`friends.html`)
+
+### Public View
+- Toggleable — owner can hide entirely from public via `site-config.json`
+- Grid of friend cards: their profile photo + display name + link to their `username.github.io`
+- Clicking a friend card navigates to their site
+
+### Edit Mode
+- Add friend by entering their `username.github.io` URL
+- Platform fetches their `site-config.json` to pull display name + profile photo automatically
+- Remove friend card
+- Toggle entire friends page public/private
+- Friend data stored in `friends.json` in repo — no localStorage dependency
+
+---
+
+## Phase 2O: Guestbook / Friend Posts (`guestbook.html`)
+
+### Architecture Decision
+Cross-account Pull Requests require the poster to fork the owner's repo first, which is slow and complex via REST API. Instead, the platform uses the **GitHub Issues API** as the post submission and moderation queue. Issues are native to every repo, support CORS, require no fork, and map perfectly to an approve/reject workflow.
+
+### Public View
+- Approved posts displayed chronologically (rendered from `guestbook.json`)
+- Each post shows: friend's profile photo, display name, link to their site, post text, optional image, optional video link
+- No unapproved content ever visible to public
+
+### Posting Flow (Platform Users Only)
+- "Post to [username]'s page" button visible to all visitors
+- Clicking prompts GitHub OAuth login if not authenticated (via proxy Lambda)
+- After auth, platform verifies poster has their own `username.github.io` repo — confirms real platform user, not a bot or random GitHub account
+- Post form unlocks: text (required), one image (optional, client-side compressed to WebP under 200kb), one video link (optional)
+- On submit:
+  - If image included: image committed to a `/assets/posts/pending/` path in owner's repo via GitHub API using poster's token
+  - A GitHub Issue is opened on owner's repo containing structured JSON payload: poster identity, text, image path (if any), video link (if any)
+  - Issue is labeled `pending-post` automatically
+- Owner sees poster's GitHub username, profile photo, and link to their site on every issue
+
+### Owner Moderation (Edit Mode)
+- Pending posts inbox reads all open issues labeled `pending-post` via GitHub API
+- Each pending post renders as a full preview before any action
+- Approve:
+  - Post JSON appended to `guestbook.json` and committed to repo
+  - Issue closed via GitHub API
+  - Post appears live on guestbook page
+- Reject:
+  - Issue closed and labeled `rejected` via GitHub API
+  - Pending image asset deleted from repo if one was included
+  - Nothing appears on public page
+
+### Visitor Post CTA (Organic Growth Mechanic)
+- "Post to [DisplayName]'s page" button visible to all visitors
+- If visitor is not authenticated, clicking opens a welcoming modal — not a cold OAuth prompt:
+  - Headline: "Want to post on [DisplayName]'s page?"
+  - Subtext: "You'll need your own free page to do it."
+  - **"Log In"** button — already have an account, GitHub OAuth via proxy Lambda
+  - **"Create My Page"** button — redirects to platform onboarding `index.html`
+  - Small line: "It's free. You get your own page too."
+- If visitor is an authenticated platform user: post form opens directly, no modal
+- This is the primary organic acquisition funnel — every page visit is a potential new user
+
+### Returning Platform User Experience
+- When a logged-in platform user visits someone else's page, a subtle "You're on the network" indicator is shown
+- "Post to this page" button is surfaced more prominently for authenticated platform members
+- Rewards being a member, reinforces the network feel
+
+### Spam / Abuse Protection
+- GitHub OAuth required — no anonymous submissions
+- Platform membership check (must have own `username.github.io` repo) — additional filter
+- GitHub account creation requires email verification — natural bot deterrent
+- Every issue is traceable to a verified GitHub identity
+- GitHub's native abuse reporting tools apply to all bad actors
+
+---
+
+## Phase 2P: Games Page (`games.html`)
+
+### Public View
+- Game picker UI — grid of game tiles
+- Click a game → loads in a canvas viewport on the same page
+- Toggleable page (owner can hide from nav)
+
+### Games (All Vanilla JS + Canvas API — No External Libraries)
+- Tetris
+- Pac-Man
+- Snake
+- Breakout
+- Space Invaders
+
+### Data
+- High scores saved to localStorage — device only, zero repo impact
+- No external dependencies, no iframes, fully owned code
+
+---
+
+## Phase 2Q: Navigation & Shared Systems
+
+### `nav.js`
+- Reads `site-config.json` on every page load
+- Auto-populates hamburger/drawer menu with only toggled-ON pages
+- Toggled-OFF pages invisible in nav and inaccessible to public (files exist in repo but not linked)
+- Smooth off-canvas slide animation
+
+### `auth.js`
+- GitHub OAuth state management via proxy Lambda
+- Checks if authenticated user matches repo owner
+- If match: unlocks edit mode across all pages
+- If no match or not logged in: pure read-only, zero edit UI rendered in DOM
+- Token stored in sessionStorage only — never written to any file or repo
+- Token cleared on logout or session end
+- Edit mode re-prompts OAuth with narrow scope if session has expired
+
+### `theme.js`
+- Reads theme settings from `site-config.json`
+- Applies light/dark mode, background type/value, custom CSS
+- Executes before page render to prevent flash of unstyled content
+
+### `rss.xml` (Auto-Generated)
+- Updated automatically whenever owner publishes a status update or new post
+- Standard RSS/Atom format — compatible with all RSS readers and feed aggregators
+- Allows external subscribers to follow a user's site without visiting it
+- Generated client-side and committed to repo via GitHub API on each update
+
+### GitHub API Rate Limit Strategy
+- All read operations (fetching friend profiles, guestbook posts, site config) use raw static URLs: `https://username.github.io/file.json`
+- Raw static file fetches hit GitHub's CDN — unlimited, fast, no rate limit
+- `api.github.com` REST calls reserved exclusively for authenticated write operations in edit mode (5,000 requests/hour with token)
+- The only unauthenticated API call allowed: notifications badge Issues count in edit mode — acceptable since edit mode requires login
+- `friends.html` fetches each friend's `site-config.json` directly from their GitHub Pages URL, never from the API
+
+### `robots.txt` (Auto-Generated)
+- Ships in every deployed template
+- Personal mode: `Allow: /` — fully crawlable by search engines
+- Business mode: `Allow: /` — fully crawlable, maximizes JSON-LD SEO benefit
+- Off-grid mode (directory toggle OFF): `Disallow: /` — true off-grid, search engines cannot index the site
+- Regenerated and committed via GitHub API whenever directory toggle or mode changes
+
+### `sitemap.xml` (Auto-Generated)
+- Lists all currently toggled-ON public pages with their full URLs
+- Regenerated alongside `rss.xml` whenever page toggles change
+- Committed to repo via GitHub API
+- Submitted to search engines via sitemap ping protocol on every regeneration: `https://www.google.com/ping?sitemap=https://username.github.io/sitemap.xml`
+- Pairs with JSON-LD structured data for maximum business mode SEO impact
+- Not generated if off-grid mode is active
+
+### `404.html`
+- Custom styled to match user's current theme
+- Friendly message + link back to their index
+
+---
+
+## Phase 3: AWS Infrastructure (OAuth Proxy + Directory)
+
+### Lambda Functions
+| Function | Purpose |
+|---|---|
+| `oauth-proxy` | Exchanges GitHub OAuth code for access token using hidden client secret |
+| `directory-api` | Handles DynamoDB read/write/delete for opt-in user directory |
+
+### API Gateway Throttling (Both Lambdas)
+- Requests per second limit: 10 RPS per endpoint — prevents hammering
+- Daily quota: 10,000 requests/day per endpoint — prevents runaway AWS bill
+- Burst limit: 50 requests — handles legitimate traffic spikes
+- 429 Too Many Requests response returned when limits exceeded
+- Configured directly in API Gateway — zero code changes, zero cost to set up
+- Protects the $0 platform cost model from abuse or accidental loops
+
+### DynamoDB Directory Table
+- Partition key: `github_username`
+- Attributes: `display_name`, `site_url`, `listed` (boolean)
+- Stores nothing else — no email, no content, no tracking
+
+### Privacy Toggle (Edit Mode)
+- ON → writes/updates record in DynamoDB via `directory-api` Lambda
+- OFF → deletes record from DynamoDB
+- Default on deploy: ON (changeable immediately in edit mode)
+
+### Search Widget
+- Available on platform marketing page
+- Search by display name → returns matching `username.github.io` URLs
+- Optionally embeddable on user sites
+
+---
+
+## Phase 4: Custom Domain Support
+
+### How It Works
+- Owner enters custom domain in edit mode (e.g. `www.myname.com`)
+- Platform commits a `CNAME` file to repo root via GitHub API
+- GitHub Pages picks it up automatically on next build
+- `site-config.json` updated with `customDomain` value
+
+### DNS Helper UI (Edit Mode)
+- Copy-paste DNS configuration shown immediately after domain is entered:
+  - For apex domains: GitHub's A records (`185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`)
+  - For `www` subdomains: CNAME record pointing to `username.github.io`
+- Plain English instructions for common registrars (Namecheap, GoDaddy, Cloudflare)
+- "Verify DNS" button that checks if records have propagated
+
+---
+
+## Phase 5: WebRTC P2P Music Vault (Future)
+
+### Goal
+Browser-to-browser direct audio streaming between connected friends when both are online — nothing stored on any server.
+
+### How It Works
+- Uses PeerJS (WebRTC wrapper)
+- Friend visits music page while owner is online → P2P connection established
+- Stream or download directly browser-to-browser
+- Nothing uploaded to any server or repo
+- Falls back to static hosted MP3 if owner is offline
+
+---
+
+## Storage Budget Reference
+
+| Asset | Size Cap | Notes |
+|---|---|---|
+| Profile photo | 200kb WebP | Replaces on update |
+| Cover photo | 200kb WebP | Replaces on update |
+| Gallery photos | 200kb WebP each | No hard count cap, storage meter warns at 500MB |
+| Active MP3 | ~10MB recommended | One at a time, replaces on update |
+| Friend post image | 200kb WebP | Per post, client-side compressed before Issue submission |
+| Video links | 0kb | URLs only in site-config.json |
+| Friends list | Negligible | JSON URLs only |
+| Games | ~50kb total | Vanilla JS, no binary assets |
+| RSS feed | Negligible | Plain XML, auto-generated |
+| GitHub repo soft limit | 1GB | Storage meter warns at 500MB, cleanup prompt at 800MB |
+
+---
+
+## Security Reference
+
+| Risk | Mitigation |
+|---|---|
+| OAuth client secret exposure | Lambda proxy — GitHub App private key in Lambda env var only, never in code |
+| CORS wildcard on Lambda | `Access-Control-Allow-Origin` locked to onboarding domain only — never `*` |
+| Malicious site stealing auth codes via proxy | CORS domain lock + `POST` only on Lambda endpoint prevents cross-origin code theft |
+| GitHub App installation flow misimplemented | Onboarding link points to `/installations/new` — returns `installation_id`, not OAuth `code` |
+| Overly broad token scope | GitHub App fine-grained tokens, scope dropped after onboarding |
+| Token persistence | sessionStorage only, cleared on logout/tab close |
+| XSS via custom CSS injection | CSP meta tag blocks script execution in all skeleton files |
+| Anonymous spam posts | GitHub OAuth required + platform membership check |
+| Bot submissions | GitHub account email verification + identity traceability via Issues API |
+| Unauthorized repo modification | Edit mode re-prompts OAuth, tokens scoped to owner's repo only |
+| Cold barrier to new visitors | "Log In / Create My Page" modal replaces raw OAuth prompt — welcoming not blocking |
+| Stale cached content after edits | `configVersion` increment + network-first fetch strategy for all dynamic JSON files |
+| API rate limit exhaustion | All reads use raw static CDN URLs — API calls reserved for authenticated writes only |
+| AWS Lambda abuse / bill shock | API Gateway throttling — 10 RPS limit + 10k daily quota on all Lambda endpoints |
+| Search engine indexing of off-grid users | `robots.txt` set to `Disallow: /` when directory toggle is OFF |
+| Silent edit mode failures | Toast notification system on every API call — success, error, and retry feedback |
+
+---
+
+## Build Order
+
+1. AWS Lambda OAuth proxy (`oauth-proxy`) + API Gateway throttling — prerequisite for everything
+2. Template file structure + `site-config.json` schema + CSP meta tags + OG/Twitter card meta tags + accessibility attributes in all HTML skeletons
+3. `auth.js` — OAuth state, edit mode unlock, sessionStorage management, mode reading + DOM stripping, toast notification system
+4. `nav.js` — navigation drawer, reads site-config.json with cache-busting, keyboard navigation support
+5. `theme.js` — theme engine, runs before render
+6. `manifest.json` + PWA icons + default `favicon.ico` — app name, theme color, icons
+7. `sw.js` — Service Worker, shell cache, network-first strategy, offline fallback, configVersion cache invalidation
+8. `index.html` profile page — layout, edit mode, customization panel, admin utilities, share/QR, last updated timestamp, favicon auto-generation on photo upload, Personal/Business mode toggle, OG tag auto-rewrite on bio/name edit, business profile form + JSON-LD generation
+9. First-time setup wizard overlay
+10. `gallery.html`
+11. `music.html`
+12. `videos.html`
+13. `friends.html` + `friends.json` — raw static URL fetching only, no API calls
+14. `guestbook.html` + Issues API moderation + notifications badge + visitor modal (Log In / Create My Page) + returning user experience
+15. `games.html` + all 5 games (Tetris, Pac-Man, Snake, Breakout, Space Invaders)
+16. `404.html`
+17. `robots.txt` + `sitemap.xml` + `rss.xml` auto-generation logic — all three regenerated together on page toggle or mode change
+18. Marketing/onboarding `index.html` + `onboard.js` — OAuth flow, deploy, animated poller
+19. AWS Lambda `directory-api` + API Gateway throttling + DynamoDB table
+20. Phase 4: Custom domain support + DNS helper UI
+21. Phase 5: WebRTC P2P music vault

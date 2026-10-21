@@ -1,0 +1,9 @@
+{
+  "name": "autonom-oauth-proxy",
+  "version": "1.0.0",
+  "description": "GitHub App installation token exchange proxy for Autonom",
+  "main": "index.js",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  }
+}
