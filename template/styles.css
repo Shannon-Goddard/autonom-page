@@ -320,3 +320,88 @@ main {
   width: auto;
   flex: 1;
 }
+
+/* ─── Music Player ───────────────────────────────────────────────────────────── */
+#music-page { max-width: 520px; }
+
+#player {
+  margin-top: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+#track-info { text-align: center; }
+#track-title  { font-size: 1.1rem; font-weight: 600; }
+#track-artist { font-size: 0.9rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+/* hide the native audio element — we drive it via JS */
+#audio-player { display: none; }
+
+#player-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#play-pause {
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}
+
+/* Seek and volume sliders */
+#seek-bar, #volume {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: none;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+#seek-bar::-webkit-slider-thumb,
+#volume::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+#download-track {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 1rem;
+  transition: background var(--transition);
+}
+#download-track:hover {
+  background: var(--surface-2);
+  text-decoration: none;
+}
+
+#upload-track-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+#upload-track-controls input[type="file"] { width: auto; }
