@@ -992,5 +992,5 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 17. `robots.txt` + `sitemap.xml` + `rss.xml` auto-generation logic — all three regenerated together on page toggle or mode change
 18. Marketing/onboarding `index.html` + `onboard.js` — OAuth flow, deploy, animated poller
 19. AWS Lambda `directory-api` + API Gateway throttling + DynamoDB table
-20. Phase 4: Custom domain support + DNS helper UI
-21. Phase 5: WebRTC P2P music vault
+20. Phase 4: Custom domain support + DNS helper UI — `#dns-helper` panel, `showDNSHelper()` (apex A records / www CNAME), verify button (`no-cors HEAD`), auto-shows if domain already set. Committed as `ee1efcd`. ✅
+21. Phase 5: WebRTC P2P music vault — future, not yet built
