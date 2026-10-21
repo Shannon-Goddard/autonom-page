@@ -1,0 +1,199 @@
+/* ─── CSS Variables ──────────────────────────────────────────────────────────── */
+:root {
+  --bg:           #1a1a2e;
+  --surface:      #16213e;
+  --surface-2:    #0f3460;
+  --accent:       #e94560;
+  --text:         #eaeaea;
+  --text-muted:   #888;
+  --border:       rgba(255,255,255,0.08);
+  --radius:       12px;
+  --shadow:       0 8px 32px rgba(0,0,0,0.4);
+  --transition:   0.2s ease;
+}
+
+[data-theme="light"] {
+  --bg:           #f5f5f5;
+  --surface:      #ffffff;
+  --surface-2:    #e8e8e8;
+  --accent:       #e94560;
+  --text:         #1a1a2e;
+  --text-muted:   #666;
+  --border:       rgba(0,0,0,0.08);
+  --shadow:       0 8px 32px rgba(0,0,0,0.1);
+}
+
+/* ─── Reset & Base ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img { max-width: 100%; display: block; }
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.5rem 1.2rem;
+  background: var(--accent);
+  color: #fff;
+  transition: opacity var(--transition);
+}
+button:hover { opacity: 0.85; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.8rem;
+  width: 100%;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+h1 { font-size: 1.8rem; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.1rem; }
+
+/* ─── Utility ────────────────────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ─── Nav Toggle Button ──────────────────────────────────────────────────────── */
+#nav-toggle {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 200;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.7rem;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+/* ─── Nav Drawer ─────────────────────────────────────────────────────────────── */
+#nav-drawer {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  z-index: 300;
+  padding: 1.5rem 1rem;
+  transition: left var(--transition);
+  overflow-y: auto;
+}
+#nav-drawer.open { left: 0; }
+
+#nav-drawer ul { list-style: none; margin-top: 2rem; }
+#nav-drawer ul li { margin-bottom: 0.5rem; }
+#nav-drawer ul a, #nav-drawer ul button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius);
+  color: var(--text);
+  background: transparent;
+  font-size: 1rem;
+  transition: background var(--transition);
+}
+#nav-drawer ul a:hover, #nav-drawer ul button:hover { background: var(--surface-2); }
+#nav-drawer ul a.nav-active { background: var(--surface-2); color: var(--accent); font-weight: 600; }
+
+#nav-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  padding: 0.3rem 0.6rem;
+}
+
+/* ─── Edit Buttons ───────────────────────────────────────────────────────────── */
+.edit-btn {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  padding: 0.3rem 0.8rem;
+}
+
+/* ─── Toast Notifications ────────────────────────────────────────────────────── */
+#toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  padding: 0.75rem 1.2rem;
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  animation: slideIn 0.2s ease;
+  max-width: 320px;
+}
+.toast-success { background: #2d6a4f; }
+.toast-error   { background: #c1121f; }
+.toast button  { background: rgba(255,255,255,0.2); font-size: 0.8rem; padding: 0.2rem 0.6rem; }
+
+@keyframes slideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ─── Glassmorphism Surface ──────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* ─── Main Content ───────────────────────────────────────────────────────────── */
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 3rem;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  main { padding: 4.5rem 1rem 2rem; }
+  h1   { font-size: 1.4rem; }
+}
