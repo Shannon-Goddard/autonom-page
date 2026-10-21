@@ -11,10 +11,25 @@ A stateless Node.js function that handles GitHub App installation token exchange
 
 **Why Lambda?** The GitHub App private key cannot exist in client-side JavaScript. Lambda is the secure middleman — the key lives in an environment variable, never in code, never in any repo.
 
-### API Gateway (HTTP API) — `autonom-oauth-proxy`
-A single route: `POST /prod/token`. That's it. No GET, no wildcards.
+### AWS Lambda — `autonom-directory-api`
+Handles the opt-in user directory. Three operations: `GET /directory?q=` (search), `POST /directory` (upsert listing), `DELETE /directory` (remove listing). Reads/writes to DynamoDB. Called by `admin.js` when the owner toggles directory listing on or off.
 
-**Throttling:** 10 requests/second, burst limit 50, to protect against abuse and runaway AWS bills on a $0 platform cost model.
+**Least-privilege IAM:** inline policy on `autonom-lambda-role` grants only `dynamodb:PutItem`, `dynamodb:DeleteItem`, `dynamodb:Scan` on the specific table ARN — nothing else.
+
+### DynamoDB — `autonom-directory`
+On-demand billing. Partition key: `github_username` (String). Attributes: `display_name`, `site_url`, `listed` (Boolean), `updated_at`. Stores nothing else — no email, no content, no tracking.
+
+### API Gateway (HTTP API) — `autonom-oauth-proxy` (shared)
+All routes on the same API ID `f8rcwlcsz8`:
+
+| Route | Lambda | Purpose |
+|---|---|---|
+| `POST /token` | `autonom-oauth-proxy` | GitHub App token exchange |
+| `GET /directory` | `autonom-directory-api` | Search directory |
+| `POST /directory` | `autonom-directory-api` | Upsert listing |
+| `DELETE /directory` | `autonom-directory-api` | Remove listing |
+
+**Throttling:** 10 RPS, burst 50 — applied at stage level, covers all routes.
 
 ---
 
@@ -144,6 +159,58 @@ aws lambda add-permission \
 ```
 
 Replace `<ACCOUNT_ID>`, `<API_ID>`, `<INTEGRATION_ID>`, `<APP_ID>`, and `<PEM_CONTENTS>` with your own values.
+
+### Reproducing `autonom-directory-api` + DynamoDB
+
+```bash
+# 1. Create DynamoDB table
+aws dynamodb create-table \
+  --table-name autonom-directory \
+  --attribute-definitions AttributeName=github_username,AttributeType=S \
+  --key-schema AttributeName=github_username,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region us-east-1
+
+# 2. Attach DynamoDB policy to existing Lambda role
+aws iam put-role-policy \
+  --role-name autonom-lambda-role \
+  --policy-name autonom-dynamodb-directory \
+  --policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["dynamodb:PutItem","dynamodb:DeleteItem","dynamodb:Scan"],"Resource":"arn:aws:dynamodb:us-east-1:<ACCOUNT_ID>:table/autonom-directory"}]}'
+
+# 3. Zip and deploy Lambda
+Compress-Archive -Path './lambda/directory-api/*' -DestinationPath './lambda/directory-api.zip'
+
+aws lambda create-function \
+  --function-name autonom-directory-api \
+  --runtime nodejs22.x \
+  --role arn:aws:iam::<ACCOUNT_ID>:role/autonom-lambda-role \
+  --handler index.handler \
+  --zip-file fileb://lambda/directory-api.zip \
+  --timeout 10 --memory-size 128
+
+aws lambda update-function-configuration \
+  --function-name autonom-directory-api \
+  --environment "Variables={ALLOWED_ORIGIN=https://autonom.page,TABLE_NAME=autonom-directory}"
+
+# 4. Add routes to existing API Gateway
+aws apigatewayv2 create-integration \
+  --api-id <API_ID> \
+  --integration-type AWS_PROXY \
+  --integration-uri arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:autonom-directory-api \
+  --payload-format-version 2.0
+
+aws apigatewayv2 create-route --api-id <API_ID> --route-key "GET /directory"    --target "integrations/<INTEGRATION_ID>"
+aws apigatewayv2 create-route --api-id <API_ID> --route-key "POST /directory"   --target "integrations/<INTEGRATION_ID>"
+aws apigatewayv2 create-route --api-id <API_ID> --route-key "DELETE /directory" --target "integrations/<INTEGRATION_ID>"
+
+# 5. Grant API Gateway invoke permission
+aws lambda add-permission \
+  --function-name autonom-directory-api \
+  --statement-id apigateway-invoke \
+  --action lambda:InvokeFunction \
+  --principal apigateway.amazonaws.com \
+  --source-arn "arn:aws:execute-api:us-east-1:<ACCOUNT_ID>:<API_ID>/*"
+```
 
 ---
 

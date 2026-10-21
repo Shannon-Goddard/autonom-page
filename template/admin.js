@@ -64,6 +64,32 @@
     window.open(`https://github.com/${Autonom.OWNER}/${Autonom.REPO}/archive/refs/heads/main.zip`);
   }
 
+  // ─── Directory API ────────────────────────────────────────────────────────────
+  const DIRECTORY_API = 'https://f8rcwlcsz8.execute-api.us-east-1.amazonaws.com/prod/directory';
+
+  async function syncDirectory(config) {
+    const listed = config.directory?.listed !== false;
+    try {
+      if (listed) {
+        await fetch(DIRECTORY_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            github_username: Autonom.OWNER,
+            display_name:    config.displayName || Autonom.OWNER,
+            site_url:        `https://${Autonom.OWNER}.github.io`,
+          }),
+        });
+      } else {
+        await fetch(DIRECTORY_API, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ github_username: Autonom.OWNER }),
+        });
+      }
+    } catch { /* non-fatal — directory sync failure doesn't break the site */ }
+  }
+
   // ─── Public API ───────────────────────────────────────────────────────────────
   Object.assign(window.Autonom, {
     loadStorageMeter,
@@ -71,5 +97,6 @@
     handleShare,
     loadNotificationsBadge,
     handleExport,
+    syncDirectory,
   });
 })();

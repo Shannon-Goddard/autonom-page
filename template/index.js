@@ -239,6 +239,7 @@
       await Autonom.saveConfig(config, { directory: { listed: e.target.checked } }, 'Update directory listing');
       await Autonom.regenerateRobots(config);
       await Autonom.regenerateSitemap(config);
+      await Autonom.syncDirectory(config);
     });
 
     // Custom domain
