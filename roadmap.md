@@ -994,3 +994,11 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 19. AWS Lambda `directory-api` + API Gateway throttling + DynamoDB table
 20. Phase 4: Custom domain support + DNS helper UI — `#dns-helper` panel, `showDNSHelper()` (apex A records / www CNAME), verify button (`no-cors HEAD`), auto-shows if domain already set. Committed as `ee1efcd`. ✅
 21. Phase 5: WebRTC P2P music vault — future, not yet built
+
+## Bug Fixes (Post-Launch Testing)
+
+- **SVG icons** — replaced emoji feature icons with white SVG files in `assets/`. Fixed `.feature-icon` CSS from `font-size` to `width`/`height`. Added `align-items: center` + `text-align: center` to `.feature-card`. Committed as `93d8ac6`, `43d7f23`.
+- **GitHub App visibility** — App was private, blocking all installs. Made public via `github.com/settings/apps/autonom-page`. No code change.
+- **Existing repo guard** — `onboard.js` `createRepo()` now checks if `username.github.io` already exists and bails with a clear message instead of failing silently. Committed as `fa3970d`.
+- **GitHub install hint** — Added note below Connect button explaining to choose "All repositories" for new accounts. Committed as `fa3970d`.
+- **CSP blocking callback** — `callback.html` had `script-src 'self'` which blocked its own inline `<script>`. Extracted to `callback.js`. This was the root cause of "Connecting your account..." hanging forever. Committed as `4ac9fd5`.
