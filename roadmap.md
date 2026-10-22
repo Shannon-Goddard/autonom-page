@@ -1040,6 +1040,8 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 
 - **Directory label and domain input UX** — Mobile users couldn't easily copy the URL from the directory label. Changed label to "List your domain in the directory" and pre-populated the custom domain input with `username.github.io` so it's ready to save with one tap. If a custom domain is already set it shows that instead. Committed as `0e2e23f`.
 
+- **AUTONOM.md / README.md** — Added `AUTONOM.md` to the template. Deployed to every user repo as `README.md` (renamed in the Git tree at deploy time so it renders on their GitHub repo homepage). Contains: badges for Amazon Q, Shannon, GitHub repo, Autonom; plain-English explanation of HTML/CSS/JS; how to edit a file on GitHub; full file structure tree; file use case table; hex color reference for dark/light mode and UI colors; "If You Broke It" section with undo steps and full nuclear reset instructions. Committed as `d39bc94`, rename fix as `bbe7a68`.
+
 ## Known Issues / Future Work
 
 - **App already installed edge case** — If a user has previously installed the GitHub App and returns to `autonom.page` to start over, the OAuth + installation flow throws an error (installation already exists). Needs a graceful handler — detect existing installation and skip to the form, or surface a clear message. Low priority edge case for now.
