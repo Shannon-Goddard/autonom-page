@@ -147,14 +147,14 @@
       name: `${username}.github.io`,
       description: `${username}'s personal Autonom page`,
       private: false,
-      auto_init: false,
+      auto_init: true,
     }, userToken);
   }
 
-  // ─── Template push (uses installToken) ───────────────────────────────────────
+  // ─── Template push — single commit via Git tree API ────────────────────────
   async function pushTemplate(displayName, bio, photoBuffer) {
-    const repo     = `${username}/${username}.github.io`;
-    const siteUrl  = `https://${username}.github.io`;
+    const repo        = `${username}/${username}.github.io`;
+    const siteUrl     = `https://${username}.github.io`;
     const templateBase = 'https://raw.githubusercontent.com/Shannon-Goddard/autonom-page/main/template';
 
     const textFiles = [
@@ -181,44 +181,88 @@
       'assets/favicon.ico',
     ];
 
-    const config = buildConfig(displayName, bio, siteUrl);
-    await commitFile(repo, 'site-config.json',
-      btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 2)))),
-      'Initial site-config.json');
+    // Fetch all files in parallel
+    const [textContents, binaryContents] = await Promise.all([
+      Promise.all(textFiles.map(f => fetchTemplate(`${templateBase}/${f}`))),
+      Promise.all(binaryFiles.map(f => fetchTemplateBinary(`${templateBase}/${f}`))),
+    ]);
 
-    for (const file of textFiles) {
-      let content = await fetchTemplate(`${templateBase}/${file}`);
+    // Build tree entries
+    const treeItems = [];
+
+    // Text files
+    textFiles.forEach((file, i) => {
+      let content = textContents[i];
       if (file === 'index.html') content = patchIndexHtml(content, displayName, bio, username);
       if (file === 'manifest.json') content = patchManifest(content, displayName);
-      await commitFile(repo, file, btoa(unescape(encodeURIComponent(content))), `Add ${file}`);
+      treeItems.push({ path: file, mode: '100644', type: 'blob', content });
+    });
+
+    // site-config.json
+    const config = buildConfig(displayName, bio, siteUrl);
+    treeItems.push({
+      path: 'site-config.json', mode: '100644', type: 'blob',
+      content: JSON.stringify(config, null, 2),
+    });
+
+    // Binary files — must create blobs first (tree API requires sha for binary)
+    for (let i = 0; i < binaryFiles.length; i++) {
+      const sha = await createBlob(repo, arrayBufferToBase64(binaryContents[i]));
+      treeItems.push({ path: binaryFiles[i], mode: '100644', type: 'blob', sha });
     }
 
-    for (const file of binaryFiles) {
-      const buf = await fetchTemplateBinary(`${templateBase}/${file}`);
-      await commitFile(repo, file, arrayBufferToBase64(buf), `Add ${file}`);
-    }
-
+    // Profile photo
     if (photoBuffer) {
-      const encoded = arrayBufferToBase64(photoBuffer);
-      await commitFile(repo, 'assets/profile.webp', encoded, 'Add profile photo');
-      await commitFile(repo, 'assets/cover.webp',   encoded, 'Add cover photo');
+      const sha = await createBlob(repo, arrayBufferToBase64(photoBuffer));
+      treeItems.push({ path: 'assets/profile.webp', mode: '100644', type: 'blob', sha });
+      treeItems.push({ path: 'assets/cover.webp',   mode: '100644', type: 'blob', sha });
     }
+
+    // Create tree
+    const treeRes = await ghPost(`/repos/${repo}/git/trees`, { tree: treeItems }, userToken);
+
+    // Get default branch ref to find parent commit
+    const refRes  = await ghGet(`/repos/${repo}/git/ref/heads/main`);
+    const parentSha = refRes?.object?.sha;
+
+    // Create commit
+    const commitBody = { message: 'Initial Autonom deploy', tree: treeRes.sha };
+    if (parentSha) commitBody.parents = [parentSha];
+    const commitRes = await ghPost(`/repos/${repo}/git/commits`, commitBody, userToken);
+
+    // Update ref
+    await ghPatch(`/repos/${repo}/git/refs/heads/main`, { sha: commitRes.sha }, userToken);
   }
 
-  async function commitFile(repo, path, base64Content, message) {
-    let sha;
-    try {
-      const res = await fetch(`${GITHUB_API}/repos/${repo}/contents/${path}`, {
-        headers: { Authorization: `token ${userToken}`, Accept: 'application/vnd.github+json' },
-      });
-      if (res.ok) { const d = await res.json(); sha = d.sha; }
-    } catch { /* new file */ }
+  async function createBlob(repo, base64Content) {
+    const res = await ghPost(`/repos/${repo}/git/blobs`,
+      { content: base64Content, encoding: 'base64' }, userToken);
+    return res.sha;
+  }
 
-    await ghPut(`/repos/${repo}/contents/${path}`, {
-      message,
-      content: base64Content,
-      ...(sha ? { sha } : {}),
+  async function ghGet(path) {
+    const res = await fetch(`${GITHUB_API}${path}`, {
+      headers: { Authorization: `token ${userToken}`, Accept: 'application/vnd.github+json' },
     });
+    if (!res.ok) return null;
+    return res.json();
+  }
+
+  async function ghPatch(path, body, token) {
+    const res = await fetch(`${GITHUB_API}${path}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `PATCH ${path} failed: ${res.status}`);
+    }
+    return res.json();
   }
 
   // ─── Enable GitHub Pages (uses installToken) ──────────────────────────────────
