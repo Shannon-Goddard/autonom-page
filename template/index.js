@@ -109,10 +109,10 @@
     if (dirToggle) dirToggle.checked = config.directory?.listed !== false;
 
     const dirLabel = document.getElementById('directory-label');
-    if (dirLabel) dirLabel.textContent = `List https://${Autonom.REPO_OWNER}.github.io in the directory`;
+    if (dirLabel) dirLabel.textContent = 'List your domain in the directory';
 
     const domainInput = document.getElementById('custom-domain');
-    if (domainInput) domainInput.value = config.customDomain || '';
+    if (domainInput) domainInput.value = config.customDomain || `${Autonom.REPO_OWNER}.github.io`;
   }
 
   function setVal(id, val) {
