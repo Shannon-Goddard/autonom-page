@@ -89,7 +89,9 @@
       setTimeout(() => {
         sessionStorage.removeItem('autonom_onboarding');
         sessionStorage.removeItem('autonom_user_token');
-        location.href = `https://${username}.github.io`;
+        const t = encodeURIComponent(installToken || '');
+        const u = encodeURIComponent(username);
+        location.href = `https://${username}.github.io#autonom_token=${t}&autonom_owner=${u}`;
       }, 1500);
 
     } catch (e) {
