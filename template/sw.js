@@ -121,7 +121,7 @@ async function networkFirstWithIndicator(request) {
 async function networkFirstDynamic(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && request.method === 'GET') {
       const cache = await caches.open(DYNAMIC_CACHE);
       cache.put(request, response.clone());
     }
