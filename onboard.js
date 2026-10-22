@@ -125,6 +125,12 @@
 
   // ─── Repo creation ────────────────────────────────────────────────────────────
   async function createRepo() {
+    // Check if repo already exists
+    const check = await fetch(`${GITHUB_API}/repos/${username}/${username}.github.io`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' },
+    });
+    if (check.ok) throw new Error(`You already have a ${username}.github.io repo. Visit it directly at https://${username}.github.io`);
+
     await ghPost('/user/repos', {
       name: `${username}.github.io`,
       description: `${username}'s personal Autonom page`,
