@@ -274,7 +274,7 @@ img { max-width: 100%; display: block; }
 }
 .prog-item.fail::before  { content: '✗  '; }
 
-@keyframes pulse {
+.prog-note { font-size: 0.78rem; color: var(--text-muted); font-weight: 400; }
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.6; }
 }
