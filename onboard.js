@@ -181,6 +181,8 @@
       'assets/icon-512.png',
       'assets/icon-32.png',
       'assets/favicon.ico',
+      'assets/cover.webp',
+      'assets/profile.webp',
     ];
 
     // Fetch all files in parallel
@@ -214,11 +216,10 @@
       treeItems.push({ path: binaryFiles[i], mode: '100644', type: 'blob', sha });
     }
 
-    // Profile photo
+    // Profile photo — profile only, cover left as template default
     if (photoBuffer) {
       const sha = await createBlob(repo, arrayBufferToBase64(photoBuffer));
       treeItems.push({ path: 'assets/profile.webp', mode: '100644', type: 'blob', sha });
-      treeItems.push({ path: 'assets/cover.webp',   mode: '100644', type: 'blob', sha });
     }
 
     // Create tree
