@@ -195,6 +195,7 @@
       let content = textContents[i];
       if (file === 'index.html') content = patchIndexHtml(content, displayName, bio, username);
       if (file === 'manifest.json') content = patchManifest(content, displayName);
+      if (file === 'sw.js') content = content.replace(/shell-v\d+/, `shell-v${Date.now()}`);
       treeItems.push({ path: file, mode: '100644', type: 'blob', content });
     });
 

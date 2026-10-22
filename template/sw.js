@@ -1,4 +1,4 @@
-const SHELL_VERSION = 'shell-v1';
+const SHELL_VERSION = 'shell-v2';
 const DYNAMIC_CACHE = 'dynamic-v1';
 
 const SHELL_ASSETS = [
