@@ -201,7 +201,8 @@
       if (file === 'index.html') content = patchIndexHtml(content, displayName, bio, username);
       if (file === 'manifest.json') content = patchManifest(content, displayName);
       if (file === 'sw.js') content = content.replace(/shell-v\d+/, `shell-v${Date.now()}`);
-      treeItems.push({ path: file, mode: '100644', type: 'blob', content });
+      const destPath = file === 'AUTONOM.md' ? 'README.md' : file;
+      treeItems.push({ path: destPath, mode: '100644', type: 'blob', content });
     });
 
     // site-config.json
