@@ -68,6 +68,13 @@ The platform uses a **GitHub App** (not a standard OAuth App). The distinction m
 
 `Access-Control-Allow-Origin` is locked to `https://autonom.page` — never `*`. A wildcard would allow any site on the internet to route installation codes through this proxy. The allowed origin is stored as a Lambda env var so it can be updated without a code redeploy if the domain ever changes.
 
+CORS is configured at the **API Gateway level** (not just in Lambda response headers) so that OPTIONS preflight requests are handled before they reach the Lambda. Configured via:
+
+```bash
+aws apigatewayv2 update-api --api-id f8rcwlcsz8 --region us-east-1 \
+  --cors-configuration AllowOrigins="https://autonom.page",AllowMethods="POST,GET,DELETE,OPTIONS",AllowHeaders="Content-Type",MaxAge=300
+```
+
 ---
 
 ## Token Flow
