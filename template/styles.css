@@ -154,6 +154,24 @@ h3 { font-size: 1.1rem; }
   width: auto;
 }
 
+/* Specific panel buttons that need more breathing room */
+#save-customization,
+#save-custom-domain {
+  margin-top: 0.75rem;
+  padding: 0.55rem 1rem;
+}
+
+/* Space between share/export buttons and QR code below */
+#admin-utilities {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+#export-backup,
+#share-page {
+  margin-bottom: 0.25rem;
+}
+
 /* Preview mode — hide all owner UI */
 .preview-mode .edit-btn,
 .preview-mode #customization-panel { display: none !important; }
