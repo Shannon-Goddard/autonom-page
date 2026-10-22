@@ -1017,3 +1017,14 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - **Videos missing from wizard page toggles** — `wiz-videos` checkbox absent from `template/index.html` wizard. Added. Reads dynamically so no `index.js` change needed. Committed as `32ae95b`.
 - **Progress step timing notes** — Removed timing note from deploy step (now fast). Updated build wait note to "this takes about a minute". Committed as `2be55bb`.
 - **UX: template deploy timing note** — Added "(this takes about a minute)" hint to the Deploying template files progress step. Committed as `ec7ed69`.
+
+- **CSP missing connect-src on user site** — `template/index.html` had no `connect-src` directive, blocking all `fetch()` calls to GitHub API and Lambda. Added `connect-src 'self' https://api.github.com https://f8rcwlcsz8.execute-api.us-east-1.amazonaws.com`. Committed as `265755c`. Then `'self'` was missing causing same-origin fetches like `site-config.json` to fail. Fixed as `60e0da0`.
+- **Wizard videos loop missing videos key** — `index.js` wizard save loop didn't include `videos`. Fixed as `265755c`.
+
+---
+
+## Known Issues / Future Work
+
+- **App already installed edge case** — If a user has previously installed the GitHub App and returns to `autonom.page` to start over, the OAuth + installation flow throws an error (installation already exists). Needs a graceful handler — detect existing installation and skip to the form, or surface a clear message. Low priority edge case for now.
+- **Onboarding screenshots** — Need fresh screenshots of the full flow (autonom.page → GitHub auth → install → form → progress → wizard → live site) once all bugs are resolved. To be used in README and onboarding docs.
+- **"Explain it to me like I'm 5" accordion** — Add a plain-English step-by-step section to `index.html` with screenshots walking through the full onboarding flow. Targeted at non-technical users who are intimidated by GitHub.
