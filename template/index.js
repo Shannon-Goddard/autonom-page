@@ -329,7 +329,7 @@
     document.getElementById('wizard-save')?.addEventListener('click', async () => {
       const status = document.getElementById('wizard-status')?.value.trim();
       const pages  = {};
-      ['gallery','music','friends','guestbook','games'].forEach(k => {
+      ['gallery','music','videos','friends','guestbook','games'].forEach(k => {
         const el = document.getElementById(`wiz-${k}`);
         if (el) pages[k] = el.checked;
       });
