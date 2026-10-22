@@ -1,0 +1,1 @@
+{"statusCode":502,"headers":{"Access-Control-Allow-Origin":"https://autonom.page","Access-Control-Allow-Methods":"POST","Access-Control-Allow-Headers":"Content-Type","Content-Type":"application/json"},"body":"{\"error\":\"Could not fetch installation\",\"detail\":\"Not Found\"}"}

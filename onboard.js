@@ -1,10 +1,12 @@
 (() => {
   const LAMBDA_URL  = 'https://f8rcwlcsz8.execute-api.us-east-1.amazonaws.com/prod/token';
   const GITHUB_APP  = 'autonom-page';
+  const CLIENT_ID   = 'Iv23liDBARfsjA2e1odh';
   const GITHUB_API  = 'https://api.github.com';
 
-  let token    = null;
-  let username = null;
+  let userToken    = null; // OAuth user token — repo creation only
+  let installToken = null; // Installation token — all content writes
+  let username     = null;
 
   // ─── Toast ────────────────────────────────────────────────────────────────────
   function toast(msg, type = 'success') {
@@ -24,20 +26,34 @@
   });
 
   document.getElementById('connect-github')?.addEventListener('click', () => {
-    // Store a flag so callback.html knows to redirect back to onboarding
     sessionStorage.setItem('autonom_onboarding', '1');
-    location.href = `https://github.com/apps/${GITHUB_APP}/installations/new`;
+    // Step 1: OAuth flow to get user token (needed for repo creation)
+    location.href = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=repo&redirect_uri=https://autonom.page/callback`;
   });
 
-  // ─── Resume after GitHub App callback ─────────────────────────────────────────
+  // ─── Resume after callback ────────────────────────────────────────────────────
   async function resumeFromCallback() {
-    token    = sessionStorage.getItem('autonom_token');
-    username = sessionStorage.getItem('autonom_token_owner');
-    if (!token || !username) return;
+    userToken    = sessionStorage.getItem('autonom_user_token');
+    installToken = sessionStorage.getItem('autonom_token');
+    username     = sessionStorage.getItem('autonom_token_owner');
 
-    // Already authed — skip TOS step, show form
-    show('step-form');
-    hide('step-tos');
+    if (!username) return;
+
+    // Have user token but no install token yet — need App installation
+    if (userToken && !installToken) {
+      show('step-install');
+      hide('step-tos');
+      document.getElementById('install-link')?.setAttribute(
+        'href', `https://github.com/apps/${GITHUB_APP}/installations/new`
+      );
+      return;
+    }
+
+    // Have both — ready to deploy
+    if (userToken && installToken) {
+      show('step-form');
+      hide('step-tos');
+    }
   }
 
   // ─── Deploy ───────────────────────────────────────────────────────────────────
@@ -57,26 +73,22 @@
     show('step-progress');
 
     try {
-      // 1 — Create repo
+      // Use userToken for repo creation
       await step('prog-repo', createRepo());
 
-      // 2 — Push template files (compress photo first if provided)
+      // Use installToken for all file writes
       let photoData = null;
       if (photo) photoData = await compressToWebP(photo, 200);
       await step('prog-files', pushTemplate(name, bio, photoData));
 
-      // 3 — Enable Pages
       await step('prog-pages', enablePages());
-
-      // 4 — Poll until live
       await step('prog-build', pollUntilLive());
 
-      // 5 — Done
       markDone('prog-live');
 
       setTimeout(() => {
-        // Clear onboarding session flag, keep token for edit mode
         sessionStorage.removeItem('autonom_onboarding');
+        sessionStorage.removeItem('autonom_user_token');
         location.href = `https://${username}.github.io`;
       }, 1500);
 
@@ -89,7 +101,7 @@
   }
 
   // ─── GitHub API helpers ───────────────────────────────────────────────────────
-  async function ghPost(path, body) {
+  async function ghPost(path, body, token) {
     const res = await fetch(`${GITHUB_API}${path}`, {
       method: 'POST',
       headers: {
@@ -110,7 +122,7 @@
     const res = await fetch(`${GITHUB_API}${path}`, {
       method: 'PUT',
       headers: {
-        Authorization: `token ${token}`,
+        Authorization: `token ${installToken}`,
         Accept: 'application/vnd.github+json',
         'Content-Type': 'application/json',
       },
@@ -123,31 +135,27 @@
     return res.json();
   }
 
-  // ─── Repo creation ────────────────────────────────────────────────────────────
+  // ─── Repo creation (uses userToken) ──────────────────────────────────────────
   async function createRepo() {
-    // Check if repo already exists
     const check = await fetch(`${GITHUB_API}/repos/${username}/${username}.github.io`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' },
+      headers: { Authorization: `token ${userToken}`, Accept: 'application/vnd.github+json' },
     });
-    if (check.ok) throw new Error(`You already have a ${username}.github.io repo. Visit it directly at https://${username}.github.io`);
+    if (check.ok) throw new Error(`You already have a ${username}.github.io repo. Visit it at https://${username}.github.io`);
 
     await ghPost('/user/repos', {
       name: `${username}.github.io`,
       description: `${username}'s personal Autonom page`,
       private: false,
       auto_init: false,
-    });
+    }, userToken);
   }
 
-  // ─── Template push ────────────────────────────────────────────────────────────
+  // ─── Template push (uses installToken) ───────────────────────────────────────
   async function pushTemplate(displayName, bio, photoBuffer) {
-    const repo  = `${username}/${username}.github.io`;
-    const siteUrl = `https://${username}.github.io`;
-
-    // Fetch all template files from this repo's template/ directory via raw URLs
+    const repo     = `${username}/${username}.github.io`;
+    const siteUrl  = `https://${username}.github.io`;
     const templateBase = 'https://raw.githubusercontent.com/Shannon-Goddard/autonom-page/main/template';
 
-    // Files to fetch and push as-is (text)
     const textFiles = [
       'auth.js', 'nav.js', 'theme.js', 'styles.css', 'sw.js',
       'github-api.js', 'media.js', 'feeds.js', 'business.js', 'admin.js',
@@ -165,7 +173,6 @@
       'games/pacman.js', 'games/spaceinvaders.js',
     ];
 
-    // Binary assets
     const binaryFiles = [
       'assets/icon-192.png',
       'assets/icon-512.png',
@@ -173,33 +180,23 @@
       'assets/favicon.ico',
     ];
 
-    // Build site-config.json with user's details
     const config = buildConfig(displayName, bio, siteUrl);
-
-    // Commit site-config.json first (needed by other files)
     await commitFile(repo, 'site-config.json',
       btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 2)))),
       'Initial site-config.json');
 
-    // Push text files
     for (const file of textFiles) {
       let content = await fetchTemplate(`${templateBase}/${file}`);
-      // Patch index.html OG tags with real values
       if (file === 'index.html') content = patchIndexHtml(content, displayName, bio, username);
-      // Patch manifest.json with display name
       if (file === 'manifest.json') content = patchManifest(content, displayName);
-      const encoded = btoa(unescape(encodeURIComponent(content)));
-      await commitFile(repo, file, encoded, `Add ${file}`);
+      await commitFile(repo, file, btoa(unescape(encodeURIComponent(content))), `Add ${file}`);
     }
 
-    // Push binary assets
     for (const file of binaryFiles) {
-      const buf     = await fetchTemplateBinary(`${templateBase}/${file}`);
-      const encoded = arrayBufferToBase64(buf);
-      await commitFile(repo, file, encoded, `Add ${file}`);
+      const buf = await fetchTemplateBinary(`${templateBase}/${file}`);
+      await commitFile(repo, file, arrayBufferToBase64(buf), `Add ${file}`);
     }
 
-    // Push profile photo if provided
     if (photoBuffer) {
       const encoded = arrayBufferToBase64(photoBuffer);
       await commitFile(repo, 'assets/profile.webp', encoded, 'Add profile photo');
@@ -208,11 +205,10 @@
   }
 
   async function commitFile(repo, path, base64Content, message) {
-    // Check if file exists (get SHA)
     let sha;
     try {
       const res = await fetch(`${GITHUB_API}/repos/${repo}/contents/${path}`, {
-        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' },
+        headers: { Authorization: `token ${installToken}`, Accept: 'application/vnd.github+json' },
       });
       if (res.ok) { const d = await res.json(); sha = d.sha; }
     } catch { /* new file */ }
@@ -224,15 +220,12 @@
     });
   }
 
-  // ─── Enable GitHub Pages ──────────────────────────────────────────────────────
+  // ─── Enable GitHub Pages (uses installToken) ──────────────────────────────────
   async function enablePages() {
     const repo = `${username}/${username}.github.io`;
     try {
-      await ghPost(`/repos/${repo}/pages`, {
-        source: { branch: 'main', path: '/' },
-      });
+      await ghPost(`/repos/${repo}/pages`, { source: { branch: 'main', path: '/' } }, installToken);
     } catch (e) {
-      // 409 = Pages already enabled — not an error
       if (!e.message.includes('409') && !e.message.toLowerCase().includes('already')) throw e;
     }
   }
@@ -240,8 +233,7 @@
   // ─── Poll until live ──────────────────────────────────────────────────────────
   async function pollUntilLive() {
     const url     = `https://${username}.github.io`;
-    const timeout = Date.now() + 3 * 60 * 1000; // 3 min max
-
+    const timeout = Date.now() + 3 * 60 * 1000;
     while (Date.now() < timeout) {
       await sleep(5000);
       try {
@@ -256,10 +248,10 @@
   function patchIndexHtml(html, displayName, bio, user) {
     const siteUrl = `https://${user}.github.io`;
     return html
-      .replace(/content="My Page"/g,          `content="${escHtml(displayName)}'s Page"`)
-      .replace(/content="assets\/profile\.webp"/g, `content="${siteUrl}/assets/profile.webp"`)
-      .replace(/content=""/g,                  `content="${escHtml(bio)}"`)
-      .replace(/content=""/,                   `content="${siteUrl}"`);
+      .replace(/content="My Page"/g,               `content="${escHtml(displayName)}'s Page"`)
+      .replace(/content="assets\/profile\.webp"/g,  `content="${siteUrl}/assets/profile.webp"`)
+      .replace(/content=""/g,                        `content="${escHtml(bio)}"`)
+      .replace(/content=""/,                         `content="${siteUrl}"`);
   }
 
   function patchManifest(json, displayName) {
@@ -273,10 +265,7 @@
 
   function buildConfig(displayName, bio, siteUrl) {
     return {
-      displayName,
-      bio,
-      status: '',
-      theme: 'dark',
+      displayName, bio, status: '', theme: 'dark',
       background: { type: 'color', value: '#1a1a2e' },
       pages: { gallery: true, music: true, videos: true, friends: true, guestbook: true, games: true },
       directory: { listed: true },
@@ -300,7 +289,7 @@
   // ─── Fetch helpers ────────────────────────────────────────────────────────────
   async function fetchTemplate(url) {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Could not fetch template file: ${url}`);
+    if (!res.ok) throw new Error(`Could not fetch template: ${url}`);
     return res.text();
   }
 
@@ -317,7 +306,6 @@
     return btoa(bin);
   }
 
-  // ─── Image compression (same as media.js but standalone here) ─────────────────
   function compressToWebP(file, maxKb) {
     return new Promise(resolve => {
       const img = new Image();
@@ -332,12 +320,8 @@
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
           canvas.toBlob(blob => {
             if (!blob) { resolve(new ArrayBuffer(0)); return; }
-            if (blob.size > maxKb * 1024 && quality > 0.3) {
-              quality -= 0.1;
-              tryEncode();
-            } else {
-              blob.arrayBuffer().then(resolve);
-            }
+            if (blob.size > maxKb * 1024 && quality > 0.3) { quality -= 0.1; tryEncode(); }
+            else blob.arrayBuffer().then(resolve);
           }, 'image/webp', quality);
         };
         tryEncode();
@@ -346,24 +330,14 @@
     });
   }
 
-  // ─── Progress UI helpers ──────────────────────────────────────────────────────
+  // ─── Progress UI ──────────────────────────────────────────────────────────────
   function step(id, promise) {
     markPending(id);
     return promise.then(() => markDone(id)).catch(e => { markFail(id); throw e; });
   }
-
-  function markPending(id) {
-    const el = document.getElementById(id);
-    if (el) { el.classList.add('pending'); el.classList.remove('done', 'fail'); }
-  }
-  function markDone(id) {
-    const el = document.getElementById(id);
-    if (el) { el.classList.add('done'); el.classList.remove('pending', 'fail'); }
-  }
-  function markFail(id) {
-    const el = document.getElementById(id);
-    if (el) { el.classList.add('fail'); el.classList.remove('pending', 'done'); }
-  }
+  function markPending(id) { const el = document.getElementById(id); if (el) { el.classList.add('pending'); el.classList.remove('done','fail'); } }
+  function markDone(id)    { const el = document.getElementById(id); if (el) { el.classList.add('done');    el.classList.remove('pending','fail'); } }
+  function markFail(id)    { const el = document.getElementById(id); if (el) { el.classList.add('fail');    el.classList.remove('pending','done'); } }
 
   function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
   function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
