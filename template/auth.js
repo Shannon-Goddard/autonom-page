@@ -2,7 +2,18 @@
   // ─── Constants ───────────────────────────────────────────────────────────────
   const LAMBDA_URL = 'https://f8rcwlcsz8.execute-api.us-east-1.amazonaws.com/prod/token';
   const GITHUB_APP  = 'autonom-page';
-  const REPO_OWNER  = document.location.hostname.split('.')[0]; // username from username.github.io
+  const REPO_OWNER  = document.location.hostname.split('.')[0];
+
+  // ─── Read hash token immediately — before anything else runs ─────────────────
+  if (location.hash.includes('autonom_token=')) {
+    const raw = location.hash.slice(1).replace('autonom_token=', '');
+    const [t, o] = raw.split('|').map(decodeURIComponent);
+    if (t && o) {
+      sessionStorage.setItem('autonom_token', t);
+      sessionStorage.setItem('autonom_token_owner', o);
+    }
+    history.replaceState(null, '', location.pathname + location.search);
+  }
 
   // ─── Toast System ────────────────────────────────────────────────────────────
   function toast(message, type = 'success', retryFn = null) {
@@ -151,14 +162,6 @@
 
   // ─── Init ────────────────────────────────────────────────────────────────────
   async function init() {
-    // Pick up token passed via hash from onboarding redirect
-    if (location.hash.includes('autonom_token=')) {
-      const raw = location.hash.slice(1).replace('autonom_token=', '');
-      const [t, o] = raw.split('|').map(decodeURIComponent);
-      if (t && o) setSession(t, o);
-      history.replaceState(null, '', location.pathname + location.search);
-    }
-
     const config = await loadConfig();
 
     if (config?.mode === 'business') applyBusinessMode();
