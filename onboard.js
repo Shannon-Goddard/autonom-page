@@ -46,6 +46,7 @@
       document.getElementById('install-link')?.setAttribute(
         'href', `https://github.com/apps/${GITHUB_APP}/installations/new`
       );
+      document.getElementById('step-install')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -53,6 +54,7 @@
     if (userToken && installToken) {
       show('step-form');
       hide('step-tos');
+      document.getElementById('step-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
