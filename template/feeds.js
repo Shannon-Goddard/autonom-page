@@ -88,10 +88,6 @@ ${urls.join('\n')}
 </urlset>`;
 
     await Autonom.commitFile('sitemap.xml', xml, 'Regenerate sitemap');
-
-    // Ping Google — fire and forget
-    fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(`${base}/sitemap.xml`)}`)
-      .catch(() => {});
   }
 
   async function regenerateRobots(config) {

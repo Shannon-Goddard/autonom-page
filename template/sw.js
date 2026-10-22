@@ -97,9 +97,10 @@ async function networkFirstWithIndicator(request) {
   try {
     const response = await fetch(request, { cache: 'no-store' });
     if (response.ok) {
-      // Update dynamic cache with fresh copy
-      const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, response.clone());
+      if (request.method === 'GET') {
+        const cache = await caches.open(DYNAMIC_CACHE);
+        cache.put(request, response.clone());
+      }
       return response;
     }
     throw new Error('Network response not ok');
