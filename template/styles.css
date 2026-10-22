@@ -144,6 +144,20 @@ h3 { font-size: 1.1rem; }
   padding: 0.3rem 0.8rem;
 }
 
+/* All buttons inside the customization panel match edit-btn size */
+#customization-panel button {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.8rem;
+  border: none;
+  width: auto;
+}
+
+/* Preview mode — hide all owner UI */
+.preview-mode .edit-btn,
+.preview-mode #customization-panel { display: none !important; }
+
 /* ─── Toast Notifications ────────────────────────────────────────────────────── */
 #toast-container {
   position: fixed;

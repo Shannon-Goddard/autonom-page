@@ -65,6 +65,21 @@
     logoutLi.appendChild(logoutBtn);
     ul.appendChild(logoutLi);
 
+    // Preview toggle — only visible in edit mode
+    const previewLi = document.createElement('li');
+    const previewBtn = document.createElement('button');
+    previewBtn.id = 'nav-preview';
+    previewBtn.textContent = 'Preview as Visitor';
+    previewBtn.setAttribute('aria-label', 'Preview page as a visitor');
+    previewBtn.classList.add('hidden');
+    previewBtn.addEventListener('click', () => {
+      const previewing = document.body.classList.toggle('preview-mode');
+      previewBtn.textContent = previewing ? 'Exit Preview' : 'Preview as Visitor';
+      closeNav();
+    });
+    previewLi.appendChild(previewBtn);
+    ul.appendChild(previewLi);
+
     // Close button inside drawer
     const closeBtn = document.createElement('button');
     closeBtn.id = 'nav-close';
@@ -76,18 +91,17 @@
     drawer.appendChild(closeBtn);
     drawer.appendChild(ul);
 
-    // Show logout in edit mode
+    // Show logout + preview in edit mode
     if (document.body.classList.contains('edit-mode')) {
       logoutBtn.classList.remove('hidden');
+      previewBtn.classList.remove('hidden');
     }
 
-    // Observe edit-mode class changes to show/hide logout
+    // Observe edit-mode class changes to show/hide logout + preview
     const observer = new MutationObserver(() => {
-      if (document.body.classList.contains('edit-mode')) {
-        logoutBtn.classList.remove('hidden');
-      } else {
-        logoutBtn.classList.add('hidden');
-      }
+      const inEditMode = document.body.classList.contains('edit-mode');
+      logoutBtn.classList.toggle('hidden', !inEditMode);
+      previewBtn.classList.toggle('hidden', !inEditMode);
     });
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
