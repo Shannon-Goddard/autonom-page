@@ -172,6 +172,7 @@
       '404.html', 'manifest.json',
       'robots.txt', 'rss.xml', 'sitemap.xml',
       'friends.json', 'guestbook.json',
+      'AUTONOM.md',
       'games/tetris.js', 'games/snake.js', 'games/breakout.js',
       'games/pacman.js', 'games/spaceinvaders.js',
     ];
