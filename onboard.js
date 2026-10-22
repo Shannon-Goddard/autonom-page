@@ -122,7 +122,7 @@
     const res = await fetch(`${GITHUB_API}${path}`, {
       method: 'PUT',
       headers: {
-        Authorization: `token ${installToken}`,
+        Authorization: `token ${userToken}`,
         Accept: 'application/vnd.github+json',
         'Content-Type': 'application/json',
       },
@@ -141,7 +141,6 @@
       headers: { Authorization: `token ${userToken}`, Accept: 'application/vnd.github+json' },
     });
     if (check.ok) throw new Error(`You already have a ${username}.github.io repo. Visit it at https://${username}.github.io`);
-
     await ghPost('/user/repos', {
       name: `${username}.github.io`,
       description: `${username}'s personal Autonom page`,
@@ -208,7 +207,7 @@
     let sha;
     try {
       const res = await fetch(`${GITHUB_API}/repos/${repo}/contents/${path}`, {
-        headers: { Authorization: `token ${installToken}`, Accept: 'application/vnd.github+json' },
+        headers: { Authorization: `token ${userToken}`, Accept: 'application/vnd.github+json' },
       });
       if (res.ok) { const d = await res.json(); sha = d.sha; }
     } catch { /* new file */ }
@@ -224,7 +223,7 @@
   async function enablePages() {
     const repo = `${username}/${username}.github.io`;
     try {
-      await ghPost(`/repos/${repo}/pages`, { source: { branch: 'main', path: '/' } }, installToken);
+      await ghPost(`/repos/${repo}/pages`, { source: { branch: 'main', path: '/' } }, userToken);
     } catch (e) {
       if (!e.message.includes('409') && !e.message.toLowerCase().includes('already')) throw e;
     }
