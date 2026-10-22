@@ -1,7 +1,20 @@
 const SHELL_VERSION = 'shell-v2';
 const DYNAMIC_CACHE = 'dynamic-v1';
 
+// Only truly static assets that never change after deploy
 const SHELL_ASSETS = [
+  '/assets/favicon.ico',
+  '/assets/icon-192.png',
+  '/assets/icon-512.png',
+  '/games/tetris.js',
+  '/games/pacman.js',
+  '/games/snake.js',
+  '/games/breakout.js',
+  '/games/spaceinvaders.js',
+];
+
+// HTML, JS, CSS — network first so template updates always reach the user
+const NETWORK_FIRST_SHELL = [
   '/',
   '/index.html',
   '/gallery.html',
@@ -16,14 +29,12 @@ const SHELL_ASSETS = [
   '/theme.js',
   '/styles.css',
   '/manifest.json',
-  '/assets/favicon.ico',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
-  '/games/tetris.js',
-  '/games/pacman.js',
-  '/games/snake.js',
-  '/games/breakout.js',
-  '/games/spaceinvaders.js',
+  '/github-api.js',
+  '/media.js',
+  '/feeds.js',
+  '/business.js',
+  '/admin.js',
+  '/index.js',
 ];
 
 // ─── Install — cache shell assets ────────────────────────────────────────────
@@ -52,19 +63,25 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = e.request.url;
 
-  // Always bypass cache for .json and .xml — go straight to network
+  // Always bypass cache for .json and .xml
   if (url.endsWith('.json') || url.endsWith('.xml')) {
     e.respondWith(networkFirstWithIndicator(e.request));
     return;
   }
 
-  // Shell assets — cache first
+  // Icons and game files — cache first (never change)
   if (isShellAsset(url)) {
     e.respondWith(cacheFirst(e.request));
     return;
   }
 
-  // Gallery images and MP3 — network first, cache on success
+  // HTML/JS/CSS — network first, fall back to cache
+  if (isNetworkFirstShell(url)) {
+    e.respondWith(networkFirstDynamic(e.request));
+    return;
+  }
+
+  // Gallery images, MP3, posts — network first, cache on success
   if (url.includes('/assets/gallery/') || url.includes('/assets/music/') || url.includes('/assets/posts/')) {
     e.respondWith(networkFirstDynamic(e.request));
     return;
@@ -135,6 +152,10 @@ async function networkFirstDynamic(request) {
 // ─── Shell asset check ────────────────────────────────────────────────────────
 function isShellAsset(url) {
   return SHELL_ASSETS.some(asset => url.endsWith(asset));
+}
+
+function isNetworkFirstShell(url) {
+  return NETWORK_FIRST_SHELL.some(asset => url.endsWith(asset));
 }
 
 // ─── configVersion cache invalidation ────────────────────────────────────────
