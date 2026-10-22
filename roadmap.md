@@ -680,8 +680,6 @@ Cross-account Pull Requests require the poster to fork the owner's repo first, w
 - Lists all currently toggled-ON public pages with their full URLs
 - Regenerated alongside `rss.xml` whenever page toggles change
 - Committed to repo via GitHub API
-- Submitted to search engines via sitemap ping protocol on every regeneration: `https://www.google.com/ping?sitemap=https://username.github.io/sitemap.xml`
-- Pairs with JSON-LD structured data for maximum business mode SEO impact
 - Not generated if off-grid mode is active
 
 ### `404.html`
@@ -889,7 +887,7 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - All three called together whenever page toggles or mode changes — keeps all three in sync in one edit session
 - `regenerateSitemap` pings Google after commit: `https://www.google.com/ping?sitemap=...` — fire and forget
 - `regenerateRobots` sets `Disallow: /` when directory toggle is OFF — true off-grid behavior
-- Extends `window.Autonom` — depends on `github-api.js`
+- Google sitemap ping removed — blocked by CSP and CORS regardless of intent
 
 ### `template/business.js`
 - `populateBusinessForm` reads `config.businessProfile` and fills form fields — called on edit mode unlock
@@ -1022,6 +1020,15 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - **Wizard videos loop missing videos key** — `index.js` wizard save loop didn't include `videos`. Fixed as `265755c`.
 
 ---
+
+- **SW cache serving stale index.html** — Service Worker cached `index.html` under `shell-v1`. New deploy pushed same version string, so SW never evicted old cache. Users saw old CSP (no `connect-src`) even after GitHub Pages had the correct file. Fixed by bumping to `shell-v2` and patching `sw.js` at deploy time in `onboard.js` to inject a unique `shell-v{timestamp}` per deploy — guarantees every fresh install gets a unique cache key and future deploys always bust the old shell. Committed as `2ae39a8`.
+- **UX: page lands at top after callback redirect** — After OAuth and app install redirects back to `autonom.page`, page loaded at the top. Added `scrollIntoView({ behavior: 'smooth', block: 'center' })` after `show('step-install')` and `show('step-form')` in `resumeFromCallback()`. Committed as `9020cda`.
+- **blob: URLs blocked in img-src** — Cover photo preview in wizard failed with CSP violation. `img-src` in `template/index.html` was missing `blob:`. Added. Committed as `199b605`.
+- **SW throwing on PUT requests** — `networkFirstWithIndicator` in `sw.js` called `cache.put()` on all responses including GitHub API `PUT` writes. Cache API doesn't support non-GET requests. Added `request.method === 'GET'` guard before `cache.put`. Committed as `199b605`.
+- **Google sitemap ping blocked by CSP** — `feeds.js` fired `fetch('https://www.google.com/ping?...')` after every sitemap regeneration. Blocked by `connect-src` and would fail CORS regardless. Removed entirely — no value from a browser-side ping. Committed as `199b605`.
+- **Cover/profile photo layout broken** — No CSS for `#cover-section`, `#cover-photo`, `#profile-section`, or `#profile-photo`. Cover rendered at natural image size with no containment. Profile photo appeared full-width instead of circular. Edit Cover button fell out of flow (no `position: relative` on parent). Added cover section (220px fixed height, `object-fit: cover`), profile section (centered column, 100px circle avatar, border), and Edit Cover positioned bottom-right. Committed as `a35a2e4`.
+- **Background color input full-width** — `input { width: 100% }` global rule made the color picker a giant swatch. Scoped `#bg-color` to `width: 3rem; height: 2rem`. Committed as `a35a2e4`.
+- **Background type select didn't show/hide inputs** — Selecting "Image" still showed the color picker; selecting "Solid Color" still showed the file input. Added `syncBgInputs()` wired to `bg-type` change event in `index.js`, called once on load. Committed as `a35a2e4`.
 
 ## Known Issues / Future Work
 
