@@ -261,6 +261,18 @@
     // Customization
     document.getElementById('save-customization')?.addEventListener('click', saveCustomization);
 
+    // Background type toggle
+    const bgType  = document.getElementById('bg-type');
+    const bgColor = document.getElementById('bg-color');
+    const bgImage = document.getElementById('bg-image');
+    function syncBgInputs() {
+      const t = bgType?.value;
+      bgColor?.classList.toggle('hidden', t !== 'color');
+      bgImage?.classList.toggle('hidden', t !== 'image');
+    }
+    bgType?.addEventListener('change', syncBgInputs);
+    syncBgInputs();
+
     // Mode
     document.getElementById('mode-toggle-btn')?.addEventListener('click', toggleMode);
 
