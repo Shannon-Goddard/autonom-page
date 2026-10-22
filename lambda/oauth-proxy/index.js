@@ -17,6 +17,28 @@ function signAppJWT() {
   return jwt.sign({ iat: now - 60, exp: now + 600, iss: GITHUB_APP_ID }, GITHUB_PRIVATE_KEY, { algorithm: 'RS256' });
 }
 
+function githubGet(path, appJWT) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.github.com',
+      path,
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${appJWT}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'autonom-oauth-proxy',
+      },
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(data) }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 function githubPost(path, appJWT) {
   return new Promise((resolve, reject) => {
     const options = {
@@ -70,6 +92,14 @@ exports.handler = async (event) => {
 
   try {
     const appJWT = signAppJWT();
+
+    // Get installation details to extract the account login
+    const { status: instStatus, body: instBody } = await githubGet(`/app/installations/${installation_id}`, appJWT);
+    if (instStatus !== 200) {
+      return { statusCode: 502, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Could not fetch installation', detail: instBody.message }) };
+    }
+    const login = instBody.account?.login;
+
     const { status, body } = await githubPost(`/app/installations/${installation_id}/access_tokens`, appJWT);
 
     if (status !== 201) {
@@ -79,7 +109,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ token: body.token, expires_at: body.expires_at }),
+      body: JSON.stringify({ token: body.token, expires_at: body.expires_at, login }),
     };
   } catch (err) {
     return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Internal error' }) };

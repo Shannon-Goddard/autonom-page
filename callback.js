@@ -10,7 +10,7 @@
     return;
   }
 
-  let tokenData;
+  let login;
   try {
     const res = await fetch(LAMBDA_URL, {
       method: 'POST',
@@ -18,29 +18,15 @@
       body: JSON.stringify({ installation_id: installationId }),
     });
     if (!res.ok) throw new Error(`Lambda returned ${res.status}`);
-    tokenData = await res.json();
+    const data = await res.json();
+    if (!data.token || !data.login) throw new Error('Incomplete response from auth server');
+    sessionStorage.setItem('autonom_token', data.token);
+    sessionStorage.setItem('autonom_token_owner', data.login);
+    login = data.login;
   } catch (e) {
     status.textContent = `Login failed — ${e.message}. Please try again.`;
     return;
   }
-
-  let login;
-  try {
-    const res = await fetch('https://api.github.com/user', {
-      headers: {
-        Authorization: `token ${tokenData.token}`,
-        Accept: 'application/vnd.github+json',
-      },
-    });
-    if (!res.ok) throw new Error('Could not verify GitHub identity');
-    ({ login } = await res.json());
-  } catch (e) {
-    status.textContent = e.message;
-    return;
-  }
-
-  sessionStorage.setItem('autonom_token',       tokenData.token);
-  sessionStorage.setItem('autonom_token_owner', login);
 
   status.textContent = 'Connected! Redirecting...';
 
