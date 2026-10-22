@@ -153,9 +153,8 @@
   async function init() {
     // Pick up token passed via hash from onboarding redirect
     if (location.hash.includes('autonom_token=')) {
-      const params = new URLSearchParams(location.hash.slice(1));
-      const t = params.get('autonom_token');
-      const o = params.get('autonom_owner');
+      const raw = location.hash.slice(1).replace('autonom_token=', '');
+      const [t, o] = raw.split('|').map(decodeURIComponent);
       if (t && o) setSession(t, o);
       history.replaceState(null, '', location.pathname + location.search);
     }
