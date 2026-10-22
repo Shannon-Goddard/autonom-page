@@ -139,21 +139,13 @@
   }
 
   // ─── Edit Mode Entry Point ────────────────────────────────────────────────────
-  // Called when owner clicks any edit button — checks session, prompts if expired
   async function enterEditMode() {
     const token = getToken();
-
-    if (token) {
-      const username = await fetchAuthenticatedUser(token);
-      if (username && username === REPO_OWNER) {
-        unlockEditMode();
-        return;
-      }
-      // Token expired or wrong user
-      clearSession();
+    if (token && getTokenOwner() === REPO_OWNER) {
+      unlockEditMode();
+      return;
     }
-
-    // No valid session — redirect to GitHub App install flow
+    clearSession();
     redirectToGitHubApp();
   }
 
@@ -161,31 +153,17 @@
   async function init() {
     const config = await loadConfig();
 
-    // Apply business mode DOM strip before anything renders
-    if (config?.mode === 'business') {
-      applyBusinessMode();
-    }
+    if (config?.mode === 'business') applyBusinessMode();
 
-    // If returning from GitHub App install (callback page handles token exchange)
-    // and token is already in sessionStorage, check ownership
     const token = getToken();
-    if (token) {
-      const username = await fetchAuthenticatedUser(token);
-      if (username === REPO_OWNER) {
-        unlockEditMode();
-
-        // Show first-time wizard if flagged
-        if (config?.firstTimeSetup) {
-          const wizard = document.getElementById('first-time-wizard');
-          if (wizard) wizard.classList.remove('hidden');
-        }
-      } else {
-        // Token exists but doesn't match owner — clear it
-        clearSession();
+    if (token && getTokenOwner() === REPO_OWNER) {
+      unlockEditMode();
+      if (config?.firstTimeSetup) {
+        const wizard = document.getElementById('first-time-wizard');
+        if (wizard) wizard.classList.remove('hidden');
       }
     }
 
-    // Wire up edit buttons to prompt auth if no session
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', enterEditMode);
     });
