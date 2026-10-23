@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; connect-src https:;" />
+  <title>Legal — Autonom</title>
+  <meta property="og:title" content="Legal — Autonom" />
+  <meta property="og:description" content="Terms of Service and Privacy Policy for Autonom." />
+  <meta property="og:image" content="https://autonom.page/assets/icon-512.png" />
+  <meta property="og:url" content="https://autonom.page/legal.html" />
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="onboard.css" />
+</head>
+<body>
+
+  <!-- ─── Nav ─────────────────────────────────────────────────────────────────── -->
+  <nav id="site-nav" aria-label="Site navigation">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="Autonom home">
+        <img src="assets/icon-512.png" alt="Autonom" />
+        <span>Autonom</span>
+      </a>
+      <button id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-drawer">&#9776;</button>
+    </div>
+  </nav>
+
+  <div id="nav-drawer" class="nav-drawer" aria-hidden="true">
+    <button id="nav-drawer-close" aria-label="Close menu">&#x2715;</button>
+    <ul role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="legal.html" class="nav-active">Legal</a></li>
+      <li><a href="how-to-domain.html">How-To: Custom Domain</a></li>
+      <li><a href="how-to-google.html">How-To: Google Search &amp; Analytics</a></li>
+      <li><a href="directory.html">Browse Pages</a></li>
+      <li><a href="colors.html">Color Reference</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+    </ul>
+  </div>
+  <div id="nav-overlay" aria-hidden="true"></div>
+
+  <!-- ─── Page Hero ─────────────────────────────────────────────────────────── -->
+  <div class="page-hero">
+    <h1>Legal</h1>
+    <p>Terms of Service and Privacy Policy. Plain English. No walls of text.</p>
+  </div>
+
+  <!-- ─── Terms of Service ──────────────────────────────────────────────────── -->
+  <section aria-labelledby="tos-heading">
+    <div class="section-inner about-section">
+      <h2 id="tos-heading">Terms of Service</h2>
+      <p class="about-tagline">Last updated: June 2025</p>
+
+      <p>
+        Autonom is a free tool that creates a GitHub Pages website in your GitHub account.
+        By using it, you agree to these terms.
+      </p>
+
+      <h3>What Autonom does</h3>
+      <p>
+        Autonom uses GitHub's API to create a repository in your account and deploy a website template to it.
+        After that, your site runs on GitHub Pages — a free service operated by GitHub (Microsoft).
+        Autonom is a setup tool. Once your site is deployed, it runs independently of us.
+      </p>
+
+      <h3>What you're responsible for</h3>
+      <p>
+        You own your GitHub account and everything in your repository. You're responsible for the content
+        you publish on your site. Don't use Autonom to publish anything illegal, harassing, or that violates
+        GitHub's own <a href="https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies" target="_blank" rel="noopener">Acceptable Use Policies</a>.
+        If GitHub removes your repository for a policy violation, that's between you and GitHub — not us.
+      </p>
+
+      <h3>GitHub dependency</h3>
+      <p>
+        Autonom depends on GitHub Pages being free and available. GitHub has offered free Pages hosting
+        since 2008 and there's no indication that's changing, but we can't guarantee it forever.
+        If GitHub changes their policies, your repository and all your content will still be yours —
+        you can move it anywhere that hosts static sites (Netlify, Vercel, Cloudflare Pages, your own server).
+      </p>
+
+      <h3>No warranty</h3>
+      <p>
+        Autonom is provided as-is. We make no guarantees about uptime, data integrity, or fitness for any
+        particular purpose. The onboarding service (the Lambda function that handles GitHub OAuth) is a
+        best-effort free service. If it goes down, your existing site is unaffected — it runs on GitHub's
+        infrastructure, not ours.
+      </p>
+
+      <h3>Changes to these terms</h3>
+      <p>
+        If these terms change in a meaningful way, we'll update the date above. Since there's no account
+        system, we can't notify you directly — check back here if you're curious.
+      </p>
+
+      <h3>Contact</h3>
+      <p>
+        Questions about these terms: <a href="mailto:shannon@loyal9.app">shannon@loyal9.app</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Privacy Policy ────────────────────────────────────────────────────── -->
+  <section aria-labelledby="privacy-heading" style="background: var(--surface);">
+    <div class="section-inner about-section">
+      <h2 id="privacy-heading">Privacy Policy</h2>
+      <p class="about-tagline">Last updated: June 2025</p>
+
+      <p>
+        Short version: we don't collect your data, we don't store it, and we don't sell it.
+        Here's the longer version.
+      </p>
+
+      <h3>What happens during onboarding</h3>
+      <p>
+        When you connect your GitHub account, you're redirected to GitHub's OAuth flow.
+        GitHub sends us a temporary authorization code. Our Lambda function exchanges that code
+        for a GitHub access token on your behalf and returns it to your browser.
+        <strong>We do not store that token.</strong> It lives in your browser session only,
+        used to make API calls to GitHub, and is gone when you close the tab.
+      </p>
+
+      <p class="about-honest">
+        The Lambda function logs are retained by AWS CloudWatch for 14 days by default.
+        Those logs may contain your GitHub username and installation ID (a public identifier),
+        but never your access token — the token is passed directly to your browser, not logged.
+      </p>
+
+      <h3>What we don't do</h3>
+      <p>
+        We don't run analytics on this site. No Google Analytics, no tracking pixels, no cookies,
+        no fingerprinting. There's no account system, no email list, no database of users.
+        We genuinely don't know who you are after you leave this page.
+      </p>
+
+      <h3>Your deployed site</h3>
+      <p>
+        Your site lives in your GitHub repository. Any data your visitors generate
+        (guestbook entries, etc.) is stored as JSON files in that repository via GitHub's API,
+        using your own access token. We never see or touch that data after onboarding is complete.
+      </p>
+
+      <h3>GitHub's privacy policy</h3>
+      <p>
+        Because Autonom uses GitHub Pages and GitHub's API, GitHub's own privacy practices apply
+        to your repository and site traffic. See
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">GitHub's Privacy Statement</a>.
+      </p>
+
+      <h3>Third-party services on your deployed site</h3>
+      <p>
+        The template we deploy includes optional integrations (Google Search Console, Google Analytics).
+        These are opt-in — you configure them yourself in your site's settings panel.
+        If you enable them, Google's privacy policies apply to your site's visitors.
+        That's your call to make, not ours.
+      </p>
+
+      <h3>Contact</h3>
+      <p>
+        Privacy questions: <a href="mailto:shannon@loyal9.app">shannon@loyal9.app</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Footer ────────────────────────────────────────────────────────────── -->
+  <footer id="site-footer">
+    <p>Built by <a href="https://aws.amazon.com/q/developer/" target="_blank" rel="noopener">Amazon Q</a>. <span style="color:var(--text-muted)">Shannon</span> kinda had an idea... kinda.</p>
+    <a href="https://buymeacoffee.com/goddardshannon9" target="_blank" rel="noopener" class="btn-beer" aria-label="Buy the dev a beer">🍺 Buy the dev a beer</a>
+  </footer>
+
+  <script>
+    (() => {
+      const hamburger = document.getElementById('nav-hamburger');
+      const drawer    = document.getElementById('nav-drawer');
+      const overlay   = document.getElementById('nav-overlay');
+      const close     = document.getElementById('nav-drawer-close');
+      function openNav() {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        hamburger.setAttribute('aria-expanded', 'true');
+        drawer.setAttribute('aria-hidden', 'false');
+        overlay.setAttribute('aria-hidden', 'false');
+        close.focus();
+      }
+      function closeNav() {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.setAttribute('aria-hidden', 'true');
+        hamburger.focus();
+      }
+      hamburger.addEventListener('click', openNav);
+      close.addEventListener('click', closeNav);
+      overlay.addEventListener('click', closeNav);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+    })();
+  </script>
+
+</body>
+</html>
