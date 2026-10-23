@@ -572,3 +572,75 @@ img { max-width: 100%; display: block; }
 }
 .about-connect a:hover { background: var(--surface-2); text-decoration: none; }
 .about-connect .btn-beer { border: none; }
+
+/* ─── How It Works ───────────────────────────────────────────────────────────── */
+#how-it-works { background: var(--bg); }
+
+.hiw-intro {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  margin-bottom: 2.5rem;
+  max-width: 560px;
+}
+
+.hiw-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  counter-reset: none;
+}
+
+.hiw-step {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+}
+
+.hiw-num {
+  flex-shrink: 0;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+}
+
+.hiw-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.hiw-body strong {
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.hiw-body p {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+.hiw-link {
+  font-size: 0.88rem;
+  color: var(--accent-2);
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 0.25rem;
+}
+.hiw-link:hover { text-decoration: underline; }
+
+.hiw-reassure {
+  margin-top: 2rem;
+  font-size: 0.95rem;
+  color: var(--accent-2);
+  font-weight: 600;
+  text-align: center;
+}
