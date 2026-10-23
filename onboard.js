@@ -298,11 +298,22 @@
   // ─── Template patching ────────────────────────────────────────────────────────
   function patchIndexHtml(html, displayName, bio, user) {
     const siteUrl = `https://${user}.github.io`;
+    const schema  = {
+      '@context': 'https://schema.org',
+      '@type':    'Person',
+      name:       displayName,
+      url:        siteUrl,
+      image:      `${siteUrl}/assets/profile.webp`,
+      description: bio || '',
+      mainEntityOfPage: { '@type': 'WebPage', '@id': siteUrl },
+    };
+    const jsonLD = `<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n</script>`;
     return html
       .replace(/content="My Page"/g,               `content="${escHtml(displayName)}'s Page"`)
       .replace(/content="assets\/profile\.webp"/g,  `content="${siteUrl}/assets/profile.webp"`)
       .replace(/content=""/g,                        `content="${escHtml(bio)}"`)
-      .replace(/content=""/,                         `content="${siteUrl}"`);
+      .replace(/content=""/,                         `content="${siteUrl}"`)
+      .replace('</head>',                            `${jsonLD}\n</head>`);
   }
 
   function patchManifest(json, displayName) {

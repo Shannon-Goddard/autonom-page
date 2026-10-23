@@ -242,7 +242,8 @@
       if (val === null) return;
       el.textContent = val;
       await Autonom.saveConfig(config, { bio: val }, 'Update bio');
-      await Autonom.rewriteIndexHead(config, null);
+      if (config.mode !== 'business') await Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config));
+      else await Autonom.rewriteIndexHead(config, Autonom.generateJSONLD(config.businessProfile, config));
     });
 
     // Status
@@ -377,6 +378,10 @@
       Autonom.loadStorageMeter();
       Autonom.loadNotificationsBadge();
       Autonom.renderQRCode();
+      // Ensure JSON-LD is present — inject silently if missing
+      if (config.mode !== 'business') {
+        Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config)).catch(() => {});
+      }
       if (config.firstTimeSetup) {
         document.getElementById('first-time-wizard')?.classList.remove('hidden');
       }

@@ -40,11 +40,26 @@
     };
 
     await Autonom.saveConfig(config, { businessProfile: bp }, 'Update business profile');
-    await rewriteIndexHead(config, generateJSONLD(bp));
+    await rewriteIndexHead(config, generateJSONLD(bp, config));
     Autonom.toast('Business profile saved', 'success');
   }
 
-  function generateJSONLD(bp) {
+  function generatePersonJSONLD(config) {
+    const base = `https://${Autonom.OWNER}.github.io`;
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type':    'Person',
+      name:       config.displayName || Autonom.OWNER,
+      url:        base,
+      image:      `${base}/assets/profile.webp`,
+      description: config.bio || '',
+      mainEntityOfPage: { '@type': 'WebPage', '@id': base },
+    };
+    return `<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n<\/script>`;
+  }
+
+  function generateJSONLD(bp, config) {
+    const base    = `https://${Autonom.OWNER}.github.io`;
     const typeMap = {
       LocalBusiness:       'LocalBusiness',
       ProfessionalService: 'ProfessionalService',
@@ -54,22 +69,26 @@
     };
     const schema = {
       '@context': 'https://schema.org',
-      '@type':    typeMap[bp.type] || 'LocalBusiness',
-      name:       bp.name,
-      image:      `https://${Autonom.OWNER}.github.io/assets/profile.webp`,
-      url:        `https://${Autonom.OWNER}.github.io`,
-      telephone:  bp.phone,
-      email:      bp.email,
-      address: {
+      '@type':    [typeMap[bp.type] || 'LocalBusiness', 'Person'],
+      name:       bp.name || config?.displayName || Autonom.OWNER,
+      image:      `${base}/assets/profile.webp`,
+      url:        base,
+      telephone:  bp.phone  || undefined,
+      email:      bp.email  || undefined,
+      description: config?.bio || '',
+      address: (bp.address?.locality || bp.address?.region || bp.address?.country) ? {
         '@type':         'PostalAddress',
-        addressLocality: bp.address.locality,
-        addressRegion:   bp.address.region,
-        addressCountry:  bp.address.country,
-      },
-      priceRange: bp.priceRange,
+        addressLocality: bp.address.locality  || undefined,
+        addressRegion:   bp.address.region    || undefined,
+        addressCountry:  bp.address.country   || undefined,
+      } : undefined,
+      priceRange: bp.priceRange || undefined,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': base },
     };
-    if (bp.hours?.length) schema.openingHoursSpecification = bp.hours;
-    return `<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n<\/script>`;
+    // Strip undefined values so schema stays clean
+    const clean = JSON.parse(JSON.stringify(schema));
+    if (bp.hours?.length) clean.openingHoursSpecification = bp.hours;
+    return `<script type="application/ld+json">\n${JSON.stringify(clean, null, 2)}\n<\/script>`;
   }
 
   async function rewriteIndexHead(config, jsonLDBlock) {
@@ -106,6 +125,7 @@
   Object.assign(window.Autonom, {
     populateBusinessForm,
     saveBusinessProfile,
+    generatePersonJSONLD,
     generateJSONLD,
     rewriteIndexHead,
   });
