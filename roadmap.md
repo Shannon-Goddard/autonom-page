@@ -1042,8 +1042,46 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 
 - **AUTONOM.md / README.md** — Added `AUTONOM.md` to the template. Deployed to every user repo as `README.md` (renamed in the Git tree at deploy time so it renders on their GitHub repo homepage). Contains: badges for Amazon Q, Shannon, GitHub repo, Autonom; plain-English explanation of HTML/CSS/JS; how to edit a file on GitHub; full file structure tree; file use case table; hex color reference for dark/light mode and UI colors; "If You Broke It" section with undo steps and full nuclear reset instructions. Committed as `d39bc94`, rename fix as `bbe7a68`.
 
+## Marketing Site (`autonom.page`) Build-Out
+
+### Site Nav — All Pages
+- Added fixed top nav bar to `index.html` and `about.html`: logo + hamburger, right-side drawer, overlay + Escape to close, inline script. `body { padding-top: 56px }` pushes content below fixed bar. Nav links to all planned pages. Committed as `70006db`.
+- Nav CSS added to top of `onboard.css` (before `:root` variables block). `.page-hero` added for sub-page headers.
+
+### `about.html`
+- Four sections: The Project (what Autonom is and why), Is It Really Free (pricing table with real market rates vs Free), Shannon Goddard (tagline, three projects with stats and links, connect section with beer button), Amazon Q (honest account of how built, link to try it). Committed as `70006db`.
+- About page CSS appended to `onboard.css`: `.about-section`, `.about-tagline`, `.about-honest`, `.pricing-table`, `.project-card`, `.project-header`, `.project-links`, `.about-connect`.
+
+### `legal.html`
+- Single page, two sections: Terms of Service (6 sections: what Autonom does, your responsibility, GitHub dependency, no warranty, changes, contact) and Privacy Policy (6 sections: onboarding token flow, what we don't do, your deployed site data, GitHub's privacy policy, third-party opt-ins, contact). Plain English throughout. Committed as `f02c337`.
+
+### How It Works section — `index.html`
+- Added `#how-it-works` section between Features and FAQ. Three numbered steps: make a GitHub account (with direct link to `github.com/signup`), fill in the form (name/bio/photo, we handle the rest), your site is live. Closes with "You've filled out harder forms than this." CSS appended to `onboard.css`. Committed as `2e37f6b`.
+
+### `how-to-domain.html`
+- Five steps: buy a domain (Namecheap/Squarespace/Cloudflare/GoDaddy with honest notes on each), tell GitHub about your domain (repo → Settings → Pages → Custom domain), add DNS records (full table: 4 A records + CNAME, registrar-specific notes), wait and verify (honest 15min–24hr window, two most common mistakes), update Autonom site URL. Committed as `d8fb872`.
+
+### `how-to-google.html`
+- Part 1: Google Search Console — add property, HTML tag verification (paste code into Autonom settings), submit `sitemap.xml`. Part 2: Google Analytics — create account, get `G-XXXXXXXXXX` measurement ID, paste into Autonom settings. Closes with realistic indexing timeline (day 1–3, week 1–2, month 1+). Committed as `d8fb872`.
+- **Rich Results Test section** added — plain English explanation of JSON-LD, why Squarespace/Wix charge for it, 4-step walkthrough of the Rich Results Test tool, what entities they'll see (Person in personal mode, LocalBusiness + Person in business mode). Committed as `9af4deb`.
+- **Directory section** added — explains auto-listing (no user input, name/URL from profile), how to opt out (Settings → uncheck toggle), honest design rationale (no spam, no typos, no one submitting someone else's URL). Committed as `9af4deb`.
+- How-to CSS appended to `onboard.css`: `.howto-list` (arrow bullets, green accent), `.howto-steps` (auto-numbered, red circle counters, surface-2 background), `code` inline style.
+
+### JSON-LD — `autonom.page`
+- Added hardcoded `WebSite` + `SoftwareApplication` JSON-LD schema to `index.html`. `SoftwareApplication` includes `price: "0"`, `priceCurrency: "USD"`, `applicationCategory: "WebApplication"`, Shannon as `author` (Person). Enables rich results on the marketing site itself — used as the screenshot example in `how-to-google.html`. Committed as `56c01d3`.
+
+### JSON-LD — User Template
+- **`business.js`**: Added `generatePersonJSONLD(config)` for personal mode — outputs `Person` schema with name, URL, image, description, `mainEntityOfPage`. Updated `generateJSONLD(bp, config)` to output `@type: [LocalBusiness, Person]` combined type, pass `config` for bio/name, strip `undefined` values via `JSON.parse(JSON.stringify(schema))`. Exposed `generatePersonJSONLD` in public API. Committed as `5a128cb`.
+- **`index.js`**: On every owner page load, `rewriteIndexHead` runs silently to keep schema current. Bio edit handler picks correct schema based on mode (Person vs LocalBusiness+Person). Committed as `5a128cb`.
+- **`onboard.js`**: `patchIndexHtml` now injects `Person` schema into `index.html` at deploy time — schema present from day one before user ever logs in. Committed as `5a128cb`.
+
+---
+
 ## Known Issues / Future Work
 
 - **App already installed edge case** — If a user has previously installed the GitHub App and returns to `autonom.page` to start over, the OAuth + installation flow throws an error (installation already exists). Needs a graceful handler — detect existing installation and skip to the form, or surface a clear message. Low priority edge case for now.
-- **Onboarding screenshots** — Need fresh screenshots of the full flow (autonom.page → GitHub auth → install → form → progress → wizard → live site) once all bugs are resolved. To be used in README and onboarding docs.
-- **"Explain it to me like I'm 5" accordion** — Add a plain-English step-by-step section to `index.html` with screenshots walking through the full onboarding flow. Targeted at non-technical users who are intimidated by GitHub.
+- **Images needed** — Screenshots/illustrations for: How It Works steps (3 images, 400×260px), how-to-domain DNS records and GitHub Pages settings (2 images, 640×360px), how-to-google Search Console HTML tag, Analytics measurement ID, Rich Results Test result (3 images, 640×360px), about.html hero banner (900×300px). All to go in `assets/`. Wire into HTML once delivered.
+- **Remaining 404 pages** — `directory.html`, `colors.html`, `changelog.html` not yet built. Linked in nav.
+- **`directory.html`** — Searchable list of all public Autonom sites. Reads from DynamoDB via `directory-api` Lambda. No user input — listings auto-populated from onboarding data, toggled via Settings panel.
+- **`colors.html`** — Interactive hex/RGB color reference tool.
+- **`changelog.html`** — Version history page.
