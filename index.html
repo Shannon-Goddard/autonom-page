@@ -22,6 +22,32 @@
 </head>
 <body>
 
+  <!-- ─── Nav ─────────────────────────────────────────────────────────────────── -->
+  <nav id="site-nav" aria-label="Site navigation">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="Autonom home">
+        <img src="assets/icon-512.png" alt="Autonom" />
+        <span>Autonom</span>
+      </a>
+      <button id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-drawer">&#9776;</button>
+    </div>
+  </nav>
+
+  <div id="nav-drawer" class="nav-drawer" aria-hidden="true">
+    <button id="nav-drawer-close" aria-label="Close menu">&#x2715;</button>
+    <ul role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="legal.html">Legal</a></li>
+      <li><a href="how-to-domain.html">How-To: Custom Domain</a></li>
+      <li><a href="how-to-google.html">How-To: Google Search &amp; Analytics</a></li>
+      <li><a href="directory.html">Browse Pages</a></li>
+      <li><a href="colors.html">Color Reference</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+    </ul>
+  </div>
+  <div id="nav-overlay" aria-hidden="true"></div>
+
   <!-- ─── Hero ──────────────────────────────────────────────────────────────── -->
   <header id="hero">
     <div class="hero-inner">
@@ -188,5 +214,33 @@
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <script src="onboard.js"></script>
+  <script>
+    (() => {
+      const hamburger = document.getElementById('nav-hamburger');
+      const drawer    = document.getElementById('nav-drawer');
+      const overlay   = document.getElementById('nav-overlay');
+      const close     = document.getElementById('nav-drawer-close');
+      function openNav() {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        hamburger.setAttribute('aria-expanded', 'true');
+        drawer.setAttribute('aria-hidden', 'false');
+        overlay.setAttribute('aria-hidden', 'false');
+        close.focus();
+      }
+      function closeNav() {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.setAttribute('aria-hidden', 'true');
+        hamburger.focus();
+      }
+      hamburger.addEventListener('click', openNav);
+      close.addEventListener('click', closeNav);
+      overlay.addEventListener('click', closeNav);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+    })();
+  </script>
 </body>
 </html>

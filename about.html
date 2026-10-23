@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data: blob:; connect-src https:;" />
+  <title>About — Autonom</title>
+  <meta property="og:title" content="About — Autonom" />
+  <meta property="og:description" content="The story behind Autonom, the people who built it, and why it's free." />
+  <meta property="og:image" content="https://autonom.page/assets/icon-512.png" />
+  <meta property="og:url" content="https://autonom.page/about.html" />
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="onboard.css" />
+</head>
+<body>
+
+  <!-- ─── Nav ─────────────────────────────────────────────────────────────────── -->
+  <nav id="site-nav" aria-label="Site navigation">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="Autonom home">
+        <img src="assets/icon-512.png" alt="Autonom" />
+        <span>Autonom</span>
+      </a>
+      <button id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-drawer">&#9776;</button>
+    </div>
+  </nav>
+
+  <div id="nav-drawer" class="nav-drawer" aria-hidden="true">
+    <button id="nav-drawer-close" aria-label="Close menu">&#x2715;</button>
+    <ul role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="about.html" class="nav-active">About</a></li>
+      <li><a href="legal.html">Legal</a></li>
+      <li><a href="how-to-domain.html">How-To: Custom Domain</a></li>
+      <li><a href="how-to-google.html">How-To: Google Search &amp; Analytics</a></li>
+      <li><a href="directory.html">Browse Pages</a></li>
+      <li><a href="colors.html">Color Reference</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+    </ul>
+  </div>
+  <div id="nav-overlay" aria-hidden="true"></div>
+
+  <!-- ─── Page Hero ─────────────────────────────────────────────────────────── -->
+  <div class="page-hero">
+    <h1>About Autonom</h1>
+    <p>The story, the people, and the reason it's free.</p>
+  </div>
+
+  <!-- ─── The Project ───────────────────────────────────────────────────────── -->
+  <section aria-label="About the project">
+    <div class="section-inner about-section">
+      <h2>The Project</h2>
+      <p>
+        Autonom started with a simple observation: the personal web is gone. MySpace let you make something that was
+        actually <em>yours</em>. Then platforms took over — and with them came algorithms, subscriptions, and the
+        constant threat that the company could delete everything you built overnight.
+      </p>
+      <p>
+        Autonom brings that back. Your site lives in your own GitHub repository. We deploy it, you own it.
+        No monthly fee. No algorithm deciding who sees your content. No platform that can pull the rug.
+      </p>
+      <p>
+        Every feature — the gallery, the music player, the guestbook, the games, the business mode, the JSON-LD SEO —
+        is built into the template that gets deployed to <em>your</em> repo on day one. After that, Autonom is just
+        a convenience layer. You could walk away and your site keeps running forever.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Is It Really Free ─────────────────────────────────────────────────── -->
+  <section aria-label="Is it really free" style="background: var(--surface);">
+    <div class="section-inner about-section">
+      <h2>Is it really free?</h2>
+      <p>
+        Yes. Here's what you'd normally pay for what you're getting:
+      </p>
+      <div class="pricing-table-wrap">
+        <table class="pricing-table" aria-label="Market rate comparison">
+          <thead>
+            <tr>
+              <th>What you're getting</th>
+              <th>What others charge</th>
+              <th>Autonom</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Personal website hosting</td><td>$12–25 / month</td><td class="free">Free</td></tr>
+            <tr><td>Custom domain connection</td><td>$10–20 / month extra</td><td class="free">Free</td></tr>
+            <tr><td>JSON-LD structured data / SEO</td><td>$500–2,000 one-time (agency)</td><td class="free">Free</td></tr>
+            <tr><td>Installable PWA</td><td>$1,000+ dev cost</td><td class="free">Free</td></tr>
+            <tr><td>RSS feed</td><td>$5–15 / month</td><td class="free">Free</td></tr>
+            <tr><td>QR code generator</td><td>$5–15 / month</td><td class="free">Free</td></tr>
+            <tr><td>Full data export / backup</td><td>Often paywalled</td><td class="free">Free</td></tr>
+            <tr><td>Built-in games</td><td>Why would you even pay for this</td><td class="free">Free</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="about-honest">
+        Here's what this actually costs to run: one AWS Lambda function, one database table, and a domain name.
+        At current scale the AWS bill is under $5 a month. GitHub Pages is free because Microsoft runs it as a
+        goodwill service for developers. The only real costs are <strong>autonom.page</strong> ($20/yr, mine)
+        and whatever domain you choose to buy for yourself (optional, from any registrar, nothing to do with us).
+      </p>
+      <p class="about-honest">
+        I'm not charging because I don't need to. I have other projects. This one I'm giving away.
+        If you want to say thanks, there's a beer button at the bottom.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Shannon ───────────────────────────────────────────────────────────── -->
+  <section aria-label="About Shannon Goddard">
+    <div class="section-inner about-section">
+      <h2>Shannon Goddard</h2>
+      <p class="about-tagline">Founder, Loyal9 LLC &nbsp;·&nbsp; <em>"We pass them left, and watch the industry blink."</em></p>
+      <p>
+        Full-stack developer shipping apps that actually get used. 19 years of operations leadership at Food 4 Less
+        (Manager → District Trainer) before pivoting to software. UC Berkeley Data Analytics certified.
+        Stubborn problem solver who researches until finding the right way — not the easy way.
+      </p>
+
+      <h3>Currently shipping</h3>
+
+      <div class="project-card glass">
+        <div class="project-header">
+          <span class="project-emoji">🌿</span>
+          <div>
+            <strong>GrowApp — Cannabis Cultivation Guide</strong>
+            <p>Personalized daily cultivation guidance based on your strain, lighting, and nutrients.</p>
+          </div>
+        </div>
+        <p class="project-stats">7,000+ users in 3 months &nbsp;·&nbsp; 2,800+ strain database &nbsp;·&nbsp; 1,300+ YouTube subscribers &nbsp;·&nbsp; 142K+ video views</p>
+        <div class="project-links">
+          <a href="https://apps.apple.com/us/app/growapp-cannabis-guide/id6751991099" target="_blank" rel="noopener" aria-label="GrowApp on App Store">App Store</a>
+          <a href="https://play.google.com/store/apps/details?id=com.GrowAppCannabisGuide" target="_blank" rel="noopener" aria-label="GrowApp on Google Play">Google Play</a>
+          <a href="https://growappcannabis.guide" target="_blank" rel="noopener" aria-label="GrowApp website">Website</a>
+        </div>
+      </div>
+
+      <div class="project-card glass">
+        <div class="project-header">
+          <span class="project-emoji">🎭</span>
+          <div>
+            <strong>Mission Mischief — Social Scavenger Hunt</strong>
+            <p>Hashtags as blockchain proofs. First implementation of social media as a distributed ledger. 99% accuracy with community consensus. 95% cost reduction vs traditional blockchain.</p>
+          </div>
+        </div>
+        <p class="project-stats">1,000+ verified transactions &nbsp;·&nbsp; 51 missions &nbsp;·&nbsp; zero wallets &nbsp;·&nbsp; pure chaos &nbsp;·&nbsp; launching soon</p>
+        <div class="project-links">
+          <a href="https://github.com/Shannon-Goddard/mission-mischief" target="_blank" rel="noopener" aria-label="Mission Mischief repo">GitHub</a>
+          <a href="https://doi.org/10.5281/zenodo.17620402" target="_blank" rel="noopener" aria-label="Mission Mischief whitepaper DOI">Whitepaper</a>
+        </div>
+      </div>
+
+      <div class="project-card glass">
+        <div class="project-header">
+          <span class="project-emoji">🌱</span>
+          <div>
+            <strong>CI-Strains-Pro — Cannabis Intelligence</strong>
+            <p>Surgical, HTML-verified global ledger for cannabis genetics and market intelligence. No hallucinations. Full traceability. "Ship what's clean. Mark what's not."</p>
+          </div>
+        </div>
+        <p class="project-stats">21,220+ verified strains &nbsp;·&nbsp; 200+ validated columns &nbsp;·&nbsp; 76.1% lineage coverage &nbsp;·&nbsp; 100% identity verification</p>
+        <div class="project-links">
+          <a href="https://strains.loyal9.app" target="_blank" rel="noopener" aria-label="CI-Strains live verification">Live Verification</a>
+          <a href="https://pro.loyal9.app" target="_blank" rel="noopener" aria-label="CI-Strains Pro enterprise">Enterprise</a>
+          <a href="https://github.com/Shannon-Goddard/ci-strains-pro" target="_blank" rel="noopener" aria-label="CI-Strains GitHub repo">GitHub</a>
+        </div>
+      </div>
+
+      <div class="about-connect">
+        <a href="https://www.linkedin.com/in/shannon-goddard/" target="_blank" rel="noopener" aria-label="Shannon on LinkedIn">LinkedIn</a>
+        <a href="mailto:shannon@loyal9.app" aria-label="Email Shannon">shannon@loyal9.app</a>
+        <a href="https://buymeacoffee.com/goddardshannon9" target="_blank" rel="noopener" class="btn-beer" aria-label="Buy the dev a beer">🍺 Buy the dev a beer</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Amazon Q ──────────────────────────────────────────────────────────── -->
+  <section aria-label="About Amazon Q" style="background: var(--surface);">
+    <div class="section-inner about-section">
+      <h2>Amazon Q</h2>
+      <p class="about-tagline">AI Developer &nbsp;·&nbsp; Built by AWS &nbsp;·&nbsp; Running inside Shannon's IDE</p>
+      <p>
+        Autonom was built entirely inside VS Code using Amazon Q Developer — AWS's AI coding assistant.
+        Every line of HTML, CSS, JavaScript, Lambda code, and infrastructure configuration in this project
+        was written by Amazon Q in response to Shannon's direction.
+      </p>
+      <p>
+        That's not a disclaimer. It's the point. Amazon Q handled the implementation — the GitHub API calls,
+        the OAuth flow, the service worker caching strategy, the Git tree API single-commit deploy, the CSP headers,
+        the Lambda token exchange, all of it. Shannon handled the product decisions, the UX instincts,
+        the debugging sessions, and the vision of what this should be.
+      </p>
+      <p>
+        This project is a real-world demonstration of what's possible when a solo developer with domain expertise
+        works alongside an AI that can hold the full codebase in context and execute without losing the thread.
+        The footer says it plainly: <em>"Built by Amazon Q. Shannon kinda had an idea... kinda."</em>
+      </p>
+      <p>
+        Amazon Q Developer is available free inside VS Code, JetBrains, and other IDEs.
+        If you're a developer, <a href="https://aws.amazon.com/q/developer/" target="_blank" rel="noopener" aria-label="Amazon Q Developer">try it</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Footer ────────────────────────────────────────────────────────────── -->
+  <footer id="site-footer">
+    <p>Built by <a href="https://aws.amazon.com/q/developer/" target="_blank" rel="noopener">Amazon Q</a>. <span style="color:var(--text-muted)">Shannon</span> kinda had an idea... kinda.</p>
+    <a href="https://buymeacoffee.com/goddardshannon9" target="_blank" rel="noopener" class="btn-beer" aria-label="Buy the dev a beer">🍺 Buy the dev a beer</a>
+  </footer>
+
+  <script>
+    (() => {
+      const hamburger = document.getElementById('nav-hamburger');
+      const drawer    = document.getElementById('nav-drawer');
+      const overlay   = document.getElementById('nav-overlay');
+      const close     = document.getElementById('nav-drawer-close');
+      function openNav() {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        hamburger.setAttribute('aria-expanded', 'true');
+        drawer.setAttribute('aria-hidden', 'false');
+        overlay.setAttribute('aria-hidden', 'false');
+        close.focus();
+      }
+      function closeNav() {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.setAttribute('aria-hidden', 'true');
+        hamburger.focus();
+      }
+      hamburger.addEventListener('click', openNav);
+      close.addEventListener('click', closeNav);
+      overlay.addEventListener('click', closeNav);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+    })();
+  </script>
+
+</body>
+</html>
