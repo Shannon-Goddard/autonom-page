@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; connect-src https:;" />
+  <title>How-To: Google Search &amp; Analytics — Autonom</title>
+  <meta property="og:title" content="How-To: Google Search &amp; Analytics — Autonom" />
+  <meta property="og:description" content="Get your Autonom site into Google search results and see who's visiting. Step-by-step, no tech experience needed." />
+  <meta property="og:image" content="https://autonom.page/assets/icon-512.png" />
+  <meta property="og:url" content="https://autonom.page/how-to-google.html" />
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="onboard.css" />
+</head>
+<body>
+
+  <!-- ─── Nav ─────────────────────────────────────────────────────────────────── -->
+  <nav id="site-nav" aria-label="Site navigation">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="Autonom home">
+        <img src="assets/icon-512.png" alt="Autonom" />
+        <span>Autonom</span>
+      </a>
+      <button id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-drawer">&#9776;</button>
+    </div>
+  </nav>
+
+  <div id="nav-drawer" class="nav-drawer" aria-hidden="true">
+    <button id="nav-drawer-close" aria-label="Close menu">&#x2715;</button>
+    <ul role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="legal.html">Legal</a></li>
+      <li><a href="how-to-domain.html">How-To: Custom Domain</a></li>
+      <li><a href="how-to-google.html" class="nav-active">How-To: Google Search &amp; Analytics</a></li>
+      <li><a href="directory.html">Browse Pages</a></li>
+      <li><a href="colors.html">Color Reference</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+    </ul>
+  </div>
+  <div id="nav-overlay" aria-hidden="true"></div>
+
+  <!-- ─── Page Hero ─────────────────────────────────────────────────────────── -->
+  <div class="page-hero">
+    <h1>How-To: Google Search &amp; Analytics</h1>
+    <p>Get your site into Google search results and see who's visiting. Both are free. Neither requires any coding.</p>
+  </div>
+
+  <!-- ─── Intro ─────────────────────────────────────────────────────────────── -->
+  <section aria-label="Introduction">
+    <div class="section-inner about-section">
+      <h2>Two separate things</h2>
+      <p>
+        This guide covers two different Google tools that people often confuse:
+      </p>
+      <ul class="howto-list">
+        <li><strong>Google Search Console</strong> — tells Google your site exists and lets you see what search terms people use to find you. Free. No code on your site.</li>
+        <li><strong>Google Analytics</strong> — shows you how many people visit your site, where they came from, and what they looked at. Free. Adds a small tracking script to your pages.</li>
+      </ul>
+      <p>
+        You don't need both. Search Console is more useful if you care about being found on Google.
+        Analytics is more useful if you want to understand your visitors. Most people set up both.
+      </p>
+      <p class="about-honest">
+        Both are optional. Your Autonom site already has JSON-LD structured data built in, which helps
+        Google understand your content even without Search Console. These tools just give you more visibility
+        and control.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Search Console ────────────────────────────────────────────────────── -->
+  <section aria-labelledby="gsc-heading" style="background: var(--surface);">
+    <div class="section-inner about-section">
+      <h2 id="gsc-heading">Part 1 — Google Search Console</h2>
+      <p class="about-tagline">Tells Google your site exists. Shows you what people search to find you.</p>
+
+      <h3>Step 1 — Add your site</h3>
+      <ol class="howto-steps">
+        <li>Go to <a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a> and sign in with your Google account.</li>
+        <li>Click <strong>Add property</strong>.</li>
+        <li>Choose <strong>URL prefix</strong> and enter your site URL — either <code>https://yourusername.github.io</code> or your custom domain like <code>https://yourname.com</code>.</li>
+        <li>Click <strong>Continue</strong>.</li>
+      </ol>
+
+      <h3>Step 2 — Verify ownership</h3>
+      <p>
+        Google needs to confirm you own the site before it shows you data. The easiest method for Autonom sites
+        is the <strong>HTML tag</strong> method:
+      </p>
+      <ol class="howto-steps">
+        <li>In the verification screen, click <strong>HTML tag</strong> to expand it.</li>
+        <li>You'll see a meta tag that looks like this:<br>
+          <code>&lt;meta name="google-site-verification" content="<strong>abc123xyz...</strong>" /&gt;</code>
+        </li>
+        <li>Copy just the content value — the part between the quotes after <code>content=</code>. It's a long string of letters and numbers.</li>
+        <li>Log in to your Autonom site, open the <strong>Settings</strong> panel, and paste it into the <strong>Google Search Console verification code</strong> field.</li>
+        <li>Hit save. Your site will update within a minute.</li>
+        <li>Go back to Search Console and click <strong>Verify</strong>.</li>
+      </ol>
+      <p class="about-honest">
+        If verification fails, wait 2–3 minutes after saving in Autonom and try again. The site needs to
+        rebuild on GitHub Pages before Google can read the tag.
+      </p>
+
+      <h3>Step 3 — Submit your sitemap</h3>
+      <p>
+        A sitemap tells Google exactly which pages your site has. Your Autonom site generates one automatically.
+      </p>
+      <ol class="howto-steps">
+        <li>In Search Console, click <strong>Sitemaps</strong> in the left sidebar.</li>
+        <li>In the <strong>Add a new sitemap</strong> field, type <code>sitemap.xml</code>.</li>
+        <li>Click <strong>Submit</strong>.</li>
+      </ol>
+      <p>
+        Google will crawl your sitemap and start indexing your pages. This can take anywhere from a few hours
+        to a few days for a new site. Once it's indexed, your site will appear in Google search results.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Google Analytics ──────────────────────────────────────────────────── -->
+  <section aria-labelledby="ga-heading">
+    <div class="section-inner about-section">
+      <h2 id="ga-heading">Part 2 — Google Analytics</h2>
+      <p class="about-tagline">See how many people visit, where they came from, and what they looked at.</p>
+
+      <h3>Step 1 — Create a Google Analytics account</h3>
+      <ol class="howto-steps">
+        <li>Go to <a href="https://analytics.google.com" target="_blank" rel="noopener">analytics.google.com</a> and sign in with your Google account.</li>
+        <li>Click <strong>Start measuring</strong>.</li>
+        <li>Enter an account name — this is just for you, use anything like "My Website".</li>
+        <li>Click <strong>Next</strong>, then set up a <strong>Property</strong>. Give it a name (your site name), choose your timezone and currency.</li>
+        <li>Click <strong>Next</strong>, fill in the business details (just pick whatever fits), then click <strong>Create</strong>.</li>
+        <li>Accept the terms.</li>
+      </ol>
+
+      <h3>Step 2 — Get your Measurement ID</h3>
+      <ol class="howto-steps">
+        <li>After creating the property, Google will ask you to set up a data stream. Choose <strong>Web</strong>.</li>
+        <li>Enter your site URL and a stream name, then click <strong>Create stream</strong>.</li>
+        <li>You'll see a <strong>Measurement ID</strong> — it looks like <code>G-XXXXXXXXXX</code>.</li>
+        <li>Copy that ID.</li>
+      </ol>
+
+      <h3>Step 3 — Add it to your Autonom site</h3>
+      <ol class="howto-steps">
+        <li>Log in to your Autonom site and open the <strong>Settings</strong> panel.</li>
+        <li>Paste your Measurement ID into the <strong>Google Analytics ID</strong> field.</li>
+        <li>Hit save.</li>
+      </ol>
+      <p>
+        That's it. Autonom adds the Analytics tracking script to every page of your site automatically.
+        Give it 24–48 hours and you'll start seeing visitor data in your Analytics dashboard.
+      </p>
+      <p class="about-honest">
+        Analytics data only shows up for real visitors — not you browsing your own site.
+        If you want to exclude your own visits, Google Analytics has a filter for that under
+        Admin → Data Streams → your stream → Configure tag settings → Define internal traffic.
+        That's optional and a bit more advanced.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── What to expect ────────────────────────────────────────────────────── -->
+  <section aria-label="What to expect" style="background: var(--surface);">
+    <div class="section-inner about-section">
+      <h2>What to expect</h2>
+      <p>
+        New sites take time to get traction in Google. Don't panic if you're not showing up in search results
+        on day one — that's completely normal. Here's a realistic timeline:
+      </p>
+      <ul class="howto-list">
+        <li><strong>Day 1–3:</strong> Google crawls your sitemap and starts indexing your pages.</li>
+        <li><strong>Week 1–2:</strong> Your site starts appearing in search results for your name and exact phrases from your bio.</li>
+        <li><strong>Month 1+:</strong> If you add content regularly (gallery updates, music, blog-style bio updates), Google starts ranking you for more terms.</li>
+      </ul>
+      <p>
+        The JSON-LD structured data that Autonom builds into your site gives you a head start —
+        Google can understand exactly who you are, what you do, and what your site is about
+        without having to guess from your content.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Footer ────────────────────────────────────────────────────────────── -->
+  <footer id="site-footer">
+    <p>Built by <a href="https://aws.amazon.com/q/developer/" target="_blank" rel="noopener">Amazon Q</a>. <span style="color:var(--text-muted)">Shannon</span> kinda had an idea... kinda.</p>
+    <a href="https://buymeacoffee.com/goddardshannon9" target="_blank" rel="noopener" class="btn-beer" aria-label="Buy the dev a beer">🍺 Buy the dev a beer</a>
+  </footer>
+
+  <script>
+    (() => {
+      const hamburger = document.getElementById('nav-hamburger');
+      const drawer    = document.getElementById('nav-drawer');
+      const overlay   = document.getElementById('nav-overlay');
+      const close     = document.getElementById('nav-drawer-close');
+      function openNav() {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        hamburger.setAttribute('aria-expanded', 'true');
+        drawer.setAttribute('aria-hidden', 'false');
+        overlay.setAttribute('aria-hidden', 'false');
+        close.focus();
+      }
+      function closeNav() {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.setAttribute('aria-hidden', 'true');
+        hamburger.focus();
+      }
+      hamburger.addEventListener('click', openNav);
+      close.addEventListener('click', closeNav);
+      overlay.addEventListener('click', closeNav);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; connect-src https:;" />
+  <title>How-To: Custom Domain — Autonom</title>
+  <meta property="og:title" content="How-To: Custom Domain — Autonom" />
+  <meta property="og:description" content="Connect a custom domain like yourname.com to your Autonom site. Step-by-step, no tech experience needed." />
+  <meta property="og:image" content="https://autonom.page/assets/icon-512.png" />
+  <meta property="og:url" content="https://autonom.page/how-to-domain.html" />
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="onboard.css" />
+</head>
+<body>
+
+  <!-- ─── Nav ─────────────────────────────────────────────────────────────────── -->
+  <nav id="site-nav" aria-label="Site navigation">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="Autonom home">
+        <img src="assets/icon-512.png" alt="Autonom" />
+        <span>Autonom</span>
+      </a>
+      <button id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-drawer">&#9776;</button>
+    </div>
+  </nav>
+
+  <div id="nav-drawer" class="nav-drawer" aria-hidden="true">
+    <button id="nav-drawer-close" aria-label="Close menu">&#x2715;</button>
+    <ul role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="legal.html">Legal</a></li>
+      <li><a href="how-to-domain.html" class="nav-active">How-To: Custom Domain</a></li>
+      <li><a href="how-to-google.html">How-To: Google Search &amp; Analytics</a></li>
+      <li><a href="directory.html">Browse Pages</a></li>
+      <li><a href="colors.html">Color Reference</a></li>
+      <li><a href="changelog.html">Changelog</a></li>
+    </ul>
+  </div>
+  <div id="nav-overlay" aria-hidden="true"></div>
+
+  <!-- ─── Page Hero ─────────────────────────────────────────────────────────── -->
+  <div class="page-hero">
+    <h1>How-To: Custom Domain</h1>
+    <p>Turn <em>yourname.github.io</em> into <em>yourname.com</em>. Takes about 10 minutes to set up, then a few hours to go live.</p>
+  </div>
+
+  <!-- ─── Intro ─────────────────────────────────────────────────────────────── -->
+  <section aria-label="Introduction">
+    <div class="section-inner about-section">
+      <h2>Do you need a custom domain?</h2>
+      <p>
+        No. Your Autonom site works perfectly at <em>yourname.github.io</em> — that's a real URL you can share,
+        put on a business card, and link from social media. It's free and it never expires.
+      </p>
+      <p>
+        A custom domain like <em>yourname.com</em> is optional. It looks more professional and is easier to
+        remember. Domains typically cost $10–20 per year from any registrar. That cost is between you and
+        whoever you buy it from — Autonom has nothing to do with it.
+      </p>
+      <p class="about-honest">
+        This guide uses <strong>Namecheap</strong> as the example registrar — they're straightforward and
+        commonly used. The steps are nearly identical on GoDaddy, Google Domains, Squarespace Domains,
+        Cloudflare Registrar, or anywhere else. The DNS record values are always the same.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Step 1 ────────────────────────────────────────────────────────────── -->
+  <section aria-label="Step 1: Buy a domain" style="background: var(--surface);">
+    <div class="section-inner about-section">
+      <h2>Step 1 — Buy a domain</h2>
+      <p>
+        Go to a domain registrar and search for the name you want. Common choices:
+      </p>
+      <ul class="howto-list">
+        <li><a href="https://www.namecheap.com" target="_blank" rel="noopener">Namecheap</a> — straightforward, no upsell pressure</li>
+        <li><a href="https://domains.squarespace.com" target="_blank" rel="noopener">Squarespace Domains</a> — clean interface, slightly pricier</li>
+        <li><a href="https://www.cloudflare.com/products/registrar/" target="_blank" rel="noopener">Cloudflare Registrar</a> — at-cost pricing, best value, slightly more technical</li>
+        <li><a href="https://www.godaddy.com" target="_blank" rel="noopener">GoDaddy</a> — widely known, watch for renewal price jumps</li>
+      </ul>
+      <p>
+        Search for <code>yourname.com</code>. If it's taken, try <code>.net</code>, <code>.co</code>,
+        <code>.me</code>, or add a word like <code>yourname.art</code> or <code>yourname.dev</code>.
+        Buy it. You'll get an account with the registrar — keep those login details somewhere safe.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Step 2 ────────────────────────────────────────────────────────────── -->
+  <section aria-label="Step 2: Add the domain in GitHub">
+    <div class="section-inner about-section">
+      <h2>Step 2 — Tell GitHub about your domain</h2>
+      <p>
+        Go to your GitHub repository. The URL looks like:
+        <code>github.com/yourusername/yourusername.github.io</code>
+      </p>
+      <ol class="howto-steps">
+        <li>Click the <strong>Settings</strong> tab at the top of your repository.</li>
+        <li>In the left sidebar, click <strong>Pages</strong>.</li>
+        <li>Under <strong>Custom domain</strong>, type your domain — for example <code>yourname.com</code>.</li>
+        <li>Click <strong>Save</strong>.</li>
+      </ol>
+      <p>
+        GitHub will show a warning that the DNS isn't configured yet. That's fine — you're about to do that.
+        GitHub also automatically creates a file called <code>CNAME</code> in your repository. Don't delete it.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Step 3 ────────────────────────────────────────────────────────────── -->
+  <section aria-label="Step 3: Add DNS records" style="background: var(--surface);">
+    <div class="section-inner about-section">
+      <h2>Step 3 — Add DNS records at your registrar</h2>
+      <p>
+        DNS records are how the internet knows that <em>yourname.com</em> should point to GitHub's servers.
+        Log in to your registrar and find the <strong>DNS settings</strong> or <strong>Advanced DNS</strong>
+        section for your domain.
+      </p>
+      <p>You need to add these records:</p>
+
+      <div class="pricing-table-wrap">
+        <table class="pricing-table" aria-label="GitHub Pages DNS records">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Host / Name</th>
+              <th>Value</th>
+              <th>TTL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>A</td><td><code>@</code></td><td><code>185.199.108.153</code></td><td>Automatic</td></tr>
+            <tr><td>A</td><td><code>@</code></td><td><code>185.199.109.153</code></td><td>Automatic</td></tr>
+            <tr><td>A</td><td><code>@</code></td><td><code>185.199.110.153</code></td><td>Automatic</td></tr>
+            <tr><td>A</td><td><code>@</code></td><td><code>185.199.111.153</code></td><td>Automatic</td></tr>
+            <tr><td>CNAME</td><td><code>www</code></td><td><code>yourusername.github.io</code></td><td>Automatic</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="about-honest">
+        The four A records point your root domain (<em>yourname.com</em>) to GitHub's servers.
+        The CNAME record makes <em>www.yourname.com</em> work too. Replace <code>yourusername</code>
+        in the CNAME value with your actual GitHub username.
+      </p>
+      <p>
+        On Namecheap: go to <strong>Domain List → Manage → Advanced DNS</strong>. Delete any existing
+        A records pointing somewhere else, then add the five records above.
+      </p>
+      <p>
+        On Squarespace Domains: go to <strong>Domains → your domain → DNS Settings</strong>.
+        Same idea — add the records, remove any conflicting ones.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Step 4 ────────────────────────────────────────────────────────────── -->
+  <section aria-label="Step 4: Wait and verify">
+    <div class="section-inner about-section">
+      <h2>Step 4 — Wait, then verify</h2>
+      <p>
+        DNS changes take time to spread across the internet. Usually it's 15–60 minutes.
+        Sometimes it takes up to 24 hours. This is normal — you can't speed it up.
+      </p>
+      <p>
+        Once it's done, go back to <strong>GitHub → your repo → Settings → Pages</strong>.
+        You should see a green checkmark and a message that says your site is published at your custom domain.
+        GitHub also automatically enables HTTPS (the padlock) — this can take a few extra minutes after the DNS resolves.
+      </p>
+      <p class="about-honest">
+        If it's been more than 24 hours and it's still not working: double-check that the CNAME record
+        value matches your exact GitHub username, and that you saved the domain in GitHub Pages settings.
+        Those are the two most common mistakes.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Step 5: Autonom settings ─────────────────────────────────────────── -->
+  <section aria-label="Step 5: Update Autonom settings" style="background: var(--surface);">
+    <div class="section-inner about-section">
+      <h2>Step 5 — Update your Autonom site settings</h2>
+      <p>
+        Log in to your Autonom site (go to <em>yourname.github.io</em> or your new custom domain,
+        click the menu, and log in with GitHub). Open the <strong>Settings</strong> panel and update
+        the <strong>Site URL</strong> field to your new domain — for example <code>https://yourname.com</code>.
+      </p>
+      <p>
+        This updates your sitemap, RSS feed, and structured data so search engines see the right URL.
+        Hit save. Done.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Footer ────────────────────────────────────────────────────────────── -->
+  <footer id="site-footer">
+    <p>Built by <a href="https://aws.amazon.com/q/developer/" target="_blank" rel="noopener">Amazon Q</a>. <span style="color:var(--text-muted)">Shannon</span> kinda had an idea... kinda.</p>
+    <a href="https://buymeacoffee.com/goddardshannon9" target="_blank" rel="noopener" class="btn-beer" aria-label="Buy the dev a beer">🍺 Buy the dev a beer</a>
+  </footer>
+
+  <script>
+    (() => {
+      const hamburger = document.getElementById('nav-hamburger');
+      const drawer    = document.getElementById('nav-drawer');
+      const overlay   = document.getElementById('nav-overlay');
+      const close     = document.getElementById('nav-drawer-close');
+      function openNav() {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        hamburger.setAttribute('aria-expanded', 'true');
+        drawer.setAttribute('aria-hidden', 'false');
+        overlay.setAttribute('aria-hidden', 'false');
+        close.focus();
+      }
+      function closeNav() {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.setAttribute('aria-hidden', 'true');
+        hamburger.focus();
+      }
+      hamburger.addEventListener('click', openNav);
+      close.addEventListener('click', closeNav);
+      overlay.addEventListener('click', closeNav);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+    })();
+  </script>
+
+</body>
+</html>

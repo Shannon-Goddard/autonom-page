@@ -644,3 +644,77 @@ img { max-width: 100%; display: block; }
   font-weight: 600;
   text-align: center;
 }
+
+/* ─── How-To Guides ──────────────────────────────────────────────────────────── */
+.howto-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0;
+}
+.howto-list li {
+  font-size: 0.93rem;
+  color: var(--text-muted);
+  padding-left: 1.2rem;
+  position: relative;
+  line-height: 1.7;
+}
+.howto-list li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--accent-2);
+}
+.howto-list li strong { color: var(--text); }
+
+.howto-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-left: 0;
+  counter-reset: howto;
+  list-style: none;
+}
+.howto-steps li {
+  counter-increment: howto;
+  font-size: 0.93rem;
+  color: var(--text-muted);
+  padding: 0.65rem 0.9rem 0.65rem 3rem;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  position: relative;
+  line-height: 1.7;
+}
+.howto-steps li::before {
+  content: counter(howto);
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.78rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.howto-steps li strong { color: var(--text); }
+.howto-steps li code {
+  background: rgba(255,255,255,0.08);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+code {
+  background: rgba(255,255,255,0.08);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: 'Courier New', monospace;
+}
