@@ -1080,8 +1080,81 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 ## Known Issues / Future Work
 
 - **App already installed edge case** — If a user has previously installed the GitHub App and returns to `autonom.page` to start over, the OAuth + installation flow throws an error (installation already exists). Needs a graceful handler — detect existing installation and skip to the form, or surface a clear message. Low priority edge case for now.
-- **Images needed** — Screenshots/illustrations for: How It Works steps (3 images, 400×260px), how-to-domain DNS records and GitHub Pages settings (2 images, 640×360px), how-to-google Search Console HTML tag, Analytics measurement ID, Rich Results Test result (3 images, 640×360px), about.html hero banner (900×300px). All to go in `assets/`. Wire into HTML once delivered.
+- **Template testing required first** — Before images, before the how-to guides are considered done, the deployed user site needs a full test pass: onboarding flow end-to-end, edit mode login, profile photo upload, cover photo upload, all six page toggles, customization panel saves, business mode switch, directory toggle, custom domain field, preview as visitor, wizard on first login. Use `shannon-not-tom` test account, delete repo between runs. See `testing/TESTING.md` for full checklist.
+- **Images needed — BLOCKED on template testing** — Cannot take real screenshots of the deployed user site until toggles, image uploads, and edit mode are fully tested and working. All how-to screenshots that show the Autonom site in action (settings panel, customization toggles, profile photo upload, etc.) must use a real working deploy, not a mockup. Images to create once template is confirmed working:
+  - How It Works steps: GitHub signup page, Autonom onboarding form, finished live site (3 images, 400×260px)
+  - how-to-domain: GitHub Pages settings panel with custom domain field, registrar DNS records panel (2 images, 640×360px)
+  - how-to-google: Search Console HTML tag screen, Analytics measurement ID screen, Rich Results Test result for `autonom.page` (3 images, 640×360px)
+  - about.html hero banner — abstract/dark palette, no site dependency (900×300px)
+  - All images go in `assets/`. Wire into HTML in one pass once delivered.
 - **Remaining 404 pages** — `directory.html`, `colors.html`, `changelog.html` not yet built. Linked in nav.
 - **`directory.html`** — Searchable list of all public Autonom sites. Reads from DynamoDB via `directory-api` Lambda. No user input — listings auto-populated from onboarding data, toggled via Settings panel.
 - **`colors.html`** — Interactive hex/RGB color reference tool.
 - **`changelog.html`** — Version history page.
+
+---
+
+## Phase 6: vCard Share (Planned)
+
+### Vision
+When the owner clicks "Share My Page", instead of silently copying a URL to the clipboard, a modal opens pre-filled with everything the site already knows about them. They review it, optionally fill in extra fields, and walk away with a real digital business card — a `.vcf` file anyone can tap to save directly to their phone contacts, plus the URL and QR code in the same flow.
+
+### Why
+A URL is a link. A vCard is an identity. One tap and the person who just visited your page has your name, photo, phone, email, and website saved in their contacts forever — no app, no platform, no middleman.
+
+### Share Modal — UX Flow
+1. Owner clicks **Share My Page** in admin utilities (edit mode)
+2. Modal opens — pre-filled from `site-config.json` and `businessProfile` (if business mode)
+3. Owner reviews, edits any field, adds anything missing
+4. Three actions available:
+   - **Download .vcf** — generates and downloads a standards-compliant vCard 3.0 file
+   - **Copy Link** — copies `username.github.io` (or custom domain) to clipboard
+   - **QR Code** — shows the existing QR code inline, with download button
+5. Modal dismisses with Escape or clicking outside
+
+### Pre-filled Fields (from existing data)
+| vCard Field | Source |
+|---|---|
+| Full Name (`FN`, `N`) | `config.displayName` |
+| Note / Bio (`NOTE`) | `config.bio` |
+| URL (`URL`) | `config.customDomain` or `username.github.io` |
+| Photo (`PHOTO`) | `assets/profile.webp` — fetched as blob, base64 encoded into vCard |
+| Title (`TITLE`) | `config.status` (if set) |
+| Organization (`ORG`) | `businessProfile.name` (business mode only) |
+| Phone (`TEL`) | `businessProfile.phone` (business mode only) |
+| Email (`EMAIL`) | `businessProfile.email` (business mode only) |
+| Address (`ADR`) | `businessProfile.address` (business mode only) |
+
+### Additional vCard Fields (optional, modal input only — not stored)
+Fields the owner can fill in the modal that are useful for a contact card but don't belong in the public site config:
+- Mobile phone (if different from business phone)
+- Second email
+- Birthday (`BDAY`)
+- Pronouns (`X-PRONOUNS` — non-standard but widely supported)
+- Social handles — Twitter/X, Instagram, LinkedIn, GitHub (each a separate `X-SOCIALPROFILE` or `URL` entry)
+
+### vCard 3.0 Format
+```
+BEGIN:VCARD
+VERSION:3.0
+FN:Shannon Goddard
+N:Goddard;Shannon;;;
+TITLE:Founder, Loyal9 LLC
+ORG:Loyal9 LLC
+URL:https://shannon-goddard.github.io
+EMAIL:shannon@loyal9.app
+TEL;TYPE=WORK:+1-555-000-0000
+NOTE:Full-stack developer. We pass them left and watch the industry blink.
+PHOTO;ENCODING=b;TYPE=JPEG:[base64 encoded profile photo]
+END:VCARD
+```
+
+### Implementation Notes
+- Entirely client-side — no server, no API call, no new Lambda
+- `generateVCard(config)` function in `admin.js` — builds the `.vcf` string from config + modal form values
+- Profile photo fetched via `fetch('assets/profile.webp')` → `arrayBuffer()` → `btoa()` — embedded directly in the vCard so the contact saves with a photo
+- Download triggered via `URL.createObjectURL(new Blob([vcf], { type: 'text/vcard' }))` + programmatic `<a>` click — no library needed
+- Modal fields that aren't stored anywhere — they exist only in the modal, used only for the download. Owner fills them in each time or leaves them blank. No privacy concern, no extra config bloat.
+- `site-config.json` gets a new optional `vcard` object for fields the owner wants pre-filled next time: `{ phone, socialHandles: { twitter, instagram, linkedin } }` — owner can save these from the modal with a "Remember these" checkbox
+- QR code in modal reuses the existing `api.qrserver.com` image tag — no new code
+- Keyboard accessible: Tab through fields, Enter to download, Escape to close
