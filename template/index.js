@@ -16,6 +16,7 @@
 
     renderVideos();
     applyOGTags();
+    renderHomepageSections();
 
     if (Autonom.isOwner()) {
       populateCustomizationPanel();
@@ -62,6 +63,152 @@
     config.videos = (config.videos || []).filter(v => v !== url);
     await Autonom.saveConfig(config, { videos: config.videos }, 'Remove video');
     renderVideos();
+  }
+
+  // ─── Homepage Sections ──────────────────────────────────────────────────────
+  function renderHomepageSections() {
+    const hs   = config.homepageSections || {};
+    const main = document.getElementById('profile-page');
+    if (!main) return;
+
+    // Remove any previously injected sections
+    main.querySelectorAll('.homepage-section').forEach(el => el.remove());
+
+    const sections = [
+      { key: 'gallery',   render: renderHSGallery },
+      { key: 'music',     render: renderHSMusic },
+      { key: 'videos',    render: renderHSVideos },
+      { key: 'friends',   render: renderHSFriends },
+      { key: 'guestbook', render: renderHSGuestbook },
+    ];
+
+    sections.forEach(({ key, render }) => {
+      if (!hs[key]) return;
+      const sec = document.createElement('section');
+      sec.className = 'homepage-section';
+      sec.setAttribute('aria-label', key.charAt(0).toUpperCase() + key.slice(1));
+      render(sec);
+      main.appendChild(sec);
+    });
+  }
+
+  function renderHSGallery(sec) {
+    sec.innerHTML = '<h2>Gallery</h2><div class="hs-gallery-grid"></div>';
+    const grid = sec.querySelector('.hs-gallery-grid');
+    // Fetch from repo API
+    Autonom.ghGet(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/assets/gallery`)
+      .then(items => {
+        const photos = items.filter(f => f.name.endsWith('.webp'));
+        if (!photos.length) { grid.innerHTML = '<p class="gallery-empty">No photos yet.</p>'; return; }
+        grid.innerHTML = photos.map(p =>
+          `<figure class="gallery-item"><img src="${p.download_url}" alt="${p.name}" loading="lazy" /></figure>`
+        ).join('');
+      })
+      .catch(() => { grid.innerHTML = '<p class="gallery-empty">Could not load photos.</p>'; });
+  }
+
+  function renderHSMusic(sec) {
+    const tracks = config.tracks || [];
+    if (!tracks.length) {
+      sec.innerHTML = '<h2>Music</h2><p class="music-empty">No tracks yet.</p>';
+      return;
+    }
+    const t = tracks[0];
+    sec.innerHTML = `
+      <h2>Music</h2>
+      <div class="hs-player">
+        <audio id="hs-audio" src="assets/music/${t.filename}"></audio>
+        <p class="hs-track-title">${t.title || t.filename}</p>
+        <p class="hs-track-artist">${t.artist || ''}</p>
+        <button id="hs-play-pause" aria-label="Play or pause">Play</button>
+        <a href="music.html" class="hs-link">Full playlist →</a>
+      </div>`;
+    const audio   = sec.querySelector('#hs-audio');
+    const playBtn = sec.querySelector('#hs-play-pause');
+    playBtn?.addEventListener('click', () => {
+      if (audio.paused) { audio.play(); playBtn.textContent = 'Pause'; }
+      else              { audio.pause(); playBtn.textContent = 'Play'; }
+    });
+  }
+
+  function renderHSVideos(sec) {
+    const videos = config.videos || [];
+    sec.innerHTML = '<h2>Videos</h2>';
+    if (!videos.length) { sec.innerHTML += '<p class="videos-empty">No videos yet.</p>'; return; }
+    // Show first 2 videos as preview
+    const preview = videos.slice(0, 2);
+    const grid = document.createElement('div');
+    grid.className = 'videos-grid hs-videos-grid';
+    grid.innerHTML = preview.map(url => {
+      const id = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1];
+      if (!id) return '';
+      return `<div class="video-item"><div class="video-embed-wrap">
+        <iframe src="https://www.youtube.com/embed/${id}" title="YouTube video" allowfullscreen></iframe>
+      </div></div>`;
+    }).join('');
+    sec.appendChild(grid);
+    if (videos.length > 2) {
+      const link = document.createElement('a');
+      link.href = 'videos.html';
+      link.className = 'hs-link';
+      link.textContent = `See all ${videos.length} videos →`;
+      sec.appendChild(link);
+    }
+  }
+
+  function renderHSFriends(sec) {
+    sec.innerHTML = '<h2>Friends</h2>';
+    fetch('friends.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : [])
+      .then(friends => {
+        if (!friends.length) { sec.innerHTML += '<p class="friends-empty">No friends added yet.</p>'; return; }
+        const grid = document.createElement('div');
+        grid.className = 'friends-grid hs-friends-grid';
+        grid.innerHTML = friends.slice(0, 6).map(f => `
+          <div class="friend-card">
+            <a href="https://${f.username}.github.io" target="_blank" rel="noopener">
+              <img src="https://${f.username}.github.io/assets/profile.webp"
+                alt="${f.username}" onerror="this.src='assets/profile.webp'" />
+              <span class="friend-name">${f.username}</span>
+            </a>
+          </div>`).join('');
+        sec.appendChild(grid);
+        if (friends.length > 6) {
+          const link = document.createElement('a');
+          link.href = 'friends.html';
+          link.className = 'hs-link';
+          link.textContent = `See all ${friends.length} friends →`;
+          sec.appendChild(link);
+        }
+      })
+      .catch(() => { sec.innerHTML += '<p class="friends-empty">Could not load friends.</p>'; });
+  }
+
+  function renderHSGuestbook(sec) {
+    sec.innerHTML = '<h2>Guestbook</h2>';
+    fetch('guestbook.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : [])
+      .then(posts => {
+        const approved = (posts || []).filter(p => p.approved).slice(0, 3);
+        if (!approved.length) { sec.innerHTML += '<p class="guestbook-empty">No posts yet.</p>'; return; }
+        const list = document.createElement('div');
+        list.className = 'hs-guestbook';
+        list.innerHTML = approved.map(p => `
+          <div class="guestbook-post">
+            <div class="post-header">
+              <img src="${p.avatar || 'assets/profile.webp'}" alt="${p.author}" />
+              <span class="post-author">${p.author}</span>
+            </div>
+            <p class="post-text">${p.text}</p>
+          </div>`).join('');
+        sec.appendChild(list);
+        const link = document.createElement('a');
+        link.href = 'guestbook.html';
+        link.className = 'hs-link';
+        link.textContent = 'View full guestbook →';
+        sec.appendChild(link);
+      })
+      .catch(() => { sec.innerHTML += '<p class="guestbook-empty">Could not load posts.</p>'; });
   }
 
   // ─── OG Tags ──────────────────────────────────────────────────────────────────

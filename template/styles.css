@@ -1133,3 +1133,99 @@ main {
   padding: 0.6rem;
   font-size: 0.9rem;
 }
+
+/* ─── Homepage Sections ──────────────────────────────────────────────────────── */
+.homepage-section {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+.homepage-section h2 { margin-bottom: 1rem; }
+
+.hs-link {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
+.hs-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.hs-videos-grid {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.hs-friends-grid {
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+}
+
+.hs-player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 400px;
+}
+.hs-track-title  { font-weight: 600; }
+.hs-track-artist { font-size: 0.9rem; color: var(--text-muted); }
+
+.hs-guestbook {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ─── Music Track List ───────────────────────────────────────────────────────── */
+#track-list {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.track-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.track-row:hover    { background: var(--surface-2); }
+.track-row.track-active { border-color: var(--accent); }
+
+.track-row-title  { flex: 1; font-size: 0.9rem; font-weight: 600; }
+.track-row-artist { font-size: 0.8rem; color: var(--text-muted); }
+
+.remove-track {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: 1.1rem;
+  padding: 0 0.3rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.remove-track:hover { color: var(--accent); opacity: 1; }
+
+.music-empty { color: var(--text-muted); margin-top: 1rem; }
+
+#player-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+#prev-track, #next-track {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+}

@@ -26,11 +26,7 @@
     "listed": true
   },
   "customDomain": "",
-  "currentTrack": {
-    "filename": "",
-    "title": "",
-    "artist": ""
-  },
+  "tracks": [],
   "videos": [],
   "rss": {
     "enabled": true

@@ -1,39 +1,80 @@
 (() => {
   let config = {};
+  let currentIndex = 0;
   const audio = document.getElementById('audio-player');
 
-  // ─── Load config and populate player ─────────────────────────────────────────
+  // ─── Init ─────────────────────────────────────────────────────────────────────
   async function init() {
     try {
       const res = await fetch('site-config.json', { cache: 'no-store' });
       if (res.ok) config = await res.json();
     } catch { /* offline */ }
 
-    const track = config.currentTrack || {};
-
-    if (track.filename) {
-      audio.src = `assets/music/${track.filename}`;
-      setText('track-title',  track.title  || track.filename);
-      setText('track-artist', track.artist || '');
-      const dl = document.getElementById('download-track');
-      if (dl) {
-        dl.href     = `assets/music/${track.filename}`;
-        dl.download = track.filename;
-      }
-      document.getElementById('player')?.classList.remove('hidden');
-    } else {
-      document.getElementById('player')?.classList.add('hidden');
-      if (!Autonom.isOwner()) {
-        setText('track-title', 'No track uploaded yet.');
-      }
-    }
+    renderTrackList();
+    loadTrack(currentIndex);
+    wirePlayer();
 
     if (Autonom.isOwner()) {
       document.getElementById('upload-track-controls')?.classList.remove('hidden');
-      wireUpload();
+      document.getElementById('upload-track-btn')?.addEventListener('click', uploadTracks);
     }
+  }
 
-    wirePlayer();
+  // ─── Playlist helpers ─────────────────────────────────────────────────────────
+  function tracks() { return config.tracks || []; }
+
+  function loadTrack(index) {
+    const list = tracks();
+    if (!list.length) {
+      document.getElementById('player')?.classList.add('hidden');
+      return;
+    }
+    currentIndex = Math.max(0, Math.min(index, list.length - 1));
+    const t = list[currentIndex];
+    audio.src = `assets/music/${t.filename}`;
+    setText('track-title',  t.title  || t.filename);
+    setText('track-artist', t.artist || '');
+    const dl = document.getElementById('download-track');
+    if (dl) { dl.href = `assets/music/${t.filename}`; dl.download = t.filename; }
+    document.getElementById('player')?.classList.remove('hidden');
+    const playBtn = document.getElementById('play-pause');
+    if (playBtn) playBtn.textContent = 'Play';
+    highlightActive();
+  }
+
+  // ─── Render track list ────────────────────────────────────────────────────────
+  function renderTrackList() {
+    const list = tracks();
+    const el   = document.getElementById('track-list');
+    if (!el) return;
+    if (!list.length) { el.innerHTML = '<p class="music-empty">No tracks yet.</p>'; return; }
+
+    el.innerHTML = list.map((t, i) => `
+      <div class="track-row${i === currentIndex ? ' track-active' : ''}" data-index="${i}">
+        <span class="track-row-title">${t.title || t.filename}</span>
+        <span class="track-row-artist">${t.artist || ''}</span>
+        ${Autonom.isOwner()
+          ? `<button class="remove-track" data-index="${i}" aria-label="Remove ${t.title || t.filename}">&times;</button>`
+          : ''}
+      </div>`).join('');
+
+    el.querySelectorAll('.track-row').forEach(row =>
+      row.addEventListener('click', e => {
+        if (e.target.classList.contains('remove-track')) return;
+        loadTrack(+row.dataset.index);
+        audio.play();
+        document.getElementById('play-pause').textContent = 'Pause';
+      })
+    );
+    el.querySelectorAll('.remove-track').forEach(btn =>
+      btn.addEventListener('click', () => removeTrack(+btn.dataset.index))
+    );
+  }
+
+  function highlightActive() {
+    document.querySelectorAll('.track-row').forEach((row, i) =>
+      row.classList.toggle('track-active', i === currentIndex)
+    );
   }
 
   // ─── Player controls ──────────────────────────────────────────────────────────
@@ -47,67 +88,82 @@
       else              { audio.pause(); playBtn.textContent = 'Play'; }
     });
 
+    document.getElementById('prev-track')?.addEventListener('click', () => {
+      loadTrack(currentIndex - 1); audio.play();
+      if (playBtn) playBtn.textContent = 'Pause';
+    });
+    document.getElementById('next-track')?.addEventListener('click', () => {
+      loadTrack(currentIndex + 1); audio.play();
+      if (playBtn) playBtn.textContent = 'Pause';
+    });
+
     audio.addEventListener('ended', () => {
-      if (playBtn) playBtn.textContent = 'Play';
+      if (currentIndex < tracks().length - 1) {
+        loadTrack(currentIndex + 1); audio.play();
+        if (playBtn) playBtn.textContent = 'Pause';
+      } else {
+        if (playBtn) playBtn.textContent = 'Play';
+      }
     });
 
     audio.addEventListener('timeupdate', () => {
-      if (!audio.duration) return;
-      if (seekBar) seekBar.value = (audio.currentTime / audio.duration) * 100;
+      if (!audio.duration || !seekBar) return;
+      seekBar.value = (audio.currentTime / audio.duration) * 100;
     });
-
     seekBar?.addEventListener('input', () => {
       if (audio.duration) audio.currentTime = (seekBar.value / 100) * audio.duration;
     });
-
-    volBar?.addEventListener('input', () => {
-      audio.volume = volBar.value;
-    });
+    volBar?.addEventListener('input', () => { audio.volume = volBar.value; });
   }
 
-  // ─── Upload ───────────────────────────────────────────────────────────────────
-  function wireUpload() {
-    document.getElementById('upload-track-btn')?.addEventListener('click', uploadTrack);
-  }
+  // ─── Upload multiple tracks ───────────────────────────────────────────────────
+  async function uploadTracks() {
+    const fileInput = document.getElementById('track-upload');
+    const files     = Array.from(fileInput?.files || []);
+    if (!files.length) { Autonom.toast('Select at least one MP3', 'error'); return; }
 
-  async function uploadTrack() {
-    const fileInput   = document.getElementById('track-upload');
-    const titleInput  = document.getElementById('track-title-input');
-    const artistInput = document.getElementById('track-artist-input');
-    const file        = fileInput?.files[0];
-
-    if (!file) { Autonom.toast('Select an MP3 first', 'error'); return; }
-    if (file.size > 20 * 1024 * 1024) {
-      Autonom.toast('File too large — keep MP3s under 20MB', 'error'); return;
+    const oversized = files.filter(f => f.size > 20 * 1024 * 1024);
+    if (oversized.length) {
+      Autonom.toast(`${oversized.map(f => f.name).join(', ')} exceed 20MB limit`, 'error');
+      return;
     }
 
     const btn = document.getElementById('upload-track-btn');
     if (btn) btn.disabled = true;
 
-    const filename = file.name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase();
-    const buf      = await file.arrayBuffer();
+    const existing = config.tracks || [];
+    const added = [];
 
-    await Autonom.commitFile(`assets/music/${filename}`, buf, `Upload track ${filename}`, true);
+    for (const file of files) {
+      const filename = file.name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase();
+      const buf      = await file.arrayBuffer();
+      await Autonom.commitFile(`assets/music/${filename}`, buf, `Upload track ${filename}`, true);
+      // Derive title from filename — strip extension, replace dashes/underscores
+      const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+      added.push({ filename, title, artist: '' });
+    }
 
-    const track = {
-      filename,
-      title:  titleInput?.value.trim()  || filename,
-      artist: artistInput?.value.trim() || '',
-    };
-
-    await Autonom.saveConfig(config, { currentTrack: track }, 'Update current track');
+    const updatedTracks = [...existing, ...added];
+    await Autonom.saveConfig(config, { tracks: updatedTracks }, 'Upload tracks');
     await Autonom.regenerateRSS(config);
 
-    // Update player live without reload
-    audio.src = `assets/music/${filename}`;
-    setText('track-title',  track.title);
-    setText('track-artist', track.artist);
-    const dl = document.getElementById('download-track');
-    if (dl) { dl.href = `assets/music/${filename}`; dl.download = filename; }
-    document.getElementById('player')?.classList.remove('hidden');
-
-    Autonom.toast('Track uploaded', 'success');
+    renderTrackList();
+    if (!existing.length) loadTrack(0);
+    Autonom.toast(`${added.length} track${added.length > 1 ? 's' : ''} uploaded`, 'success');
     if (btn) btn.disabled = false;
+    fileInput.value = '';
+  }
+
+  // ─── Remove track ─────────────────────────────────────────────────────────────
+  async function removeTrack(index) {
+    const list = tracks();
+    const t    = list[index];
+    if (!t || !confirm(`Remove "${t.title || t.filename}"?`)) return;
+    const updated = list.filter((_, i) => i !== index);
+    await Autonom.saveConfig(config, { tracks: updated }, `Remove track ${t.filename}`);
+    if (currentIndex >= updated.length) currentIndex = Math.max(0, updated.length - 1);
+    renderTrackList();
+    loadTrack(currentIndex);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────────

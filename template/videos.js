@@ -14,11 +14,8 @@
       document.getElementById('add-video-controls')?.classList.remove('hidden');
       document.getElementById('add-video-btn')?.addEventListener('click', () => {
         const input = document.getElementById('video-url-input');
-        const url   = input?.value.trim();
-        if (url) { addVideo(url); input.value = ''; }
-      });
-      document.getElementById('video-url-input')?.addEventListener('keydown', e => {
-        if (e.key === 'Enter') document.getElementById('add-video-btn')?.click();
+        const urls  = (input?.value || '').split('\n').map(u => u.trim()).filter(Boolean);
+        if (urls.length) { addVideos(urls); input.value = ''; }
       });
     }
   }
@@ -67,12 +64,15 @@
   }
 
   // ─── Add / Remove ─────────────────────────────────────────────────────────────
-  async function addVideo(url) {
-    if (!youtubeId(url)) { Autonom.toast('Invalid YouTube URL', 'error'); return; }
-    config.videos = [...(config.videos || []), url];
-    await Autonom.saveConfig(config, { videos: config.videos }, 'Add video');
+  async function addVideos(urls) {
+    const valid   = urls.filter(u => youtubeId(u));
+    const invalid = urls.length - valid.length;
+    if (!valid.length) { Autonom.toast('No valid YouTube URLs found', 'error'); return; }
+    if (invalid) Autonom.toast(`${invalid} invalid URL${invalid > 1 ? 's' : ''} skipped`, 'error');
+    config.videos = [...(config.videos || []), ...valid];
+    await Autonom.saveConfig(config, { videos: config.videos }, 'Add videos');
     renderVideos();
-    Autonom.toast('Video added', 'success');
+    Autonom.toast(`${valid.length} video${valid.length > 1 ? 's' : ''} added`, 'success');
   }
 
   async function removeVideo(url) {
