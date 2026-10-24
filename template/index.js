@@ -17,7 +17,12 @@
     renderVideos();
     applyOGTags();
 
-    if (Autonom.isOwner()) populateCustomizationPanel();
+    if (Autonom.isOwner()) {
+      populateCustomizationPanel();
+      document.getElementById('edit-profile-btn')?.classList.remove('hidden');
+      document.getElementById('edit-cover')?.classList.remove('hidden');
+      document.getElementById('profile-photo-wrap')?.classList.add('owner');
+    }
   }
 
   function setText(id, val) {
@@ -81,22 +86,32 @@
     if (el) el.setAttribute('content', content);
   }
 
-  // ─── Customization Panel ──────────────────────────────────────────────────────
+  // ─── Populate Edit Drawer ─────────────────────────────────────────────────────
   function populateCustomizationPanel() {
-    setVal('theme-toggle', config.theme || 'dark');
-    setVal('bg-type',      config.background?.type  || 'color');
-    setVal('bg-color',     config.background?.value || '#1a1a2e');
+    setVal('edit-display-name', config.displayName || '');
+    setVal('edit-bio',          config.bio         || '');
+    setVal('edit-status',       config.status      || '');
+    setVal('theme-toggle',      config.theme       || 'dark');
+    setVal('bg-type',           config.background?.type  || 'color');
+    setVal('bg-color',          config.background?.value || '#1a1a2e');
+    setVal('custom-css',        config.customCSS   || '');
+
     const bgColorVal = config.background?.type === 'color' ? (config.background?.value || '#1a1a2e') : '#1a1a2e';
     const swatchEl = document.getElementById('bg-color-swatch');
     const labelEl  = document.getElementById('bg-color-label');
     if (swatchEl) swatchEl.style.background = bgColorVal;
     if (labelEl)  labelEl.textContent = bgColorVal.toUpperCase();
-    setVal('custom-css',   config.customCSS || '');
 
     const pages = config.pages || {};
-    Object.keys(pages).forEach(key => {
+    ['gallery','music','videos','friends','guestbook','games'].forEach(key => {
       const el = document.getElementById(`toggle-${key}`);
-      if (el) el.checked = pages[key];
+      if (el) el.checked = pages[key] !== false;
+    });
+
+    const home = config.homepageSections || {};
+    ['gallery','music','videos','friends','guestbook'].forEach(key => {
+      const el = document.getElementById(`home-${key}`);
+      if (el) el.checked = !!home[key];
     });
 
     const modeBtn = document.getElementById('mode-toggle-btn');
@@ -113,11 +128,8 @@
     const dirToggle = document.getElementById('directory-toggle');
     if (dirToggle) dirToggle.checked = config.directory?.listed !== false;
 
-    const dirLabel = document.getElementById('directory-label');
-    if (dirLabel) dirLabel.textContent = 'List your domain in the directory';
-
-    const domainInput = document.getElementById('custom-domain');
-    if (domainInput) domainInput.value = config.customDomain || `${Autonom.REPO_OWNER}.github.io`;
+    const ledgerRow = document.getElementById('ledger-domain-row');
+    if (ledgerRow) ledgerRow.classList.toggle('hidden', config.directory?.listed === false);
   }
 
   function setVal(id, val) {
@@ -127,16 +139,25 @@
 
   // ─── Save Customization ───────────────────────────────────────────────────────
   async function saveCustomization() {
-    const theme  = document.getElementById('theme-toggle')?.value || 'dark';
-    const bgType = document.getElementById('bg-type')?.value      || 'color';
-    const bgColor= document.getElementById('bg-color')?.value     || '#1a1a2e';
-    const bgImage= document.getElementById('bg-image');
-    const css    = document.getElementById('custom-css')?.value   || '';
+    const displayName = document.getElementById('edit-display-name')?.value.trim() || '';
+    const bio         = document.getElementById('edit-bio')?.value.trim()          || '';
+    const status      = document.getElementById('edit-status')?.value.trim()       || '';
+    const theme       = document.getElementById('theme-toggle')?.value             || 'dark';
+    const bgType      = document.getElementById('bg-type')?.value                  || 'color';
+    const bgColor     = document.getElementById('bg-color')?.value                 || '#1a1a2e';
+    const bgImage     = document.getElementById('bg-image');
+    const css         = document.getElementById('custom-css')?.value               || '';
 
     const pages = {};
     ['gallery','music','videos','friends','guestbook','games'].forEach(key => {
       const el = document.getElementById(`toggle-${key}`);
       if (el) pages[key] = el.checked;
+    });
+
+    const homepageSections = {};
+    ['gallery','music','videos','friends','guestbook'].forEach(key => {
+      const el = document.getElementById(`home-${key}`);
+      if (el) homepageSections[key] = el.checked;
     });
 
     let bgValue = bgColor;
@@ -146,16 +167,26 @@
       bgValue = 'assets/background.webp';
     }
 
+    // Update DOM immediately
+    setText('display-name', displayName);
+    setText('bio',    bio);
+    setText('status', status);
+
     await Autonom.saveConfig(config, {
+      displayName, bio, status,
       theme,
       background: { type: bgType, value: bgValue },
       customCSS: css,
       pages,
-    }, 'Update customization');
+      homepageSections,
+    }, 'Update profile');
 
     AutonomTheme.applyTheme(config);
     await Autonom.regenerateRobots(config);
     await Autonom.regenerateSitemap(config);
+    if (config.mode !== 'business') await Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config));
+    else await Autonom.rewriteIndexHead(config, Autonom.generateJSONLD(config.businessProfile, config));
+    await Autonom.regenerateRSS(config);
   }
 
   // ─── Mode Toggle ──────────────────────────────────────────────────────────────
@@ -224,8 +255,9 @@
 
   // ─── Wire Events ──────────────────────────────────────────────────────────────
   function wireEvents() {
-    // Profile photo
-    document.getElementById('edit-profile-photo')?.addEventListener('click', () => {
+    // Profile photo — click avatar to pick
+    document.getElementById('profile-photo-wrap')?.addEventListener('click', () => {
+      if (!Autonom.isOwner()) return;
       const input = document.createElement('input');
       input.type = 'file'; input.accept = 'image/*';
       input.onchange = e => Autonom.handleProfilePhotoUpload(e.target.files[0]);
@@ -240,35 +272,32 @@
       input.click();
     });
 
-    // Bio
-    document.getElementById('edit-bio')?.addEventListener('click', async () => {
-      const el  = document.getElementById('bio');
-      const val = prompt('Edit bio:', el?.textContent || '');
-      if (val === null) return;
-      el.textContent = val;
-      await Autonom.saveConfig(config, { bio: val }, 'Update bio');
-      if (config.mode !== 'business') await Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config));
-      else await Autonom.rewriteIndexHead(config, Autonom.generateJSONLD(config.businessProfile, config));
+    // Edit drawer open/close
+    document.getElementById('edit-profile-btn')?.addEventListener('click', openEditDrawer);
+    document.getElementById('edit-drawer-close')?.addEventListener('click', closeEditDrawer);
+    document.getElementById('edit-drawer')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('edit-drawer')) closeEditDrawer();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeEditDrawer();
     });
 
-    // Status
-    document.getElementById('edit-status')?.addEventListener('click', async () => {
-      const el  = document.getElementById('status');
-      const val = prompt('Edit status:', el?.textContent || '');
-      if (val === null) return;
-      el.textContent = val;
-      await Autonom.saveConfig(config, { status: val }, 'Update status');
-      await Autonom.regenerateRSS(config);
-    });
+    function openEditDrawer() {
+      populateCustomizationPanel();
+      syncBgInputs();
+      document.getElementById('edit-drawer')?.classList.remove('hidden');
+      document.body.classList.add('drawer-open');
+    }
+    function closeEditDrawer() {
+      document.getElementById('edit-drawer')?.classList.add('hidden');
+      document.body.classList.remove('drawer-open');
+    }
 
-    // Videos
-    document.getElementById('edit-videos')?.addEventListener('click', () => {
-      const url = prompt('YouTube URL:');
-      if (url) addVideo(url);
+    // Save all
+    document.getElementById('save-customization')?.addEventListener('click', async () => {
+      await saveCustomization();
+      closeEditDrawer();
     });
-
-    // Customization
-    document.getElementById('save-customization')?.addEventListener('click', saveCustomization);
 
     // Background color picker modal
     (() => {
@@ -375,16 +404,15 @@
     })();
 
     // Background type toggle
-    const bgType  = document.getElementById('bg-type');
-    const bgColor = document.getElementById('bg-color');
-    const bgImage = document.getElementById('bg-image');
+    const bgTypeEl  = document.getElementById('bg-type');
+    const bgColorBtn = document.getElementById('bg-color-btn');
+    const bgImageEl = document.getElementById('bg-image');
     function syncBgInputs() {
-      const t = bgType?.value;
-      bgColor?.classList.toggle('hidden', t !== 'color');
-      bgImage?.classList.toggle('hidden', t !== 'image');
+      const t = bgTypeEl?.value;
+      bgColorBtn?.classList.toggle('hidden', t !== 'color');
+      bgImageEl?.classList.toggle('hidden', t !== 'image');
     }
-    bgType?.addEventListener('change', syncBgInputs);
-    syncBgInputs();
+    bgTypeEl?.addEventListener('change', syncBgInputs);
 
     // Mode
     document.getElementById('mode-toggle-btn')?.addEventListener('click', toggleMode);
@@ -400,27 +428,47 @@
     // Export
     document.getElementById('export-backup')?.addEventListener('click', Autonom.handleExport);
 
-    // Directory toggle
-    document.getElementById('directory-toggle')?.addEventListener('change', async e => {
-      await Autonom.saveConfig(config, { directory: { listed: e.target.checked } }, 'Update directory listing');
-      await Autonom.regenerateRobots(config);
-      await Autonom.regenerateSitemap(config);
-      await Autonom.syncDirectory(config);
+    // Directory toggle — show/hide ledger domain row
+    document.getElementById('directory-toggle')?.addEventListener('change', e => {
+      const ledgerRow = document.getElementById('ledger-domain-row');
+      if (ledgerRow) ledgerRow.classList.toggle('hidden', !e.target.checked);
     });
 
-    // Custom domain
-    document.getElementById('save-custom-domain')?.addEventListener('click', async () => {
-      const domain = document.getElementById('custom-domain')?.value?.trim().toLowerCase();
-      if (!domain) return;
-      await Autonom.saveConfig(config, { customDomain: domain }, 'Set custom domain');
-      await Autonom.commitFile('CNAME', domain, 'Add CNAME for custom domain');
-      Autonom.toast(`Custom domain set to ${domain}`, 'success');
-      showDNSHelper(domain);
+    // Update ledger domain — auto-detect hostname or CNAME
+    document.getElementById('update-ledger-domain')?.addEventListener('click', async () => {
+      const btn = document.getElementById('update-ledger-domain');
+      btn.textContent = 'Detecting...';
+      btn.disabled = true;
+
+      let domain = '';
+      // Option 1: already on custom domain
+      if (!location.hostname.endsWith('github.io') && location.hostname !== 'localhost') {
+        domain = location.hostname;
+      } else {
+        // Option 2: read CNAME file from repo
+        try {
+          const data = await Autonom.ghGet(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/CNAME`);
+          domain = atob(data.content.replace(/\n/g, '')).trim();
+        } catch { /* no CNAME */ }
+      }
+
+      if (domain && !domain.endsWith('github.io')) {
+        await Autonom.saveConfig(config, { customDomain: domain }, 'Update custom domain');
+        await Autonom.syncDirectory(config);
+        Autonom.toast(`Ledger updated — ${domain}`, 'success');
+        if (config.customDomain) showDNSHelper(config.customDomain);
+      } else {
+        Autonom.toast('No custom domain found — your github.io address is already in the ledger', 'success');
+        await Autonom.syncDirectory(config);
+      }
+
+      btn.textContent = 'Update ledger';
+      btn.disabled = false;
     });
 
     // Verify DNS
     document.getElementById('verify-dns')?.addEventListener('click', async () => {
-      const domain = document.getElementById('custom-domain')?.value?.trim();
+      const domain = config.customDomain;
       const result = document.getElementById('dns-verify-result');
       if (!domain || !result) return;
       result.textContent = 'Checking...';

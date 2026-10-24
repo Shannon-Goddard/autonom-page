@@ -135,7 +135,7 @@ h3 { font-size: 1.1rem; }
   padding: 0.3rem 0.6rem;
 }
 
-/* ─── Edit Buttons ───────────────────────────────────────────────────────────── */
+/* ─── Edit Buttons (cover only now) ─────────────────────────────────────────── */
 .edit-btn {
   background: var(--surface-2);
   color: var(--text);
@@ -144,37 +144,162 @@ h3 { font-size: 1.1rem; }
   padding: 0.3rem 0.8rem;
 }
 
-/* All buttons inside the customization panel match edit-btn size */
-#customization-panel button {
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.8rem;
-  padding: 0.3rem 0.8rem;
+/* ─── Edit Profile Ghost Button ──────────────────────────────────────────────── */
+#edit-profile-btn {
+  align-self: flex-end;
+  margin-top: 0.25rem;
+}
+
+/* ─── Profile Photo Clickable Overlay ───────────────────────────────────────── */
+#profile-photo-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  cursor: default;
+}
+#profile-photo-wrap.owner { cursor: pointer; }
+#profile-photo-wrap img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--bg);
+  background: var(--surface);
+  display: block;
+}
+#profile-photo-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+#profile-photo-wrap.owner:hover #profile-photo-overlay { opacity: 1; }
+
+/* ─── Edit Drawer ────────────────────────────────────────────────────────────── */
+#edit-drawer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 400;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.15s ease;
+}
+#edit-drawer.hidden { display: none !important; }
+
+#edit-drawer-box {
+  width: 100%;
+  max-width: 420px;
+  height: 100vh;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#edit-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#edit-drawer-header h2 { font-size: 1.1rem; }
+#edit-drawer-close {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 0.2rem 0.5rem;
   border: none;
-  width: auto;
 }
 
-/* Specific panel buttons that need more breathing room */
-#save-customization,
-#save-custom-domain {
-  margin-top: 0.75rem;
-  padding: 0.55rem 1rem;
+#edit-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-/* Space between share/export buttons and QR code below */
-#admin-utilities {
+.drawer-section {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
-#export-backup,
-#share-page {
+.drawer-section:last-of-type { border-bottom: none; }
+.drawer-section h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
   margin-bottom: 0.25rem;
+}
+.drawer-section label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.drawer-section label input[type="checkbox"] { width: auto; flex-shrink: 0; }
+.drawer-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+.drawer-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Inline text button (ledger update) */
+.btn-inline {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  display: inline;
+  border-radius: 0;
+}
+.btn-inline:hover { opacity: 0.8; }
+
+#save-customization {
+  margin-top: 1.25rem;
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+/* All buttons inside drawer sections */
+.drawer-section button:not(.btn-inline) {
+  width: auto;
+  align-self: flex-start;
+  font-size: 0.85rem;
+  padding: 0.4rem 1rem;
 }
 
 /* Preview mode — hide all owner UI */
-.preview-mode .edit-btn,
-.preview-mode #customization-panel { display: none !important; }
+.preview-mode .owner-only,
+.preview-mode #edit-profile-btn { display: none !important; }
 
 /* ─── Toast Notifications ────────────────────────────────────────────────────── */
 #toast-container {
@@ -315,18 +440,6 @@ h3 { font-size: 1.1rem; }
   gap: 0.4rem;
   position: relative;
 }
-#profile-photo {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid var(--bg);
-  background: var(--surface);
-}
-#edit-profile-photo {
-  margin-top: -0.5rem;
-}
-
 /* ─── Background Controls ────────────────────────────────────────────────────── */
 #background-controls {
   display: flex;

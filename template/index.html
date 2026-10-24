@@ -34,126 +34,152 @@
 
     <section id="cover-section" aria-label="Cover photo">
       <img id="cover-photo" src="assets/cover.webp" alt="Cover photo" />
-      <button id="edit-cover" class="edit-btn hidden" aria-label="Edit cover photo">Edit Cover</button>
+      <button id="edit-cover" class="owner-only hidden" aria-label="Edit cover photo">&#128247;</button>
     </section>
 
     <section id="profile-section" aria-label="Profile">
-      <img id="profile-photo" src="assets/profile.webp" alt="Profile photo" />
-      <button id="edit-profile-photo" class="edit-btn hidden" aria-label="Edit profile photo">Edit Photo</button>
+      <div id="profile-photo-wrap">
+        <img id="profile-photo" src="assets/profile.webp" alt="Profile photo" />
+        <div id="profile-photo-overlay" aria-hidden="true">&#128247;</div>
+      </div>
       <h1 id="display-name"></h1>
       <p id="bio"></p>
-      <button id="edit-bio" class="edit-btn hidden" aria-label="Edit bio">Edit</button>
       <p id="status"></p>
-      <button id="edit-status" class="edit-btn hidden" aria-label="Edit status">Edit Status</button>
       <p id="last-updated" aria-label="Last updated"></p>
+      <button id="edit-profile-btn" class="btn-ghost owner-only hidden" aria-label="Edit profile">Edit Profile</button>
     </section>
 
     <section id="videos-section" aria-label="Videos">
       <h2>Videos</h2>
       <div id="videos-grid"></div>
-      <button id="edit-videos" class="edit-btn hidden" aria-label="Manage videos">Manage Videos</button>
-    </section>
-
-    <section id="customization-panel" class="hidden" aria-label="Customization panel">
-      <h2>Customize Your Page</h2>
-
-      <div id="theme-controls">
-        <label for="theme-toggle">Theme</label>
-        <select id="theme-toggle" aria-label="Select theme">
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-        </select>
-      </div>
-
-      <div id="background-controls">
-        <label>Background</label>
-        <select id="bg-type" aria-label="Background type">
-          <option value="color">Solid Color</option>
-          <option value="image">Image</option>
-          <option value="gradient">Gradient</option>
-        </select>
-        <button type="button" id="bg-color-btn" aria-label="Pick background color" style="display:flex;align-items:center;gap:0.5rem;background:var(--surface-2);color:var(--text);border:1px solid var(--border);">
-          <span id="bg-color-swatch" style="display:inline-block;width:1.2rem;height:1.2rem;border-radius:4px;border:1px solid var(--border);background:#1a1a2e;"></span>
-          <span id="bg-color-label">#1A1A2E</span>
-        </button>
-        <input type="hidden" id="bg-color" value="#1a1a2e" />
-        <input type="file" id="bg-image" accept="image/*" aria-label="Background image" class="hidden" />
-      </div>
-
-      <div id="custom-css-controls">
-        <label for="custom-css">Custom CSS</label>
-        <textarea id="custom-css" aria-label="Custom CSS" placeholder="/* your styles here */"></textarea>
-      </div>
-
-      <div id="page-toggles" aria-label="Page visibility toggles">
-        <h3>Pages</h3>
-        <label><input type="checkbox" id="toggle-gallery" aria-label="Show gallery page" /> Gallery</label>
-        <label><input type="checkbox" id="toggle-music" aria-label="Show music page" /> Music</label>
-        <label><input type="checkbox" id="toggle-videos" aria-label="Show videos page" /> Videos</label>
-        <label><input type="checkbox" id="toggle-friends" aria-label="Show friends page" /> Friends</label>
-        <label><input type="checkbox" id="toggle-guestbook" aria-label="Show guestbook page" /> Guestbook</label>
-        <label><input type="checkbox" id="toggle-games" aria-label="Show games page" /> Games</label>
-      </div>
-
-      <div id="mode-toggle-controls">
-        <button id="mode-toggle-btn" aria-label="Switch site mode">Switch to Business Mode</button>
-      </div>
-
-      <div id="business-profile-form" class="hidden" aria-label="Business profile form">
-        <h3>Business Profile</h3>
-        <p class="pii-notice">This information will be publicly visible on your site and in your GitHub repository. Only enter details you are comfortable sharing publicly.</p>
-        <select id="business-type" aria-label="Business type">
-          <option value="">Select type...</option>
-          <option value="LocalBusiness">Local Business</option>
-          <option value="ProfessionalService">Freelancer / Professional</option>
-          <option value="Restaurant">Restaurant</option>
-          <option value="Store">Store</option>
-          <option value="EventVenue">Event Venue</option>
-        </select>
-        <input type="text" id="business-name" placeholder="Business name" aria-label="Business name" />
-        <input type="text" id="business-category" placeholder="Category (e.g. Graphic Design)" aria-label="Business category" />
-        <input type="text" id="business-city" placeholder="City" aria-label="City" />
-        <input type="text" id="business-region" placeholder="State / Region" aria-label="State or region" />
-        <input type="text" id="business-country" placeholder="Country" aria-label="Country" />
-        <input type="tel" id="business-phone" placeholder="Phone" aria-label="Phone number" />
-        <input type="email" id="business-email" placeholder="Email" aria-label="Business email" />
-        <select id="business-price-range" aria-label="Price range">
-          <option value="">Price range...</option>
-          <option value="$">$</option>
-          <option value="$$">$$</option>
-          <option value="$$$">$$$</option>
-          <option value="$$$$">$$$$</option>
-        </select>
-        <div id="services-input" aria-label="Services offered"></div>
-        <div id="hours-input" aria-label="Operating hours"></div>
-        <button id="save-business-profile" aria-label="Save business profile">Save Business Profile</button>
-      </div>
-
-      <div id="admin-utilities" aria-label="Admin utilities">
-        <h3>Admin</h3>
-        <div id="storage-meter" aria-label="Storage usage"></div>
-        <button id="export-backup" aria-label="Export and download backup">Export / Backup</button>
-        <button id="share-page" aria-label="Copy page URL to clipboard">Share My Page</button>
-        <div id="qr-code" aria-label="QR code for your page"></div>
-        <label>
-          <input type="checkbox" id="directory-toggle" aria-label="List in directory" />
-          <span id="directory-label">List me in the directory</span>
-        </label>
-        <input type="text" id="custom-domain" placeholder="www.yourdomain.com" aria-label="Custom domain" />
-        <button id="save-custom-domain" aria-label="Save custom domain">Save Domain</button>
-        <div id="dns-helper" class="hidden" aria-label="DNS configuration instructions">
-          <p id="dns-helper-intro"></p>
-          <div id="dns-records"></div>
-          <button id="verify-dns" aria-label="Verify DNS propagation">Verify DNS</button>
-          <p id="dns-verify-result" aria-live="polite"></p>
-        </div>
-        <div id="notifications-badge" aria-label="Pending post notifications"></div>
-      </div>
-
-      <button id="save-customization" aria-label="Save all customization changes">Save Changes</button>
     </section>
 
   </main>
+
+  <!-- ─── Edit Profile Drawer ──────────────────────────────────────────────── -->
+  <div id="edit-drawer" class="hidden" role="dialog" aria-modal="true" aria-label="Edit profile">
+    <div id="edit-drawer-box">
+      <div id="edit-drawer-header">
+        <h2>Edit Profile</h2>
+        <button id="edit-drawer-close" aria-label="Close edit drawer">&#x2715;</button>
+      </div>
+      <div id="edit-drawer-body">
+
+        <div class="drawer-section">
+          <h3>Profile</h3>
+          <label for="edit-display-name">Name</label>
+          <input type="text" id="edit-display-name" placeholder="Your name" aria-label="Display name" />
+          <label for="edit-bio">Bio</label>
+          <textarea id="edit-bio" placeholder="Tell people about yourself" aria-label="Bio" rows="3"></textarea>
+          <label for="edit-status">Status</label>
+          <input type="text" id="edit-status" placeholder="What's on your mind?" aria-label="Status" />
+        </div>
+
+        <div class="drawer-section">
+          <h3>Appearance</h3>
+          <label for="theme-toggle">Theme</label>
+          <select id="theme-toggle" aria-label="Select theme">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+          <label>Background</label>
+          <select id="bg-type" aria-label="Background type">
+            <option value="color">Solid Color</option>
+            <option value="image">Image</option>
+            <option value="gradient">Gradient</option>
+          </select>
+          <button type="button" id="bg-color-btn" aria-label="Pick background color" style="display:flex;align-items:center;gap:0.5rem;background:var(--surface-2);color:var(--text);border:1px solid var(--border);">
+            <span id="bg-color-swatch" style="display:inline-block;width:1.2rem;height:1.2rem;border-radius:4px;border:1px solid var(--border);background:#1a1a2e;"></span>
+            <span id="bg-color-label">#1A1A2E</span>
+          </button>
+          <input type="hidden" id="bg-color" value="#1a1a2e" />
+          <input type="file" id="bg-image" accept="image/*" aria-label="Background image" class="hidden" />
+          <label for="custom-css">Custom CSS</label>
+          <textarea id="custom-css" aria-label="Custom CSS" placeholder="/* your styles here */" rows="4"></textarea>
+        </div>
+
+        <div class="drawer-section">
+          <h3>Pages</h3>
+          <p class="drawer-hint">Toggle which pages appear in your nav.</p>
+          <label><input type="checkbox" id="toggle-gallery" /> Gallery</label>
+          <label><input type="checkbox" id="toggle-music" /> Music</label>
+          <label><input type="checkbox" id="toggle-videos" /> Videos</label>
+          <label><input type="checkbox" id="toggle-friends" /> Friends</label>
+          <label><input type="checkbox" id="toggle-guestbook" /> Guestbook</label>
+          <label><input type="checkbox" id="toggle-games" /> Games</label>
+        </div>
+
+        <div class="drawer-section">
+          <h3>Homepage Sections</h3>
+          <p class="drawer-hint">Show content from your other pages directly on your landing page.</p>
+          <label><input type="checkbox" id="home-gallery" /> Show Gallery</label>
+          <label><input type="checkbox" id="home-music" /> Show Music Player</label>
+          <label><input type="checkbox" id="home-videos" /> Show Videos</label>
+          <label><input type="checkbox" id="home-friends" /> Show Friends</label>
+          <label><input type="checkbox" id="home-guestbook" /> Show Guestbook</label>
+        </div>
+
+        <div class="drawer-section">
+          <h3>Mode</h3>
+          <button id="mode-toggle-btn" aria-label="Switch site mode">Switch to Business Mode</button>
+        </div>
+
+        <div id="business-profile-form" class="hidden drawer-section" aria-label="Business profile form">
+          <h3>Business Profile</h3>
+          <p class="pii-notice">This information will be publicly visible on your site and in your GitHub repository. Only enter details you are comfortable sharing publicly.</p>
+          <select id="business-type" aria-label="Business type">
+            <option value="">Select type...</option>
+            <option value="LocalBusiness">Local Business</option>
+            <option value="ProfessionalService">Freelancer / Professional</option>
+            <option value="Restaurant">Restaurant</option>
+            <option value="Store">Store</option>
+            <option value="EventVenue">Event Venue</option>
+          </select>
+          <input type="text" id="business-name" placeholder="Business name" aria-label="Business name" />
+          <input type="text" id="business-category" placeholder="Category (e.g. Graphic Design)" aria-label="Business category" />
+          <input type="text" id="business-city" placeholder="City" aria-label="City" />
+          <input type="text" id="business-region" placeholder="State / Region" aria-label="State or region" />
+          <input type="text" id="business-country" placeholder="Country" aria-label="Country" />
+          <input type="tel" id="business-phone" placeholder="Phone" aria-label="Phone number" />
+          <input type="email" id="business-email" placeholder="Email" aria-label="Business email" />
+          <select id="business-price-range" aria-label="Price range">
+            <option value="">Price range...</option>
+            <option value="$">$</option>
+            <option value="$$">$$</option>
+            <option value="$$$">$$$</option>
+            <option value="$$$$">$$$$</option>
+          </select>
+          <div id="services-input" aria-label="Services offered"></div>
+          <div id="hours-input" aria-label="Operating hours"></div>
+          <button id="save-business-profile" aria-label="Save business profile">Save Business Profile</button>
+        </div>
+
+        <div class="drawer-section" aria-label="Admin utilities">
+          <h3>Admin</h3>
+          <div id="storage-meter" aria-label="Storage usage"></div>
+          <button id="export-backup" aria-label="Export and download backup">Export / Backup</button>
+          <button id="share-page" aria-label="Copy page URL to clipboard">Share My Page</button>
+          <div id="qr-code" aria-label="QR code for your page"></div>
+          <div id="notifications-badge" aria-label="Pending post notifications"></div>
+          <label class="drawer-toggle-row">
+            <input type="checkbox" id="directory-toggle" aria-label="List in directory" />
+            <span>Show my page in the ledger</span>
+          </label>
+          <div id="ledger-domain-row" class="hidden">
+            <p class="drawer-hint">Got a custom domain? <button id="update-ledger-domain" class="btn-inline" aria-label="Update ledger with custom domain">Update ledger</button></p>
+          </div>
+          <div id="dns-helper" class="hidden" aria-label="DNS configuration instructions">
+            <p id="dns-helper-intro"></p>
+            <div id="dns-records"></div>
+            <button id="verify-dns" aria-label="Verify DNS propagation">Verify DNS</button>
+            <p id="dns-verify-result" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <button id="save-customization" aria-label="Save all changes">Save Changes</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ─── Color Picker Modal ───────────────────────────────────────────────── -->
   <div id="color-picker-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Color picker">

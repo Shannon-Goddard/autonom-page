@@ -15,6 +15,13 @@
     "guestbook": true,
     "games": true
   },
+  "homepageSections": {
+    "gallery": false,
+    "music": false,
+    "videos": false,
+    "friends": false,
+    "guestbook": false
+  },
   "directory": {
     "listed": true
   },
