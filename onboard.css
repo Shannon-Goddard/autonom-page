@@ -316,6 +316,7 @@ img { max-width: 100%; display: block; }
 
 .onboard-card {
   max-width: 520px;
+  margin: 0 auto;
   padding: 2rem;
   display: flex;
   flex-direction: column;

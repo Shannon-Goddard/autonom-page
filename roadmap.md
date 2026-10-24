@@ -1077,7 +1077,7 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 
 ---
 
-- **Hamburger nav blocked by CSP on marketing pages** — Nav script was an inline `<script>` block but `index.html` and `about.html` had `script-src 'self'` with no `'unsafe-inline'`. Browser silently blocked the click listener — hamburger did nothing. Extracted nav logic to `nav.js`, replaced inline block with `<script src="nav.js">` across all five marketing pages (`index.html`, `about.html`, `legal.html`, `how-to-domain.html`, `how-to-google.html`). Fixed `about.html` CSP to add `'unsafe-inline'` for consistency with the other pages.
+- **Nav links to unbuilt pages removed** — `directory.html`, `colors.html`, `changelog.html` removed from nav drawer on all five marketing pages until they are built. Home link fixed from `/` (resolved to C drive locally) to absolute `https://autonom.page`. Legal dates updated from June 2025 to October 2026. `how-to-domain.html` Step 5 ("Update your Autonom site settings") removed — custom domain is now a toggle only, no URL input, to protect the directory from spam and errors. Get Started card centered on desktop (`margin: 0 auto` on `.onboard-card`). — Nav script was an inline `<script>` block but `index.html` and `about.html` had `script-src 'self'` with no `'unsafe-inline'`. Browser silently blocked the click listener — hamburger did nothing. Extracted nav logic to `nav.js`, replaced inline block with `<script src="nav.js">` across all five marketing pages (`index.html`, `about.html`, `legal.html`, `how-to-domain.html`, `how-to-google.html`). Fixed `about.html` CSP to add `'unsafe-inline'` for consistency with the other pages.
 
 ---
 
