@@ -1077,6 +1077,10 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 
 ---
 
+- **Hamburger nav blocked by CSP on marketing pages** — Nav script was an inline `<script>` block but `index.html` and `about.html` had `script-src 'self'` with no `'unsafe-inline'`. Browser silently blocked the click listener — hamburger did nothing. Extracted nav logic to `nav.js`, replaced inline block with `<script src="nav.js">` across all five marketing pages (`index.html`, `about.html`, `legal.html`, `how-to-domain.html`, `how-to-google.html`). Fixed `about.html` CSP to add `'unsafe-inline'` for consistency with the other pages.
+
+---
+
 ## Known Issues / Future Work
 
 - **App already installed edge case** — If a user has previously installed the GitHub App and returns to `autonom.page` to start over, the OAuth + installation flow throws an error (installation already exists). Needs a graceful handler — detect existing installation and skip to the form, or surface a clear message. Low priority edge case for now.

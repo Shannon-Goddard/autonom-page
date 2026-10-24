@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data: blob:; connect-src https:;" />
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; connect-src https:;" />
   <title>About — Autonom</title>
   <meta property="og:title" content="About — Autonom" />
   <meta property="og:description" content="The story behind Autonom, the people who built it, and why it's free." />
@@ -211,34 +211,7 @@
     <a href="https://buymeacoffee.com/goddardshannon9" target="_blank" rel="noopener" class="btn-beer" aria-label="Buy the dev a beer">🍺 Buy the dev a beer</a>
   </footer>
 
-  <script>
-    (() => {
-      const hamburger = document.getElementById('nav-hamburger');
-      const drawer    = document.getElementById('nav-drawer');
-      const overlay   = document.getElementById('nav-overlay');
-      const close     = document.getElementById('nav-drawer-close');
-      function openNav() {
-        drawer.classList.add('open');
-        overlay.classList.add('open');
-        hamburger.setAttribute('aria-expanded', 'true');
-        drawer.setAttribute('aria-hidden', 'false');
-        overlay.setAttribute('aria-hidden', 'false');
-        close.focus();
-      }
-      function closeNav() {
-        drawer.classList.remove('open');
-        overlay.classList.remove('open');
-        hamburger.setAttribute('aria-expanded', 'false');
-        drawer.setAttribute('aria-hidden', 'true');
-        overlay.setAttribute('aria-hidden', 'true');
-        hamburger.focus();
-      }
-      hamburger.addEventListener('click', openNav);
-      close.addEventListener('click', closeNav);
-      overlay.addEventListener('click', closeNav);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
-    })();
-  </script>
+  <script src="nav.js"></script>
 
 </body>
 </html>
