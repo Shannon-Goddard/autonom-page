@@ -1092,9 +1092,9 @@ Browser-to-browser direct audio streaming between connected friends when both ar
   - about.html hero banner — abstract/dark palette, no site dependency (900×300px)
   - All images go in `assets/`. Wire into HTML in one pass once delivered.
 - **Remaining 404 pages** — `directory.html`, `colors.html`, `changelog.html` not yet built. Linked in nav.
-- **`directory.html`** — Searchable list of all public Autonom sites. Reads from DynamoDB via `directory-api` Lambda. No user input — listings auto-populated from onboarding data, toggled via Settings panel.
-- **`colors.html`** — Interactive hex/RGB color reference tool.
-- **`changelog.html`** — Version history page.
+- **`colors.html`** — Built. Clickable color swatches for the full Autonom palette. Click any swatch copies hex to clipboard. Shows color name, HEX, and RGB values. CSS inline in page. Added to nav on all marketing pages.
+- **`directory.html`** — Waiting on bug-free template. Searchable list of all public Autonom sites. Reads from DynamoDB via `directory-api` Lambda. No user input — listings auto-populated from onboarding data, toggled via Settings panel.
+- **`changelog.html`** — Waiting on bug-free template. Version history page.
 
 ---
 
