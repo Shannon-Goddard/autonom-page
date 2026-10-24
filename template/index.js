@@ -86,6 +86,11 @@
     setVal('theme-toggle', config.theme || 'dark');
     setVal('bg-type',      config.background?.type  || 'color');
     setVal('bg-color',     config.background?.value || '#1a1a2e');
+    const bgColorVal = config.background?.type === 'color' ? (config.background?.value || '#1a1a2e') : '#1a1a2e';
+    const swatchEl = document.getElementById('bg-color-swatch');
+    const labelEl  = document.getElementById('bg-color-label');
+    if (swatchEl) swatchEl.style.background = bgColorVal;
+    if (labelEl)  labelEl.textContent = bgColorVal.toUpperCase();
     setVal('custom-css',   config.customCSS || '');
 
     const pages = config.pages || {};
@@ -264,6 +269,110 @@
 
     // Customization
     document.getElementById('save-customization')?.addEventListener('click', saveCustomization);
+
+    // Background color picker modal
+    (() => {
+      const modal    = document.getElementById('color-picker-modal');
+      const specCvs  = document.getElementById('cp-spectrum');
+      const hueCvs   = document.getElementById('cp-hue');
+      const preview  = document.getElementById('cp-preview');
+      const hexEl    = document.getElementById('cp-hex');
+      const rgbEl    = document.getElementById('cp-rgb');
+      const swatch   = document.getElementById('bg-color-swatch');
+      const label    = document.getElementById('bg-color-label');
+      const hidden   = document.getElementById('bg-color');
+      if (!modal || !specCvs) return;
+
+      const sCtx = specCvs.getContext('2d');
+      const hCtx = hueCvs.getContext('2d');
+      let hue = 0, draggingSpec = false, draggingHue = false;
+
+      function drawSpectrum(h) {
+        const w = specCvs.width, v = specCvs.height;
+        const gH = sCtx.createLinearGradient(0,0,w,0);
+        gH.addColorStop(0, '#fff'); gH.addColorStop(1, `hsl(${h},100%,50%)`);
+        sCtx.fillStyle = gH; sCtx.fillRect(0,0,w,v);
+        const gV = sCtx.createLinearGradient(0,0,0,v);
+        gV.addColorStop(0,'rgba(0,0,0,0)'); gV.addColorStop(1,'rgba(0,0,0,1)');
+        sCtx.fillStyle = gV; sCtx.fillRect(0,0,w,v);
+      }
+
+      function drawHue() {
+        const w = hueCvs.width, h = hueCvs.height;
+        const g = hCtx.createLinearGradient(0,0,w,0);
+        for (let i = 0; i <= 360; i += 30) g.addColorStop(i/360, `hsl(${i},100%,50%)`);
+        hCtx.fillStyle = g; hCtx.fillRect(0,0,w,h);
+      }
+
+      function toHex(r,g,b) {
+        return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0').toUpperCase()).join('');
+      }
+
+      function applyColor(r,g,b) {
+        const hex = toHex(r,g,b);
+        const rgb = `rgb(${r}, ${g}, ${b})`;
+        preview.style.background = hex;
+        hexEl.textContent = hex;
+        rgbEl.textContent = rgb;
+      }
+
+      function sampleSpec(e) {
+        const rect = specCvs.getBoundingClientRect();
+        const sx = specCvs.width / rect.width, sy = specCvs.height / rect.height;
+        const x = Math.max(0, Math.min(Math.round((e.clientX - rect.left)*sx), specCvs.width-1));
+        const y = Math.max(0, Math.min(Math.round((e.clientY - rect.top)*sy),  specCvs.height-1));
+        const px = sCtx.getImageData(x, y, 1, 1).data;
+        applyColor(px[0], px[1], px[2]);
+      }
+
+      function sampleHue(e) {
+        const rect = hueCvs.getBoundingClientRect();
+        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        hue = Math.round((x / rect.width) * 360);
+        drawSpectrum(hue);
+      }
+
+      specCvs.addEventListener('mousedown',  e => { draggingSpec = true; sampleSpec(e); });
+      hueCvs.addEventListener('mousedown',   e => { draggingHue  = true; sampleHue(e); });
+      specCvs.addEventListener('click', sampleSpec);
+      hueCvs.addEventListener('click',  sampleHue);
+      specCvs.addEventListener('touchstart', e => { draggingSpec = true; sampleSpec(e.touches[0]); }, { passive: true });
+      hueCvs.addEventListener('touchstart',  e => { draggingHue  = true; sampleHue(e.touches[0]); },  { passive: true });
+      specCvs.addEventListener('touchmove',  e => { if (draggingSpec) sampleSpec(e.touches[0]); }, { passive: true });
+      hueCvs.addEventListener('touchmove',   e => { if (draggingHue)  sampleHue(e.touches[0]); },  { passive: true });
+      document.addEventListener('mousemove', e => { if (draggingSpec) sampleSpec(e); if (draggingHue) sampleHue(e); });
+      document.addEventListener('mouseup',   () => { draggingSpec = false; draggingHue = false; });
+      document.addEventListener('touchend',  () => { draggingSpec = false; draggingHue = false; });
+
+      // Open modal
+      document.getElementById('bg-color-btn')?.addEventListener('click', () => {
+        drawHue();
+        drawSpectrum(hue);
+        // Seed with current saved color
+        const cur = hidden.value || '#1a1a2e';
+        const r = parseInt(cur.slice(1,3),16), g = parseInt(cur.slice(3,5),16), b = parseInt(cur.slice(5,7),16);
+        applyColor(r, g, b);
+        modal.classList.remove('hidden');
+      });
+
+      // Apply
+      document.getElementById('cp-apply')?.addEventListener('click', () => {
+        const hex = hexEl.textContent;
+        hidden.value = hex;
+        swatch.style.background = hex;
+        label.textContent = hex;
+        modal.classList.add('hidden');
+      });
+
+      // Close
+      document.getElementById('color-picker-close')?.addEventListener('click', () => modal.classList.add('hidden'));
+      modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.add('hidden'); });
+
+      // Click value to copy
+      hexEl.addEventListener('click', () => navigator.clipboard?.writeText(hexEl.textContent).then(() => Autonom.toast(`Copied ${hexEl.textContent}`, 'success')));
+      rgbEl.addEventListener('click', () => navigator.clipboard?.writeText(rgbEl.textContent).then(() => Autonom.toast(`Copied ${rgbEl.textContent}`, 'success')));
+    })();
 
     // Background type toggle
     const bgType  = document.getElementById('bg-type');

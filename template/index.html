@@ -72,7 +72,11 @@
           <option value="image">Image</option>
           <option value="gradient">Gradient</option>
         </select>
-        <input type="color" id="bg-color" aria-label="Background color" value="#1a1a2e" />
+        <button type="button" id="bg-color-btn" aria-label="Pick background color" style="display:flex;align-items:center;gap:0.5rem;background:var(--surface-2);color:var(--text);border:1px solid var(--border);">
+          <span id="bg-color-swatch" style="display:inline-block;width:1.2rem;height:1.2rem;border-radius:4px;border:1px solid var(--border);background:#1a1a2e;"></span>
+          <span id="bg-color-label">#1A1A2E</span>
+        </button>
+        <input type="hidden" id="bg-color" value="#1a1a2e" />
         <input type="file" id="bg-image" accept="image/*" aria-label="Background image" class="hidden" />
       </div>
 
@@ -150,6 +154,30 @@
     </section>
 
   </main>
+
+  <!-- ─── Color Picker Modal ───────────────────────────────────────────────── -->
+  <div id="color-picker-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Color picker">
+    <div id="color-picker-box" class="glass">
+      <button id="color-picker-close" aria-label="Close color picker">&#x2715;</button>
+      <h3>Pick a Color</h3>
+      <canvas id="cp-spectrum" width="600" height="400" aria-label="Color spectrum"></canvas>
+      <canvas id="cp-hue" width="600" height="28" aria-label="Hue slider"></canvas>
+      <div id="cp-preview-row">
+        <div id="cp-preview"></div>
+        <div id="cp-values">
+          <div class="cp-val-row">
+            <span class="cp-val-label">HEX</span>
+            <span id="cp-hex" class="cp-val-field">#FF0000</span>
+          </div>
+          <div class="cp-val-row">
+            <span class="cp-val-label">RGB</span>
+            <span id="cp-rgb" class="cp-val-field">rgb(255, 0, 0)</span>
+          </div>
+        </div>
+      </div>
+      <button id="cp-apply" aria-label="Apply selected color">Apply Color</button>
+    </div>
+  </div>
 
   <div id="first-time-wizard" class="hidden" role="dialog" aria-modal="true" aria-label="Welcome setup wizard">
     <div id="wizard-box" class="glass">

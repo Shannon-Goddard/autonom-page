@@ -927,3 +927,96 @@ main {
 #dns-verify-result { font-size: 0.85rem; }
 .dns-ok   { color: #04AA6D; }
 .dns-fail { color: var(--accent); }
+
+/* ─── Color Picker Modal ─────────────────────────────────────────────────────── */
+#color-picker-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.15s ease;
+}
+#color-picker-modal.hidden { display: none !important; }
+
+#color-picker-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  position: relative;
+}
+#color-picker-box h3 { font-size: 1rem; }
+
+#color-picker-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 0.2rem 0.5rem;
+  border: none;
+}
+
+#cp-spectrum {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: crosshair;
+  display: block;
+}
+
+#cp-hue {
+  width: 100%;
+  height: 18px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  cursor: crosshair;
+  display: block;
+}
+
+#cp-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#cp-preview {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  background: #ff0000;
+}
+
+#cp-values { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
+
+.cp-val-row { display: flex; align-items: center; gap: 0.5rem; }
+.cp-val-label { font-size: 0.75rem; color: var(--text-muted); width: 2.2rem; flex-shrink: 0; }
+.cp-val-field {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  flex: 1;
+  cursor: pointer;
+  user-select: all;
+}
+.cp-val-field:hover { background: var(--surface); }
+
+#cp-apply {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 0.9rem;
+}
