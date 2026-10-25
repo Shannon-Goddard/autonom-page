@@ -712,15 +712,22 @@
       rgbEl.addEventListener('click', () => navigator.clipboard?.writeText(rgbEl.textContent).then(() => Autonom.toast(`Copied ${rgbEl.textContent}`,'success')));
     })();
 
-    const bgTypeEl   = document.getElementById('bg-type');
-    const bgColorBtn = document.getElementById('bg-color-btn');
-    const bgImageEl  = document.getElementById('bg-image');
+    const bgTypeEl    = document.getElementById('bg-type');
+    const bgColorBtn  = document.getElementById('bg-color-btn');
+    const bgImageWrap = document.getElementById('bg-image-wrap');
+    const bgImageBtn  = document.getElementById('bg-image-btn');
+    const bgImageEl   = document.getElementById('bg-image');
+    const bgImageLbl  = document.getElementById('bg-image-label');
     function syncBgInputs() {
       const t = bgTypeEl?.value;
-      bgColorBtn?.classList.toggle('hidden', t !== 'color');
-      bgImageEl?.classList.toggle('hidden',  t !== 'image');
+      bgColorBtn?.classList.toggle('hidden',  t !== 'color');
+      bgImageWrap?.classList.toggle('hidden', t !== 'image');
     }
     bgTypeEl?.addEventListener('change', syncBgInputs);
+    bgImageBtn?.addEventListener('click', () => bgImageEl?.click());
+    bgImageEl?.addEventListener('change', () => {
+      bgImageLbl.textContent = bgImageEl.files[0]?.name || '';
+    });
 
     document.getElementById('mode-toggle')?.addEventListener('change', toggleMode);
     document.getElementById('save-business-profile')?.addEventListener('click', () => Autonom.saveBusinessProfile(config));

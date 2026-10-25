@@ -135,7 +135,11 @@
             <span id="bg-color-label">#1A1A2E</span>
           </button>
           <input type="hidden" id="bg-color" value="#1a1a2e" />
-          <input type="file" id="bg-image" accept="image/*" aria-label="Background image" class="hidden" />
+          <div id="bg-image-wrap" class="hidden">
+            <button type="button" id="bg-image-btn" class="btn-ghost" aria-label="Choose background image">Choose image…</button>
+            <span id="bg-image-label" class="drawer-hint"></span>
+            <input type="file" id="bg-image" accept="image/*" aria-label="Background image" class="hidden" />
+          </div>
           <label for="custom-css">Custom CSS</label>
           <textarea id="custom-css" aria-label="Custom CSS" placeholder="/* your styles here */" rows="4"></textarea>
         </div>

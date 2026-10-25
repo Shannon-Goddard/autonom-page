@@ -92,33 +92,29 @@
   }
 
   async function rewriteIndexHead(config, jsonLDBlock) {
-    try {
-      const data = await Autonom.ghGet(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/index.html`);
-      let html = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+    const data = await Autonom.ghGet(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/index.html`);
+    let html = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
 
-      // Remove existing JSON-LD block
-      html = html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\n?/g, '');
+    // Remove existing JSON-LD block
+    html = html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\n?/g, '');
 
-      // Inject new block before </head> if provided
-      if (jsonLDBlock) html = html.replace('</head>', `${jsonLDBlock}\n</head>`);
+    // Inject new block before </head> if provided
+    if (jsonLDBlock) html = html.replace('</head>', `${jsonLDBlock}\n</head>`);
 
-      // Rewrite OG + Twitter tags
-      const name = config.displayName || 'My Page';
-      const bio  = config.bio || '';
-      html = html
-        .replace(/(<meta property="og:title" content=")[^"]*(")/,       `$1${name}'s Page$2`)
-        .replace(/(<meta property="og:description" content=")[^"]*(")/,  `$1${bio}$2`)
-        .replace(/(<meta name="twitter:title" content=")[^"]*(")/,       `$1${name}'s Page$2`)
-        .replace(/(<meta name="twitter:description" content=")[^"]*(")/,  `$1${bio}$2`);
+    // Rewrite OG + Twitter tags
+    const name = config.displayName || 'My Page';
+    const bio  = config.bio || '';
+    html = html
+      .replace(/(<meta property="og:title" content=")[^"]*(")/,       `$1${name}'s Page$2`)
+      .replace(/(<meta property="og:description" content=")[^"]*(")/,  `$1${bio}$2`)
+      .replace(/(<meta name="twitter:title" content=")[^"]*(")/,       `$1${name}'s Page$2`)
+      .replace(/(<meta name="twitter:description" content=")[^"]*(")/,  `$1${bio}$2`);
 
-      await Autonom.ghPut(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/index.html`, {
-        message: 'Update JSON-LD and OG tags',
-        content: btoa(unescape(encodeURIComponent(html))),
-        sha: data.sha,
-      });
-    } catch (e) {
-      Autonom.toast(`Failed to update page metadata — ${e.message}`, 'error');
-    }
+    await Autonom.ghPut(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/index.html`, {
+      message: 'Update JSON-LD and OG tags',
+      content: btoa(unescape(encodeURIComponent(html))),
+      sha: data.sha,
+    });
   }
 
   // ─── Public API ───────────────────────────────────────────────────────────────
