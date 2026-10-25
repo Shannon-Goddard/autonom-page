@@ -32,31 +32,69 @@
 
   <main id="profile-page">
 
-    <section id="cover-section" aria-label="Cover photo">
-      <img id="cover-photo" src="assets/cover.webp" alt="Cover photo" />
-      <button id="edit-cover" class="owner-only hidden" aria-label="Edit cover photo">
-        <img src="assets/photo-icon.svg" alt="" width="20" height="20" />
-      </button>
-    </section>
+    <!-- ─── Header (scrolls away) ──────────────────────────────────────────── -->
+    <div id="profile-header">
+      <section id="cover-section" aria-label="Cover photo">
+        <img id="cover-photo" src="assets/cover.webp" alt="Cover photo" />
+        <button id="edit-cover" class="owner-only hidden" aria-label="Edit cover photo">
+          <img src="assets/photo-icon.svg" alt="" width="20" height="20" />
+        </button>
+      </section>
 
-    <section id="profile-section" aria-label="Profile">
-      <div id="profile-photo-wrap">
-        <img id="profile-photo" src="assets/profile.webp" alt="Profile photo" />
-        <div id="profile-photo-overlay" aria-hidden="true">
-          <img src="assets/photo-icon.svg" alt="" width="32" height="32" />
+      <div id="profile-identity">
+        <div id="profile-photo-wrap">
+          <img id="profile-photo" src="assets/profile.webp" alt="Profile photo" />
+          <div id="profile-photo-overlay" aria-hidden="true">
+            <img src="assets/photo-icon.svg" alt="" width="32" height="32" />
+          </div>
+        </div>
+        <div id="profile-meta">
+          <h1 id="display-name"></h1>
+          <p id="bio"></p>
+          <p id="status"></p>
+          <p id="last-updated" aria-label="Last updated"></p>
+          <button id="edit-profile-btn" class="btn-ghost owner-only hidden" aria-label="Edit profile">Edit Profile</button>
         </div>
       </div>
-      <h1 id="display-name"></h1>
-      <p id="bio"></p>
-      <p id="status"></p>
-      <p id="last-updated" aria-label="Last updated"></p>
-      <button id="edit-profile-btn" class="btn-ghost owner-only hidden" aria-label="Edit profile">Edit Profile</button>
-    </section>
+    </div>
 
-    <section id="videos-section" aria-label="Videos">
-      <h2>Videos</h2>
-      <div id="videos-grid"></div>
-    </section>
+    <!-- ─── Sticky Tab Bar ──────────────────────────────────────────────────── -->
+    <nav id="profile-tabs" aria-label="Profile sections">
+      <a href="#profile-main" id="tab-all" class="profile-tab tab-active" aria-label="Show all sections">All</a>
+    </nav>
+
+    <!-- ─── Two-column body ─────────────────────────────────────────────────── -->
+    <div id="profile-body">
+
+      <aside id="profile-left" aria-label="About">
+        <div id="about-card" class="profile-card">
+          <h2>About</h2>
+          <p id="about-bio"></p>
+          <p id="about-status"></p>
+          <p id="about-updated"></p>
+          <a id="about-domain" class="hidden" target="_blank" rel="noopener"></a>
+        </div>
+        <div id="friends-preview" class="profile-card hidden" aria-label="Friends">
+          <h2>Friends</h2>
+          <div id="friends-circles"></div>
+          <a href="friends.html" id="friends-see-all" class="profile-card-link hidden">See all friends</a>
+        </div>
+        <div id="business-card" class="profile-card hidden" aria-label="Business info">
+          <h2 id="biz-card-name"></h2>
+          <p id="biz-card-category"></p>
+          <p id="biz-card-location"></p>
+          <p id="biz-card-hours"></p>
+          <p id="biz-card-price"></p>
+          <a id="biz-card-phone" class="hidden"></a>
+          <a id="biz-card-email" class="hidden"></a>
+        </div>
+      </aside>
+
+      <div id="profile-main" aria-label="Main content">
+        <!-- Homepage sections injected here by index.js -->
+      </div>
+
+    </div>
 
   </main>
 

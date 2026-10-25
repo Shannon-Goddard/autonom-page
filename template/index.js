@@ -1,21 +1,33 @@
 (() => {
   let config = {};
+  let friends = [];
 
   // ─── Render config into DOM ───────────────────────────────────────────────────
   function renderConfig() {
     setText('display-name', config.displayName || '');
     setText('bio',          config.bio         || '');
     setText('status',       config.status      || '');
+    setText('about-bio',    config.bio         || '');
+    setText('about-status', config.status      || '');
 
     if (config.lastUpdated) {
       const days = Math.floor((Date.now() - new Date(config.lastUpdated)) / 86400000);
-      setText('last-updated', days === 0
-        ? 'Updated today'
-        : `Last updated ${days} day${days !== 1 ? 's' : ''} ago`);
+      const label = days === 0 ? 'Updated today' : `Last updated ${days} day${days !== 1 ? 's' : ''} ago`;
+      setText('last-updated',  label);
+      setText('about-updated', label);
     }
 
-    renderVideos();
+    const domain = config.customDomain || `${Autonom.OWNER}.github.io`;
+    const domainEl = document.getElementById('about-domain');
+    if (domainEl) {
+      domainEl.href = `https://${domain}`;
+      domainEl.textContent = domain;
+      domainEl.classList.remove('hidden');
+    }
+
+    buildTabBar();
     applyOGTags();
+    renderLeftColumn();
     renderHomepageSections();
 
     if (Autonom.isOwner()) {
@@ -31,47 +43,160 @@
     if (el) el.textContent = val;
   }
 
-  // ─── Videos ───────────────────────────────────────────────────────────────────
-  function youtubeId(url) {
-    const m = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/);
-    return m ? m[1] : '';
+  // ─── Tab Bar ──────────────────────────────────────────────────────────────────
+  function buildTabBar() {
+    const bar   = document.getElementById('profile-tabs');
+    if (!bar) return;
+    const pages = config.pages || {};
+    const PAGE_DEFS = [
+      { key: 'gallery',   label: 'Photos',    href: 'gallery.html' },
+      { key: 'music',     label: 'Music',     href: 'music.html' },
+      { key: 'videos',    label: 'Videos',    href: 'videos.html' },
+      { key: 'friends',   label: 'Friends',   href: 'friends.html' },
+      { key: 'guestbook', label: 'Guestbook', href: 'guestbook.html' },
+      { key: 'games',     label: 'Games',     href: 'games.html' },
+    ];
+    // Remove any previously built tabs except #tab-all
+    bar.querySelectorAll('.profile-tab:not(#tab-all)').forEach(t => t.remove());
+    PAGE_DEFS.forEach(({ key, label, href }) => {
+      if (!pages[key]) return;
+      const a = document.createElement('a');
+      a.href = href;
+      a.className = 'profile-tab';
+      a.textContent = label;
+      a.setAttribute('aria-label', `Go to ${label} page`);
+      bar.appendChild(a);
+    });
   }
 
-  function renderVideos() {
-    const grid = document.getElementById('videos-grid');
-    if (!grid || !Array.isArray(config.videos)) return;
-    grid.innerHTML = config.videos.map(v => `
-      <div class="video-item">
-        <iframe src="https://www.youtube.com/embed/${youtubeId(v)}"
-          title="YouTube video" allowfullscreen aria-label="Embedded YouTube video"></iframe>
-        <a href="${v}" target="_blank" rel="noopener" aria-label="Watch on YouTube">Watch on YouTube</a>
-        ${Autonom.isOwner() ? `<button class="remove-video edit-btn" data-url="${v}" aria-label="Remove video">Remove</button>` : ''}
-      </div>`).join('');
-    grid.querySelectorAll('.remove-video').forEach(btn =>
-      btn.addEventListener('click', () => removeVideo(btn.dataset.url))
-    );
+  // ─── Left Column ──────────────────────────────────────────────────────────────
+  function renderLeftColumn() {
+    if (config.mode === 'business') {
+      renderBusinessCard();
+      document.getElementById('friends-preview')?.classList.add('hidden');
+    } else {
+      document.getElementById('business-card')?.classList.add('hidden');
+      renderFriendsCircles();
+    }
   }
 
-  async function addVideo(url) {
-    if (!url || !youtubeId(url)) { Autonom.toast('Invalid YouTube URL', 'error'); return; }
-    config.videos = [...(config.videos || []), url];
-    await Autonom.saveConfig(config, { videos: config.videos }, 'Add video');
-    renderVideos();
+  function renderBusinessCard() {
+    const bp  = config.businessProfile || {};
+    const card = document.getElementById('business-card');
+    if (!card) return;
+    setText('biz-card-name',     bp.name     || config.displayName || '');
+    setText('biz-card-category', bp.category || '');
+    const loc = [bp.address?.locality, bp.address?.region, bp.address?.country].filter(Boolean).join(', ');
+    setText('biz-card-location', loc);
+    setText('biz-card-price',    bp.priceRange ? `Price range: ${bp.priceRange}` : '');
+
+    // Hours — show today's hours if available
+    if (Array.isArray(bp.hours) && bp.hours.length) {
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const today = bp.hours.find(h => h.day === days[new Date().getDay()]);
+      setText('biz-card-hours', today
+        ? (today.closed ? 'Closed today' : `Today: ${today.open} – ${today.close}`)
+        : '');
+    }
+
+    const phoneEl = document.getElementById('biz-card-phone');
+    if (phoneEl && bp.phone) {
+      phoneEl.href = `tel:${bp.phone}`;
+      phoneEl.textContent = bp.phone;
+      phoneEl.classList.remove('hidden');
+    }
+    const emailEl = document.getElementById('biz-card-email');
+    if (emailEl && bp.email) {
+      emailEl.href = `mailto:${bp.email}`;
+      emailEl.textContent = bp.email;
+      emailEl.classList.remove('hidden');
+    }
+    card.classList.remove('hidden');
   }
 
-  async function removeVideo(url) {
-    config.videos = (config.videos || []).filter(v => v !== url);
-    await Autonom.saveConfig(config, { videos: config.videos }, 'Remove video');
-    renderVideos();
+  function renderFriendsCircles() {
+    const wrap = document.getElementById('friends-preview');
+    const grid = document.getElementById('friends-circles');
+    if (!wrap || !grid) return;
+
+    fetch('friends.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : [])
+      .then(list => {
+        friends = list;
+        if (!list.length) { wrap.classList.add('hidden'); return; }
+        wrap.classList.remove('hidden');
+        const show = list.slice(0, 9);
+        grid.innerHTML = show.map((f, i) => `
+          <a href="${f.url}" target="_blank" rel="noopener"
+            class="friend-circle${Autonom.isOwner() ? ' draggable-friend' : ''}"
+            data-index="${i}" aria-label="${f.displayName}"
+            ${Autonom.isOwner() ? 'draggable="true"' : ''}>
+            <img src="${f.photo}" alt="${f.displayName}" loading="lazy"
+              onerror="this.src='assets/profile.webp'" />
+            <span>${f.displayName}</span>
+            ${Autonom.isOwner() ? `
+              <button class="friend-move-up" data-index="${i}" aria-label="Move ${f.displayName} up" title="Move up">&#8679;</button>
+              <button class="friend-move-dn" data-index="${i}" aria-label="Move ${f.displayName} down" title="Move down">&#8681;</button>
+            ` : ''}
+          </a>`).join('');
+
+        const seeAll = document.getElementById('friends-see-all');
+        if (seeAll) seeAll.classList.toggle('hidden', list.length <= 9);
+
+        if (Autonom.isOwner()) wireFriendReorder(grid);
+      })
+      .catch(() => { wrap?.classList.add('hidden'); });
   }
 
-  // ─── Homepage Sections ──────────────────────────────────────────────────────
+  // ─── Friend Reorder ───────────────────────────────────────────────────────────
+  function wireFriendReorder(grid) {
+    let dragSrc = null;
+
+    grid.querySelectorAll('.draggable-friend').forEach(el => {
+      el.addEventListener('dragstart', e => {
+        dragSrc = +el.dataset.index;
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+      el.addEventListener('drop', e => {
+        e.preventDefault();
+        const target = +el.dataset.index;
+        if (dragSrc === null || dragSrc === target) return;
+        const moved = friends.splice(dragSrc, 1)[0];
+        friends.splice(target, 0, moved);
+        saveFriends('Reorder friends').then(() => renderFriendsCircles());
+      });
+    });
+
+    grid.querySelectorAll('.friend-move-up').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        const i = +btn.dataset.index;
+        if (i === 0) return;
+        [friends[i-1], friends[i]] = [friends[i], friends[i-1]];
+        saveFriends('Reorder friends').then(() => renderFriendsCircles());
+      });
+    });
+    grid.querySelectorAll('.friend-move-dn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        const i = +btn.dataset.index;
+        if (i >= friends.length - 1) return;
+        [friends[i], friends[i+1]] = [friends[i+1], friends[i]];
+        saveFriends('Reorder friends').then(() => renderFriendsCircles());
+      });
+    });
+  }
+
+  async function saveFriends(msg) {
+    await Autonom.commitFile('friends.json', JSON.stringify(friends, null, 2), msg);
+  }
+
+  // ─── Homepage Sections ────────────────────────────────────────────────────────
   function renderHomepageSections() {
     const hs   = config.homepageSections || {};
-    const main = document.getElementById('profile-page');
+    const main = document.getElementById('profile-main');
     if (!main) return;
-
-    // Remove any previously injected sections
     main.querySelectorAll('.homepage-section').forEach(el => el.remove());
 
     const sections = [
@@ -86,6 +211,7 @@
       if (!hs[key]) return;
       const sec = document.createElement('section');
       sec.className = 'homepage-section';
+      sec.id = `hs-${key}`;
       sec.setAttribute('aria-label', key.charAt(0).toUpperCase() + key.slice(1));
       render(sec);
       main.appendChild(sec);
@@ -93,26 +219,28 @@
   }
 
   function renderHSGallery(sec) {
-    sec.innerHTML = '<h2>Gallery</h2><div class="hs-gallery-grid"></div>';
+    sec.innerHTML = '<h2>Photos</h2><div class="hs-gallery-grid"></div>';
     const grid = sec.querySelector('.hs-gallery-grid');
-    // Fetch from repo API
     Autonom.ghGet(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/assets/gallery`)
       .then(items => {
         const photos = items.filter(f => f.name.endsWith('.webp'));
-        if (!photos.length) { grid.innerHTML = '<p class="gallery-empty">No photos yet.</p>'; return; }
-        grid.innerHTML = photos.map(p =>
+        if (!photos.length) { sec.classList.add('hidden'); return; }
+        grid.innerHTML = photos.slice(0, 9).map(p =>
           `<figure class="gallery-item"><img src="${p.download_url}" alt="${p.name}" loading="lazy" /></figure>`
         ).join('');
+        if (photos.length > 9) {
+          const link = document.createElement('a');
+          link.href = 'gallery.html'; link.className = 'hs-link';
+          link.textContent = `See all ${photos.length} photos →`;
+          sec.appendChild(link);
+        }
       })
-      .catch(() => { grid.innerHTML = '<p class="gallery-empty">Could not load photos.</p>'; });
+      .catch(() => sec.classList.add('hidden'));
   }
 
   function renderHSMusic(sec) {
     const tracks = config.tracks || [];
-    if (!tracks.length) {
-      sec.innerHTML = '<h2>Music</h2><p class="music-empty">No tracks yet.</p>';
-      return;
-    }
+    if (!tracks.length) { sec.classList.add('hidden'); return; }
     const t = tracks[0];
     sec.innerHTML = `
       <h2>Music</h2>
@@ -121,7 +249,7 @@
         <p class="hs-track-title">${t.title || t.filename}</p>
         <p class="hs-track-artist">${t.artist || ''}</p>
         <button id="hs-play-pause" aria-label="Play or pause">Play</button>
-        <a href="music.html" class="hs-link">Full playlist →</a>
+        ${tracks.length > 1 ? `<a href="music.html" class="hs-link">Full playlist (${tracks.length} tracks) →</a>` : ''}
       </div>`;
     const audio   = sec.querySelector('#hs-audio');
     const playBtn = sec.querySelector('#hs-play-pause');
@@ -133,13 +261,11 @@
 
   function renderHSVideos(sec) {
     const videos = config.videos || [];
+    if (!videos.length) { sec.classList.add('hidden'); return; }
     sec.innerHTML = '<h2>Videos</h2>';
-    if (!videos.length) { sec.innerHTML += '<p class="videos-empty">No videos yet.</p>'; return; }
-    // Show first 2 videos as preview
-    const preview = videos.slice(0, 2);
     const grid = document.createElement('div');
-    grid.className = 'videos-grid hs-videos-grid';
-    grid.innerHTML = preview.map(url => {
+    grid.className = 'hs-videos-grid';
+    grid.innerHTML = videos.slice(0, 2).map(url => {
       const id = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1];
       if (!id) return '';
       return `<div class="video-item"><div class="video-embed-wrap">
@@ -149,48 +275,43 @@
     sec.appendChild(grid);
     if (videos.length > 2) {
       const link = document.createElement('a');
-      link.href = 'videos.html';
-      link.className = 'hs-link';
+      link.href = 'videos.html'; link.className = 'hs-link';
       link.textContent = `See all ${videos.length} videos →`;
       sec.appendChild(link);
     }
   }
 
   function renderHSFriends(sec) {
-    sec.innerHTML = '<h2>Friends</h2>';
     fetch('friends.json', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : [])
-      .then(friends => {
-        if (!friends.length) { sec.innerHTML += '<p class="friends-empty">No friends added yet.</p>'; return; }
+      .then(list => {
+        if (!list.length) { sec.classList.add('hidden'); return; }
+        sec.innerHTML = '<h2>Friends</h2>';
         const grid = document.createElement('div');
-        grid.className = 'friends-grid hs-friends-grid';
-        grid.innerHTML = friends.slice(0, 6).map(f => `
-          <div class="friend-card">
-            <a href="https://${f.username}.github.io" target="_blank" rel="noopener">
-              <img src="https://${f.username}.github.io/assets/profile.webp"
-                alt="${f.username}" onerror="this.src='assets/profile.webp'" />
-              <span class="friend-name">${f.username}</span>
-            </a>
-          </div>`).join('');
+        grid.className = 'hs-friends-circles';
+        grid.innerHTML = list.slice(0, 6).map(f => `
+          <a href="${f.url}" target="_blank" rel="noopener" class="friend-circle" aria-label="${f.displayName}">
+            <img src="${f.photo}" alt="${f.displayName}" onerror="this.src='assets/profile.webp'" />
+            <span>${f.displayName}</span>
+          </a>`).join('');
         sec.appendChild(grid);
-        if (friends.length > 6) {
+        if (list.length > 6) {
           const link = document.createElement('a');
-          link.href = 'friends.html';
-          link.className = 'hs-link';
-          link.textContent = `See all ${friends.length} friends →`;
+          link.href = 'friends.html'; link.className = 'hs-link';
+          link.textContent = `See all ${list.length} friends →`;
           sec.appendChild(link);
         }
       })
-      .catch(() => { sec.innerHTML += '<p class="friends-empty">Could not load friends.</p>'; });
+      .catch(() => sec.classList.add('hidden'));
   }
 
   function renderHSGuestbook(sec) {
-    sec.innerHTML = '<h2>Guestbook</h2>';
     fetch('guestbook.json', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : [])
       .then(posts => {
         const approved = (posts || []).filter(p => p.approved).slice(0, 3);
-        if (!approved.length) { sec.innerHTML += '<p class="guestbook-empty">No posts yet.</p>'; return; }
+        if (!approved.length) { sec.classList.add('hidden'); return; }
+        sec.innerHTML = '<h2>Guestbook</h2>';
         const list = document.createElement('div');
         list.className = 'hs-guestbook';
         list.innerHTML = approved.map(p => `
@@ -203,13 +324,13 @@
           </div>`).join('');
         sec.appendChild(list);
         const link = document.createElement('a');
-        link.href = 'guestbook.html';
-        link.className = 'hs-link';
+        link.href = 'guestbook.html'; link.className = 'hs-link';
         link.textContent = 'View full guestbook →';
         sec.appendChild(link);
       })
-      .catch(() => { sec.innerHTML += '<p class="guestbook-empty">Could not load posts.</p>'; });
+      .catch(() => sec.classList.add('hidden'));
   }
+
 
   // ─── OG Tags ──────────────────────────────────────────────────────────────────
   function applyOGTags() {
@@ -314,10 +435,11 @@
       bgValue = 'assets/background.webp';
     }
 
-    // Update DOM immediately
     setText('display-name', displayName);
     setText('bio',    bio);
     setText('status', status);
+    setText('about-bio',    bio);
+    setText('about-status', status);
 
     await Autonom.saveConfig(config, {
       displayName, bio, status,
@@ -329,8 +451,11 @@
     }, 'Update profile');
 
     AutonomTheme.applyTheme(config);
-    try { await Autonom.regenerateRobots(config); } catch { /* non-fatal */ }
-    try { await Autonom.regenerateSitemap(config); } catch { /* non-fatal */ }
+    buildTabBar();
+    renderLeftColumn();
+    renderHomepageSections();
+    try { await Autonom.regenerateRobots(config); }    catch { /* non-fatal */ }
+    try { await Autonom.regenerateSitemap(config); }   catch { /* non-fatal */ }
     try {
       if (config.mode !== 'business') await Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config));
       else await Autonom.rewriteIndexHead(config, Autonom.generateJSONLD(config.businessProfile, config));
@@ -359,6 +484,7 @@
       Autonom.toast('Switched to Business Mode', 'success');
     }
     populateCustomizationPanel();
+    renderLeftColumn();
   }
 
   // ─── DNS Helper ───────────────────────────────────────────────────────────────
@@ -367,14 +493,11 @@
     const intro   = document.getElementById('dns-helper-intro');
     const records = document.getElementById('dns-records');
     if (!helper || !intro || !records) return;
-
     const isApex = !domain.startsWith('www.');
     const owner  = Autonom.OWNER;
-
     intro.textContent = isApex
       ? `Point your apex domain (${domain}) to GitHub Pages using these A records:`
       : `Point ${domain} to GitHub Pages using this CNAME record:`;
-
     if (isApex) {
       const ips = ['185.199.108.153','185.199.109.153','185.199.110.153','185.199.111.153'];
       records.innerHTML = `
@@ -391,20 +514,16 @@
         <table class="dns-table" aria-label="DNS CNAME record">
           <thead><tr><th>Type</th><th>Host</th><th>Value</th></tr></thead>
           <tbody><tr>
-            <td>CNAME</td>
-            <td>${sub}</td>
-            <td class="dns-val">${owner}.github.io</td>
+            <td>CNAME</td><td>${sub}</td><td class="dns-val">${owner}.github.io</td>
           </tr></tbody>
         </table>
         <p class="dns-note">Set the CNAME value to <code>${owner}.github.io</code>.</p>`;
     }
-
     helper.classList.remove('hidden');
   }
 
   // ─── Wire Events ──────────────────────────────────────────────────────────────
   function wireEvents() {
-    // Profile photo — click avatar to pick
     document.getElementById('profile-photo-wrap')?.addEventListener('click', () => {
       if (!Autonom.isOwner()) return;
       const input = document.createElement('input');
@@ -413,7 +532,6 @@
       input.click();
     });
 
-    // Cover photo
     document.getElementById('edit-cover')?.addEventListener('click', () => {
       const input = document.createElement('input');
       input.type = 'file'; input.accept = 'image/*';
@@ -421,15 +539,12 @@
       input.click();
     });
 
-    // Edit drawer open/close
     document.getElementById('edit-profile-btn')?.addEventListener('click', openEditDrawer);
     document.getElementById('edit-drawer-close')?.addEventListener('click', closeEditDrawer);
     document.getElementById('edit-drawer')?.addEventListener('click', e => {
       if (e.target === document.getElementById('edit-drawer')) closeEditDrawer();
     });
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') closeEditDrawer();
-    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditDrawer(); });
 
     function openEditDrawer() {
       populateCustomizationPanel();
@@ -442,23 +557,22 @@
       document.body.classList.remove('drawer-open');
     }
 
-    // Save all
     document.getElementById('save-customization')?.addEventListener('click', async () => {
       await saveCustomization();
       closeEditDrawer();
     });
 
-    // Background color picker modal
+    // Color picker modal
     (() => {
-      const modal    = document.getElementById('color-picker-modal');
-      const specCvs  = document.getElementById('cp-spectrum');
-      const hueCvs   = document.getElementById('cp-hue');
-      const preview  = document.getElementById('cp-preview');
-      const hexEl    = document.getElementById('cp-hex');
-      const rgbEl    = document.getElementById('cp-rgb');
-      const swatch   = document.getElementById('bg-color-swatch');
-      const label    = document.getElementById('bg-color-label');
-      const hidden   = document.getElementById('bg-color');
+      const modal   = document.getElementById('color-picker-modal');
+      const specCvs = document.getElementById('cp-spectrum');
+      const hueCvs  = document.getElementById('cp-hue');
+      const preview = document.getElementById('cp-preview');
+      const hexEl   = document.getElementById('cp-hex');
+      const rgbEl   = document.getElementById('cp-rgb');
+      const swatch  = document.getElementById('bg-color-swatch');
+      const label   = document.getElementById('bg-color-label');
+      const hidden  = document.getElementById('bg-color');
       if (!modal || !specCvs) return;
 
       const sCtx = specCvs.getContext('2d');
@@ -468,139 +582,98 @@
       function drawSpectrum(h) {
         const w = specCvs.width, v = specCvs.height;
         const gH = sCtx.createLinearGradient(0,0,w,0);
-        gH.addColorStop(0, '#fff'); gH.addColorStop(1, `hsl(${h},100%,50%)`);
+        gH.addColorStop(0,'#fff'); gH.addColorStop(1,`hsl(${h},100%,50%)`);
         sCtx.fillStyle = gH; sCtx.fillRect(0,0,w,v);
         const gV = sCtx.createLinearGradient(0,0,0,v);
         gV.addColorStop(0,'rgba(0,0,0,0)'); gV.addColorStop(1,'rgba(0,0,0,1)');
         sCtx.fillStyle = gV; sCtx.fillRect(0,0,w,v);
       }
-
       function drawHue() {
         const w = hueCvs.width, h = hueCvs.height;
         const g = hCtx.createLinearGradient(0,0,w,0);
-        for (let i = 0; i <= 360; i += 30) g.addColorStop(i/360, `hsl(${i},100%,50%)`);
+        for (let i = 0; i <= 360; i += 30) g.addColorStop(i/360,`hsl(${i},100%,50%)`);
         hCtx.fillStyle = g; hCtx.fillRect(0,0,w,h);
       }
-
       function toHex(r,g,b) {
         return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0').toUpperCase()).join('');
       }
-
       function applyColor(r,g,b) {
-        const hex = toHex(r,g,b);
-        const rgb = `rgb(${r}, ${g}, ${b})`;
-        preview.style.background = hex;
-        hexEl.textContent = hex;
-        rgbEl.textContent = rgb;
+        const hex = toHex(r,g,b), rgb = `rgb(${r}, ${g}, ${b})`;
+        preview.style.background = hex; hexEl.textContent = hex; rgbEl.textContent = rgb;
       }
-
       function sampleSpec(e) {
         const rect = specCvs.getBoundingClientRect();
-        const sx = specCvs.width / rect.width, sy = specCvs.height / rect.height;
-        const x = Math.max(0, Math.min(Math.round((e.clientX - rect.left)*sx), specCvs.width-1));
-        const y = Math.max(0, Math.min(Math.round((e.clientY - rect.top)*sy),  specCvs.height-1));
-        const px = sCtx.getImageData(x, y, 1, 1).data;
-        applyColor(px[0], px[1], px[2]);
+        const sx = specCvs.width/rect.width, sy = specCvs.height/rect.height;
+        const x = Math.max(0,Math.min(Math.round((e.clientX-rect.left)*sx),specCvs.width-1));
+        const y = Math.max(0,Math.min(Math.round((e.clientY-rect.top)*sy),specCvs.height-1));
+        const px = sCtx.getImageData(x,y,1,1).data;
+        applyColor(px[0],px[1],px[2]);
       }
-
       function sampleHue(e) {
         const rect = hueCvs.getBoundingClientRect();
-        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-        hue = Math.round((x / rect.width) * 360);
-        drawSpectrum(hue);
+        const x = Math.max(0,Math.min(e.clientX-rect.left,rect.width));
+        hue = Math.round((x/rect.width)*360); drawSpectrum(hue);
       }
-
-      specCvs.addEventListener('mousedown',  e => { draggingSpec = true; sampleSpec(e); });
-      hueCvs.addEventListener('mousedown',   e => { draggingHue  = true; sampleHue(e); });
+      specCvs.addEventListener('mousedown', e => { draggingSpec=true; sampleSpec(e); });
+      hueCvs.addEventListener('mousedown',  e => { draggingHue=true;  sampleHue(e); });
       specCvs.addEventListener('click', sampleSpec);
       hueCvs.addEventListener('click',  sampleHue);
-      specCvs.addEventListener('touchstart', e => { draggingSpec = true; sampleSpec(e.touches[0]); }, { passive: true });
-      hueCvs.addEventListener('touchstart',  e => { draggingHue  = true; sampleHue(e.touches[0]); },  { passive: true });
-      specCvs.addEventListener('touchmove',  e => { if (draggingSpec) sampleSpec(e.touches[0]); }, { passive: true });
-      hueCvs.addEventListener('touchmove',   e => { if (draggingHue)  sampleHue(e.touches[0]); },  { passive: true });
-      document.addEventListener('mousemove', e => { if (draggingSpec) sampleSpec(e); if (draggingHue) sampleHue(e); });
-      document.addEventListener('mouseup',   () => { draggingSpec = false; draggingHue = false; });
-      document.addEventListener('touchend',  () => { draggingSpec = false; draggingHue = false; });
+      specCvs.addEventListener('touchstart', e => { draggingSpec=true; sampleSpec(e.touches[0]); }, {passive:true});
+      hueCvs.addEventListener('touchstart',  e => { draggingHue=true;  sampleHue(e.touches[0]); },  {passive:true});
+      specCvs.addEventListener('touchmove',  e => { if(draggingSpec) sampleSpec(e.touches[0]); }, {passive:true});
+      hueCvs.addEventListener('touchmove',   e => { if(draggingHue)  sampleHue(e.touches[0]); },  {passive:true});
+      document.addEventListener('mousemove', e => { if(draggingSpec) sampleSpec(e); if(draggingHue) sampleHue(e); });
+      document.addEventListener('mouseup',   () => { draggingSpec=false; draggingHue=false; });
+      document.addEventListener('touchend',  () => { draggingSpec=false; draggingHue=false; });
 
-      // Open modal
       document.getElementById('bg-color-btn')?.addEventListener('click', () => {
-        drawHue();
-        drawSpectrum(hue);
-        // Seed with current saved color
+        drawHue(); drawSpectrum(hue);
         const cur = hidden.value || '#1a1a2e';
-        const r = parseInt(cur.slice(1,3),16), g = parseInt(cur.slice(3,5),16), b = parseInt(cur.slice(5,7),16);
-        applyColor(r, g, b);
+        applyColor(parseInt(cur.slice(1,3),16), parseInt(cur.slice(3,5),16), parseInt(cur.slice(5,7),16));
         modal.classList.remove('hidden');
       });
-
-      // Apply
       document.getElementById('cp-apply')?.addEventListener('click', () => {
         const hex = hexEl.textContent;
-        hidden.value = hex;
-        swatch.style.background = hex;
-        label.textContent = hex;
+        hidden.value = hex; swatch.style.background = hex; label.textContent = hex;
         modal.classList.add('hidden');
       });
-
-      // Close
       document.getElementById('color-picker-close')?.addEventListener('click', () => modal.classList.add('hidden'));
       modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.add('hidden'); });
-
-      // Click value to copy
-      hexEl.addEventListener('click', () => navigator.clipboard?.writeText(hexEl.textContent).then(() => Autonom.toast(`Copied ${hexEl.textContent}`, 'success')));
-      rgbEl.addEventListener('click', () => navigator.clipboard?.writeText(rgbEl.textContent).then(() => Autonom.toast(`Copied ${rgbEl.textContent}`, 'success')));
+      hexEl.addEventListener('click', () => navigator.clipboard?.writeText(hexEl.textContent).then(() => Autonom.toast(`Copied ${hexEl.textContent}`,'success')));
+      rgbEl.addEventListener('click', () => navigator.clipboard?.writeText(rgbEl.textContent).then(() => Autonom.toast(`Copied ${rgbEl.textContent}`,'success')));
     })();
 
-    // Background type toggle
-    const bgTypeEl  = document.getElementById('bg-type');
+    const bgTypeEl   = document.getElementById('bg-type');
     const bgColorBtn = document.getElementById('bg-color-btn');
-    const bgImageEl = document.getElementById('bg-image');
+    const bgImageEl  = document.getElementById('bg-image');
     function syncBgInputs() {
       const t = bgTypeEl?.value;
       bgColorBtn?.classList.toggle('hidden', t !== 'color');
-      bgImageEl?.classList.toggle('hidden', t !== 'image');
+      bgImageEl?.classList.toggle('hidden',  t !== 'image');
     }
     bgTypeEl?.addEventListener('change', syncBgInputs);
 
-    // Mode
     document.getElementById('mode-toggle-btn')?.addEventListener('click', toggleMode);
-
-    // Business profile
-    document.getElementById('save-business-profile')?.addEventListener('click', () =>
-      Autonom.saveBusinessProfile(config)
-    );
-
-    // Share
+    document.getElementById('save-business-profile')?.addEventListener('click', () => Autonom.saveBusinessProfile(config));
     document.getElementById('share-page')?.addEventListener('click', Autonom.handleShare);
-
-    // Export
     document.getElementById('export-backup')?.addEventListener('click', Autonom.handleExport);
 
-    // Directory toggle — show/hide ledger domain row
     document.getElementById('directory-toggle')?.addEventListener('change', e => {
-      const ledgerRow = document.getElementById('ledger-domain-row');
-      if (ledgerRow) ledgerRow.classList.toggle('hidden', !e.target.checked);
+      document.getElementById('ledger-domain-row')?.classList.toggle('hidden', !e.target.checked);
     });
 
-    // Update ledger domain — auto-detect hostname or CNAME
     document.getElementById('update-ledger-domain')?.addEventListener('click', async () => {
       const btn = document.getElementById('update-ledger-domain');
-      btn.textContent = 'Detecting...';
-      btn.disabled = true;
-
+      btn.textContent = 'Detecting...'; btn.disabled = true;
       let domain = '';
-      // Option 1: already on custom domain
       if (!location.hostname.endsWith('github.io') && location.hostname !== 'localhost') {
         domain = location.hostname;
       } else {
-        // Option 2: read CNAME file from repo
         try {
           const data = await Autonom.ghGet(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/CNAME`);
-          domain = atob(data.content.replace(/\n/g, '')).trim();
+          domain = atob(data.content.replace(/\n/g,'')).trim();
         } catch { /* no CNAME */ }
       }
-
       if (domain && !domain.endsWith('github.io')) {
         await Autonom.saveConfig(config, { customDomain: domain }, 'Update custom domain');
         await Autonom.syncDirectory(config);
@@ -610,38 +683,30 @@
         Autonom.toast('No custom domain found — your github.io address is already in the ledger', 'success');
         await Autonom.syncDirectory(config);
       }
-
-      btn.textContent = 'Update ledger';
-      btn.disabled = false;
+      btn.textContent = 'Update ledger'; btn.disabled = false;
     });
 
-    // Verify DNS
     document.getElementById('verify-dns')?.addEventListener('click', async () => {
       const domain = config.customDomain;
       const result = document.getElementById('dns-verify-result');
       if (!domain || !result) return;
-      result.textContent = 'Checking...';
-      result.className = '';
+      result.textContent = 'Checking...'; result.className = '';
       try {
         await fetch(`https://${domain}`, { method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
-        result.textContent = '\u2713 Domain is resolving. GitHub Pages may still be building \u2014 check back in a few minutes if the site isn\'t live yet.';
+        result.textContent = '\u2713 Domain is resolving. GitHub Pages may still be building \u2014 check back in a few minutes.';
         result.className = 'dns-ok';
       } catch {
-        result.textContent = '\u2717 Domain not resolving yet \u2014 DNS changes can take up to 48 hours to propagate.';
+        result.textContent = '\u2717 Domain not resolving yet \u2014 DNS changes can take up to 48 hours.';
         result.className = 'dns-fail';
       }
     });
 
-    // Show DNS helper if domain already set
     if (config.customDomain) showDNSHelper(config.customDomain);
 
-    // Wizard dismiss
     document.getElementById('wizard-dismiss')?.addEventListener('click', async () => {
       document.getElementById('first-time-wizard')?.classList.add('hidden');
       await Autonom.saveConfig(config, { firstTimeSetup: false }, 'Dismiss setup wizard');
     });
-
-    // Wizard save
     document.getElementById('wizard-cover-btn')?.addEventListener('click', () =>
       document.getElementById('wizard-cover-input')?.click()
     );
@@ -656,12 +721,12 @@
         if (el) pages[k] = el.checked;
       });
       const updates = { firstTimeSetup: false, pages: { ...config.pages, ...pages } };
-      if (status) { updates.status = status; setText('status', status); }
+      if (status) { updates.status = status; setText('status', status); setText('about-status', status); }
       await Autonom.saveConfig(config, updates, 'First-time setup');
-      // Regenerate feeds silently — don't surface 503s as error toasts
-      try { if (status) await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
-      try { await Autonom.regenerateSitemap(config); } catch { /* non-fatal */ }
+      try { if (status) await Autonom.regenerateRSS(config); }  catch { /* non-fatal */ }
+      try { await Autonom.regenerateSitemap(config); }           catch { /* non-fatal */ }
       document.getElementById('first-time-wizard')?.classList.add('hidden');
+      buildTabBar();
       Autonom.toast('Page set up \u2014 looking good!', 'success');
     });
   }
@@ -685,7 +750,6 @@
       Autonom.loadStorageMeter();
       Autonom.loadNotificationsBadge();
       Autonom.renderQRCode();
-      // Ensure JSON-LD is present — inject silently if missing
       if (config.mode !== 'business') {
         Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config)).catch(() => {});
       }
