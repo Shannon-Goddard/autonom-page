@@ -2,7 +2,14 @@
   // ─── Constants ───────────────────────────────────────────────────────────────
   const LAMBDA_URL = 'https://f8rcwlcsz8.execute-api.us-east-1.amazonaws.com/prod/token';
   const GITHUB_APP  = 'autonom-page';
-  const REPO_OWNER  = document.location.hostname.split('.')[0];
+  const REPO_OWNER = (() => {
+    const h = document.location.hostname;
+    // localhost / file:// — read from a data attribute set by the repo or fall back to empty
+    if (h === 'localhost' || h === '127.0.0.1' || h === '') {
+      return document.documentElement.dataset.owner || '';
+    }
+    return h.split('.')[0];
+  })();
 
   // ─── Read hash token immediately — before anything else runs ─────────────────
   if (location.hash.includes('autonom_token=')) {
@@ -55,17 +62,17 @@
   }
 
   function unlockEditMode() {
-    document.querySelectorAll('.edit-btn').forEach(btn => btn.classList.remove('hidden'));
-    const panel = document.getElementById('customization-panel');
-    if (panel) panel.classList.remove('hidden');
     document.body.classList.add('edit-mode');
+    document.getElementById('edit-profile-btn')?.classList.remove('hidden');
+    document.getElementById('edit-cover')?.classList.remove('hidden');
+    document.getElementById('profile-photo-wrap')?.classList.add('owner');
   }
 
   function lockEditMode() {
-    document.querySelectorAll('.edit-btn').forEach(btn => btn.classList.add('hidden'));
-    const panel = document.getElementById('customization-panel');
-    if (panel) panel.classList.add('hidden');
     document.body.classList.remove('edit-mode');
+    document.getElementById('edit-profile-btn')?.classList.add('hidden');
+    document.getElementById('edit-cover')?.classList.add('hidden');
+    document.getElementById('profile-photo-wrap')?.classList.remove('owner');
   }
 
   // ─── Business Mode DOM Strip ─────────────────────────────────────────────────

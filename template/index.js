@@ -329,11 +329,13 @@
     }, 'Update profile');
 
     AutonomTheme.applyTheme(config);
-    await Autonom.regenerateRobots(config);
-    await Autonom.regenerateSitemap(config);
-    if (config.mode !== 'business') await Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config));
-    else await Autonom.rewriteIndexHead(config, Autonom.generateJSONLD(config.businessProfile, config));
-    await Autonom.regenerateRSS(config);
+    try { await Autonom.regenerateRobots(config); } catch { /* non-fatal */ }
+    try { await Autonom.regenerateSitemap(config); } catch { /* non-fatal */ }
+    try {
+      if (config.mode !== 'business') await Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config));
+      else await Autonom.rewriteIndexHead(config, Autonom.generateJSONLD(config.businessProfile, config));
+    } catch { /* non-fatal */ }
+    try { await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
   }
 
   // ─── Mode Toggle ──────────────────────────────────────────────────────────────
@@ -656,8 +658,9 @@
       const updates = { firstTimeSetup: false, pages: { ...config.pages, ...pages } };
       if (status) { updates.status = status; setText('status', status); }
       await Autonom.saveConfig(config, updates, 'First-time setup');
-      if (status) await Autonom.regenerateRSS(config);
-      await Autonom.regenerateSitemap(config);
+      // Regenerate feeds silently — don't surface 503s as error toasts
+      try { if (status) await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
+      try { await Autonom.regenerateSitemap(config); } catch { /* non-fatal */ }
       document.getElementById('first-time-wizard')?.classList.add('hidden');
       Autonom.toast('Page set up \u2014 looking good!', 'success');
     });
