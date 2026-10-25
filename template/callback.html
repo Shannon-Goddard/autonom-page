@@ -51,7 +51,15 @@
       Autonom.setSession(result.token, login);
 
       status.textContent = 'Logged in! Redirecting...';
-      setTimeout(() => { location.href = 'index.html'; }, 800);
+      const returnUrl = sessionStorage.getItem('autonom_return_url');
+      sessionStorage.removeItem('autonom_return_url');
+      const t = encodeURIComponent(result.token);
+      const u = encodeURIComponent(login);
+      setTimeout(() => {
+        location.href = returnUrl
+          ? `${returnUrl}#autonom_token=${t}|${u}`
+          : `index.html`;
+      }, 800);
     })();
   </script>
 </body>

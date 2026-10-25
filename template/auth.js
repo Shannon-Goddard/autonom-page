@@ -105,7 +105,7 @@
   // ─── GitHub App Installation Flow ────────────────────────────────────────────
   // Called when owner wants to enter edit mode and has no active session
   function redirectToGitHubApp() {
-    const callbackUrl = encodeURIComponent(`${location.origin}/callback.html`);
+    sessionStorage.setItem('autonom_return_url', location.href.split('#')[0]);
     location.href = `https://github.com/apps/${GITHUB_APP}/installations/new`;
   }
 
