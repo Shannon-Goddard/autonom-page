@@ -1496,3 +1496,19 @@ main {
   font-size: 0.8rem;
   padding: 0.35rem 0.75rem;
 }
+
+/* ─── Homepage Section Empty State CTA ───────────────────────────────────────── */
+.hs-empty-cta {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  transition: border-color var(--transition), color var(--transition);
+}
+.hs-empty-cta:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  text-decoration: none;
+}

@@ -282,7 +282,12 @@
     Autonom.ghGet(`/repos/${Autonom.OWNER}/${Autonom.REPO}/contents/assets/gallery`)
       .then(items => {
         const photos = items.filter(f => f.name.endsWith('.webp'));
-        if (!photos.length) { sec.classList.add('hidden'); return; }
+        if (!photos.length) {
+          if (Autonom.isOwner()) {
+            grid.innerHTML = `<a href="gallery.html" class="hs-empty-cta">+ Add photos</a>`;
+          } else { sec.classList.add('hidden'); }
+          return;
+        }
         grid.innerHTML = photos.slice(0, 9).map(p =>
           `<figure class="gallery-item"><img src="${p.download_url}" alt="${p.name}" loading="lazy" /></figure>`
         ).join('');
@@ -298,7 +303,12 @@
 
   function renderHSMusic(sec) {
     const tracks = config.tracks || [];
-    if (!tracks.length) { sec.classList.add('hidden'); return; }
+    if (!tracks.length) {
+      if (Autonom.isOwner()) {
+        sec.innerHTML = '<h2>Music</h2><a href="music.html" class="hs-empty-cta">+ Add music</a>';
+      } else { sec.classList.add('hidden'); }
+      return;
+    }
     const t = tracks[0];
     sec.innerHTML = `
       <h2>Music</h2>
@@ -319,7 +329,12 @@
 
   function renderHSVideos(sec) {
     const videos = config.videos || [];
-    if (!videos.length) { sec.classList.add('hidden'); return; }
+    if (!videos.length) {
+      if (Autonom.isOwner()) {
+        sec.innerHTML = '<h2>Videos</h2><a href="videos.html" class="hs-empty-cta">+ Add videos</a>';
+      } else { sec.classList.add('hidden'); }
+      return;
+    }
     sec.innerHTML = '<h2>Videos</h2>';
     const grid = document.createElement('div');
     grid.className = 'hs-videos-grid';
