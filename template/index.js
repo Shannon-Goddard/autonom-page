@@ -455,10 +455,8 @@
       if (el) el.checked = !!home[key];
     });
 
-    const modeBtn = document.getElementById('mode-toggle-btn');
-    if (modeBtn) modeBtn.textContent = config.mode === 'business'
-      ? 'Switch to Personal Mode'
-      : 'Switch to Business Mode';
+    const modeToggle = document.getElementById('mode-toggle');
+    if (modeToggle) modeToggle.checked = config.mode === 'business';
 
     const bizForm = document.getElementById('business-profile-form');
     if (bizForm) {
@@ -547,8 +545,6 @@
       }, 'Switch to personal mode');
       Autonom.toast('Switched to Personal Mode', 'success');
     } else {
-      const confirmed = confirm('This will hide interactive features from visitors. You can switch back anytime.');
-      if (!confirmed) return;
       await Autonom.saveConfig(config, {
         personalModeSnapshot: JSON.parse(JSON.stringify(config.pages)),
         pages: { gallery: true, music: false, videos: true, friends: false, guestbook: false, games: false },
@@ -726,7 +722,7 @@
     }
     bgTypeEl?.addEventListener('change', syncBgInputs);
 
-    document.getElementById('mode-toggle-btn')?.addEventListener('click', toggleMode);
+    document.getElementById('mode-toggle')?.addEventListener('change', toggleMode);
     document.getElementById('save-business-profile')?.addEventListener('click', () => Autonom.saveBusinessProfile(config));
     document.getElementById('share-page')?.addEventListener('click', Autonom.handleShare);
     document.getElementById('export-backup')?.addEventListener('click', Autonom.handleExport);

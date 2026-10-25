@@ -163,7 +163,14 @@
 
         <div class="drawer-section">
           <h3>Mode</h3>
-          <button id="mode-toggle-btn" aria-label="Switch site mode">Switch to Business Mode</button>
+          <label class="drawer-toggle-row">
+            <div class="toggle-switch">
+              <input type="checkbox" id="mode-toggle" aria-label="Business mode" />
+              <span class="toggle-track"></span>
+            </div>
+            <span>Business Mode</span>
+          </label>
+          <p class="drawer-hint">Hides interactive features, shows business info card.</p>
         </div>
 
         <div id="business-profile-form" class="hidden drawer-section" aria-label="Business profile form">
@@ -199,8 +206,8 @@
         <div class="drawer-section" aria-label="Admin utilities">
           <h3>Admin</h3>
           <div id="storage-meter" aria-label="Storage usage"></div>
-          <button id="export-backup" aria-label="Export and download backup">Export / Backup</button>
-          <button id="share-page" aria-label="Copy page URL to clipboard">Share My Page</button>
+          <button id="export-backup" class="btn-ghost" aria-label="Export and download backup">Export / Backup</button>
+          <button id="share-page" class="btn-ghost" aria-label="Copy page URL to clipboard">Share My Page</button>
           <div id="qr-code" aria-label="QR code for your page"></div>
           <div id="notifications-badge" aria-label="Pending post notifications"></div>
           <label class="drawer-toggle-row">

@@ -1512,3 +1512,63 @@ main {
   color: var(--accent);
   text-decoration: none;
 }
+
+/* ─── Admin Utility Buttons (muted ghost) ────────────────────────────────────── */
+#export-backup,
+#share-page {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+#export-backup:hover,
+#share-page:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  opacity: 1;
+}
+
+/* ─── Toggle Switch ──────────────────────────────────────────────────────────── */
+.toggle-switch {
+  position: relative;
+  width: 2.4rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform var(--transition), background var(--transition);
+}
+.toggle-switch input:checked + .toggle-track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.toggle-switch input:checked + .toggle-track::after {
+  transform: translateX(1.05rem);
+  background: #fff;
+}
+.toggle-switch input:focus-visible + .toggle-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
