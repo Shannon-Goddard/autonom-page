@@ -608,6 +608,7 @@
       input.click();
     });
 
+    document.getElementById('login-btn')?.addEventListener('click', () => Autonom.enterEditMode());
     document.getElementById('edit-profile-btn')?.addEventListener('click', openEditDrawer);
     document.getElementById('edit-drawer-close')?.addEventListener('click', closeEditDrawer);
     document.getElementById('edit-drawer')?.addEventListener('click', e => {

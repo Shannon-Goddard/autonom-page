@@ -77,7 +77,44 @@ h3 { font-size: 1.1rem; }
 /* ─── Utility ────────────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
-/* ─── Nav Toggle Button ──────────────────────────────────────────────────────── */
+/* ─── Top Bar (login / get your page) ───────────────────────────────────────── */
+#top-bar {
+  position: fixed;
+  top: 0.75rem;
+  right: 1rem;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#login-btn {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+#login-btn:hover { background: var(--surface-2); opacity: 1; }
+
+#get-page-btn {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+#get-page-btn:hover { opacity: 0.85; text-decoration: none; }
+
+/* Hide top bar once owner is logged in */
+.edit-mode #top-bar { display: none; }
+
+
 #nav-toggle {
   position: fixed;
   top: 1rem;
