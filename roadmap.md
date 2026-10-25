@@ -187,11 +187,14 @@ username.github.io/
     "listed": true
   },
   "customDomain": "",
-  "currentTrack": {
-    "filename": "",
-    "title": "",
-    "artist": ""
+  "homepageSections": {
+    "gallery": false,
+    "music": false,
+    "videos": false,
+    "friends": false,
+    "guestbook": false
   },
+  "tracks": [],
   "videos": [],
   "rss": {
     "enabled": true
@@ -925,12 +928,13 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - Delete button rendered only for owner, fades in on hover via CSS — clean public view
 - `gallery.html` script order: `auth.js` → `github-api.js` → `media.js` → `nav.js` → `gallery.js`
 
-### `template/music.js`
-- Reads `currentTrack` from `site-config.json` on load — player hidden entirely if no track uploaded
-- Native `<audio>` element kept `display:none` — driven entirely via JS controls
-- Upload: 20MB cap with toast warning, filename sanitized (`/[^a-z0-9._-]/gi`), raw `arrayBuffer()` passed to `commitFile`
-- Saves `currentTrack` to `site-config.json` and calls `regenerateRSS` on upload — track change = feed update
-- Player updates live after upload — no page reload needed
+### `template/music.js` (rewritten as playlist)
+- `tracks[]` array replaces single `currentTrack` object in `site-config.json`
+- Multi-file upload: select multiple MP3s, all committed and appended to playlist in one save
+- Track list renders below player — click any row to jump, active row highlighted with accent border, remove button per track (owner only)
+- Prev/Next buttons, auto-advances to next track on `ended` event
+- Title auto-derived from filename on upload (strips extension, replaces dashes/underscores with spaces)
+- 20MB cap per file enforced before any upload attempt
 - `music.html` script order: `auth.js` → `github-api.js` → `nav.js` → `music.js`
 
 ### `template/videos.js`
@@ -1081,7 +1085,25 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 
 ---
 
-## Known Issues / Future Work
+- **Edit Profile drawer** — Replaced all scattered inline edit buttons with a single right-side slide-in drawer. Page view is now clean for visitors — no edit UI visible. Owner sees two affordances only: clickable profile photo (camera overlay on hover) and ghost "Edit Profile" button below profile section (right-aligned, Facebook pattern). Drawer contains: Profile (name, bio, status as form fields), Appearance (theme, background, custom CSS), Pages (nav visibility toggles), Homepage Sections (pull gallery/music/videos/friends/guestbook content onto landing page), Mode/Business, Admin. Save Changes batches all fields into one commit then closes drawer. No more `prompt()` calls anywhere. Committed as `e66069e`.
+
+- **Homepage sections** — New `homepageSections` object in `site-config.json` (`gallery`, `music`, `videos`, `friends`, `guestbook`, all default false). Toggled in Edit Profile drawer under "Homepage Sections". When enabled, sections render dynamically below the profile on `index.html`: gallery fetches repo contents API, music renders mini player with first track + "Full playlist →" link, videos shows first 2 embeds + overflow link, friends shows first 6 cards + overflow link, guestbook shows 3 most recent approved posts + link. All sections re-render on every `renderConfig()` call. Committed as `992dfc7`.
+
+- **Multi-upload — gallery** — Already supported `multiple` file input. No change needed.
+
+- **Multi-upload — videos** — Single URL input replaced with multi-line textarea (one URL per line). Bulk validates all lines, skips invalid with toast, adds all valid in one `saveConfig` call. Committed as `992dfc7`.
+
+- **Music playlist** — `currentTrack` single-track model replaced with `tracks[]` array in `site-config.json`. `music.js` fully rewritten: multi-file upload (select multiple MP3s at once, all committed and appended to playlist), track list UI below player (click any row to jump, active row highlighted, remove button per track), prev/next buttons, auto-advance on track end. Title auto-derived from filename on upload. Committed as `992dfc7`.
+
+- **Wizard 401/503 errors** — Three fixes: (1) `unlockEditMode`/`lockEditMode` in `auth.js` still referenced `#customization-panel` and `.edit-btn` which no longer exist after drawer refactor — updated to target `#edit-profile-btn`, `#edit-cover`, `#profile-photo-wrap`. (2) `REPO_OWNER` derived from `hostname.split('.')[0]` returned `"localhost"` during local testing, making `isOwner()` always false — added `data-owner` attribute on `<html>` tag as localhost fallback. (3) Wizard save and `saveCustomization` fired `regenerateRSS`/`regenerateSitemap`/`regenerateRobots`/`rewriteIndexHead` sequentially with no error handling — a single GitHub 503 cascaded into multiple error toasts. Wrapped all regenerate calls in individual `try/catch` blocks — core config save still completes, feed regeneration failures are silent and non-fatal. Committed as `308895d`.
+
+- **Camera icon — SVG replacing emoji** — `photo-icon.svg` (white camera, existing marketing site asset) copied into `template/assets/`. Profile photo hover overlay and cover button both now use `<img src="assets/photo-icon.svg">` instead of the 📷 emoji. Emoji renders inconsistently across OS/browser; SVG is consistent and CSS-styleable. Committed as `70cca5f`.
+
+- **Cover button restyled** — "Edit Cover" pink accent button replaced with icon-only dark semi-transparent pill (`rgba(0,0,0,0.5)`, darkens on hover). No text, no pink, just the camera SVG bottom-right of the banner. Matches Instagram/Facebook cover edit pattern. Committed as `70cca5f`.
+
+- **Edit Profile button ghost style** — `#edit-profile-btn` was inheriting the pink `--accent` background. Restyled to ghost/outlined: transparent background, `var(--text)` color, `1px solid var(--border)` border, `var(--surface-2)` on hover. Matches Facebook's outlined "Edit profile" button exactly. Committed as current.
+
+
 
 - **App already installed edge case** — If a user has previously installed the GitHub App and returns to `autonom.page` to start over, the OAuth + installation flow throws an error (installation already exists). Needs a graceful handler — detect existing installation and skip to the form, or surface a clear message. Low priority edge case for now.
 - **Template testing required first** — Before images, before the how-to guides are considered done, the deployed user site needs a full test pass: onboarding flow end-to-end, edit mode login, profile photo upload, cover photo upload, all six page toggles, customization panel saves, business mode switch, directory toggle, custom domain field, preview as visitor, wizard on first login. Use `shannon-not-tom` test account, delete repo between runs. See `testing/TESTING.md` for full checklist.

@@ -148,7 +148,11 @@ h3 { font-size: 1.1rem; }
 #edit-profile-btn {
   align-self: flex-end;
   margin-top: 0.25rem;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
 }
+#edit-profile-btn:hover { background: var(--surface-2); opacity: 1; }
 
 /* ─── Profile Photo Clickable Overlay ───────────────────────────────────────── */
 #profile-photo-wrap {
