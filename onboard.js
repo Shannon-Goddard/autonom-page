@@ -184,6 +184,7 @@
       'assets/favicon.ico',
       'assets/cover.webp',
       'assets/profile.webp',
+      'assets/photo-icon.svg',
     ];
 
     // Fetch all files in parallel
