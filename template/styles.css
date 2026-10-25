@@ -99,20 +99,21 @@ h3 { font-size: 1.1rem; }
 }
 #login-btn:hover { background: var(--surface-2); opacity: 1; }
 
-#get-page-btn {
-  background: var(--accent);
-  color: #fff;
+#logout-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
   font-size: 0.85rem;
   padding: 0.35rem 0.9rem;
   border-radius: var(--radius);
-  font-weight: 600;
   box-shadow: var(--shadow);
-  white-space: nowrap;
 }
-#get-page-btn:hover { opacity: 0.85; text-decoration: none; }
+#logout-btn:hover { background: var(--surface-2); color: var(--text); opacity: 1; }
 
-/* Hide top bar once owner is logged in */
-.edit-mode #top-bar { display: none; }
+/* Toggle based on auth state */
+#logout-btn { display: none; }
+.edit-mode #login-btn  { display: none; }
+.edit-mode #logout-btn { display: inline-block; }
 
 
 #nav-toggle {
