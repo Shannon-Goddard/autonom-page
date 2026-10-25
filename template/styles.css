@@ -1463,3 +1463,36 @@ main {
   #profile-left .profile-card { flex: 1 1 100%; }
   #friends-circles { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ─── Friends Empty State ────────────────────────────────────────────────────── */
+.friends-empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.25rem 0;
+}
+.friends-empty-state p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.friends-empty-state code {
+  background: var(--surface-2);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+.friends-quick-add {
+  display: flex;
+  gap: 0.4rem;
+}
+.friends-quick-add input {
+  flex: 1;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.6rem;
+}
+.friends-quick-add button {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+}

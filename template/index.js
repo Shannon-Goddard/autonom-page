@@ -123,8 +123,34 @@
       .then(r => r.ok ? r.json() : [])
       .then(list => {
         friends = list;
-        if (!list.length) { wrap.classList.add('hidden'); return; }
         wrap.classList.remove('hidden');
+
+        if (!list.length) {
+          grid.innerHTML = '';
+          const empty = document.createElement('div');
+          empty.className = 'friends-empty-state';
+          if (Autonom.isOwner()) {
+            empty.innerHTML = `
+              <p>Add friends by username — anyone on Autonom has a page at <code>username.github.io</code></p>
+              <div class="friends-quick-add">
+                <input type="text" id="friends-quick-input" placeholder="username or URL" aria-label="Friend username or URL" />
+                <button id="friends-quick-btn" aria-label="Add friend">Add</button>
+              </div>`;
+            wrap.appendChild(empty);
+            document.getElementById('friends-quick-btn')?.addEventListener('click', quickAddFriend);
+            document.getElementById('friends-quick-input')?.addEventListener('keydown', e => {
+              if (e.key === 'Enter') quickAddFriend();
+            });
+          } else {
+            empty.textContent = 'No friends added yet.';
+            wrap.appendChild(empty);
+          }
+          return;
+        }
+
+        // remove any previous empty state
+        wrap.querySelector('.friends-empty-state')?.remove();
+
         const show = list.slice(0, 9);
         grid.innerHTML = show.map((f, i) => `
           <a href="${f.url}" target="_blank" rel="noopener"
@@ -148,7 +174,39 @@
       .catch(() => { wrap?.classList.add('hidden'); });
   }
 
-  // ─── Friend Reorder ───────────────────────────────────────────────────────────
+  // ─── Quick Add Friend (empty state) ─────────────────────────────────────────
+  async function quickAddFriend() {
+    const input = document.getElementById('friends-quick-input');
+    const raw = input?.value.trim();
+    if (!raw) return;
+    const url = normaliseUrl(raw);
+    if (friends.some(f => f.url === url)) { Autonom.toast('Already added', 'error'); return; }
+    const btn = document.getElementById('friends-quick-btn');
+    btn.disabled = true; btn.textContent = 'Adding…';
+    try {
+      const cfg = await fetch(`${url}/site-config.json`).then(r => r.ok ? r.json() : {});
+      const owner = url.replace('https://', '').split('.')[0];
+      friends.push({
+        url,
+        displayName: cfg.displayName || owner,
+        photo: `${url}/assets/profile.webp`,
+      });
+      await saveFriends('Add friend');
+      Autonom.toast(`${cfg.displayName || owner} added!`, 'success');
+      renderFriendsCircles();
+    } catch {
+      Autonom.toast('Could not fetch that profile — check the username', 'error');
+      btn.disabled = false; btn.textContent = 'Add';
+    }
+  }
+
+  function normaliseUrl(raw) {
+    if (raw.startsWith('http')) return raw.replace(/\/$/, '');
+    const user = raw.replace(/\.github\.io.*$/, '');
+    return `https://${user}.github.io`;
+  }
+
+  
   function wireFriendReorder(grid) {
     let dragSrc = null;
 
