@@ -144,6 +144,7 @@
           body: JSON.stringify({ device_code: deviceData.device_code }),
         });
         const data = await res.json();
+        statusEl.textContent = data.error || (data.token ? 'approved' : 'waiting...');
 
         if (data.token && data.login) {
           clearInterval(_devicePollTimer);
@@ -161,8 +162,8 @@
           statusEl.textContent = `Login failed — ${data.error}`;
         }
       } catch (e) {
-        clearInterval(_devicePollTimer);
-        statusEl.textContent = `Login failed — ${e.message}`;
+        statusEl.textContent = `Network error — retrying... (${e.message})`;
+        // keep polling on network blips
       }
     }, interval);
 
