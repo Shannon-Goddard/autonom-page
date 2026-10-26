@@ -87,6 +87,65 @@ async function exchangeInstallation(installationId) {
   return body; // { token, expires_at }
 }
 
+// Device flow — request user+device code
+async function requestDeviceCode() {
+  const body = JSON.stringify({ client_id: GITHUB_CLIENT_ID });
+  const { status, body: data } = await httpsRequest({
+    hostname: 'github.com',
+    path: '/login/device/code',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'autonom-oauth-proxy',
+      'Content-Length': Buffer.byteLength(body),
+    },
+  }, body);
+  if (status !== 200 || data.error) throw new Error(data.error || 'Device code request failed');
+  return data; // { device_code, user_code, verification_uri, expires_in, interval }
+}
+
+// Device flow — poll for access token
+async function pollDeviceToken(deviceCode) {
+  const body = JSON.stringify({
+    client_id: GITHUB_CLIENT_ID,
+    device_code: deviceCode,
+    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+  });
+  const { status, body: data } = await httpsRequest({
+    hostname: 'github.com',
+    path: '/login/oauth/access_token',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'autonom-oauth-proxy',
+      'Content-Length': Buffer.byteLength(body),
+    },
+  }, body);
+  if (status !== 200) throw new Error('Poll failed');
+  return data; // { access_token } or { error: 'authorization_pending' } etc.
+}
+
+// Get installation token from a user OAuth token
+async function userTokenToInstallToken(userToken) {
+  const login = await getLogin(userToken);
+  const appJWT = signAppJWT();
+  const { status, body } = await httpsRequest({
+    hostname: 'api.github.com',
+    path: `/users/${login}/installation`,
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${appJWT}`,
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'autonom-oauth-proxy',
+    },
+  });
+  if (status !== 200) throw new Error('No installation found — please install the GitHub App first');
+  const installData = await exchangeInstallation(body.id);
+  return { token: installData.token, expires_at: installData.expires_at, login };
+}
+
 exports.handler = async (event) => {
   if (event.requestContext?.http?.method === 'OPTIONS') {
     return { statusCode: 204, headers: CORS_HEADERS, body: '' };
@@ -106,6 +165,24 @@ exports.handler = async (event) => {
   catch { return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
   try {
+    // Device flow step 1 — request device+user code
+    if (body.device_flow) {
+      const data = await requestDeviceCode();
+      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify(data) };
+    }
+
+    // Device flow step 2 — poll for token, exchange for installation token
+    if (body.device_code) {
+      const data = await pollDeviceToken(body.device_code);
+      // Pass through pending/denied/expired errors to client
+      if (data.error) {
+        return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ error: data.error }) };
+      }
+      // Got user token — exchange for installation token
+      const result = await userTokenToInstallToken(data.access_token);
+      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify(result) };
+    }
+
     // OAuth code exchange — returns user token + login for repo creation
     if (body.code) {
       const data  = await exchangeOAuthCode(body.code);

@@ -102,11 +102,73 @@
     }
   }
 
-  // ─── GitHub App Installation Flow ────────────────────────────────────────────
-  // Called when owner wants to enter edit mode and has no active session
-  function redirectToGitHubApp() {
-    const callbackUrl = encodeURIComponent(`${location.origin}/callback.html`);
-    location.href = `https://github.com/apps/${GITHUB_APP}/installations/new`;
+  // ─── Device Flow Login ────────────────────────────────────────────────────────
+  const GITHUB_CLIENT_ID = 'Iv23liDBARfsjA2e1odh';
+  let _devicePollTimer = null;
+
+  async function startDeviceFlow() {
+    const modal     = document.getElementById('device-modal');
+    const codeEl    = document.getElementById('device-code');
+    const statusEl  = document.getElementById('device-modal-status');
+    const cancelBtn = document.getElementById('device-cancel-btn');
+    if (!modal) return;
+
+    statusEl.textContent = '';
+    codeEl.textContent   = 'Requesting code…';
+    modal.classList.remove('hidden');
+
+    let deviceData;
+    try {
+      const res = await fetch(LAMBDA_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_flow: true }),
+      });
+      if (!res.ok) throw new Error();
+      deviceData = await res.json();
+    } catch {
+      codeEl.textContent   = '';
+      statusEl.textContent = 'Could not start login — please try again.';
+      return;
+    }
+
+    codeEl.textContent = deviceData.user_code;
+    document.getElementById('device-open-btn').href = deviceData.verification_uri;
+
+    const interval = (deviceData.interval || 5) * 1000;
+    _devicePollTimer = setInterval(async () => {
+      try {
+        const res  = await fetch(LAMBDA_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device_code: deviceData.device_code }),
+        });
+        const data = await res.json();
+
+        if (data.token && data.login) {
+          clearInterval(_devicePollTimer);
+          setSession(data.token, data.login);
+          modal.classList.add('hidden');
+          if (data.login === REPO_OWNER) {
+            unlockEditMode();
+            toast('Logged in', 'success');
+          } else {
+            toast(`Logged in as ${data.login} — not the owner of this page`, 'error');
+          }
+        } else if (data.error === 'access_denied') {
+          clearInterval(_devicePollTimer);
+          statusEl.textContent = 'Login cancelled.';
+        } else if (data.error === 'expired_token') {
+          clearInterval(_devicePollTimer);
+          statusEl.textContent = 'Code expired — please try again.';
+        }
+      } catch { /* network blip — keep polling */ }
+    }, interval);
+
+    cancelBtn.onclick = () => {
+      clearInterval(_devicePollTimer);
+      modal.classList.add('hidden');
+    };
   }
 
   // Called on callback.html after GitHub redirects back with installation_id
@@ -164,7 +226,7 @@
       return;
     }
     clearSession();
-    redirectToGitHubApp();
+    startDeviceFlow();
   }
 
   // ─── Init ────────────────────────────────────────────────────────────────────

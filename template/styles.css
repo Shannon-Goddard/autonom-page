@@ -77,7 +77,74 @@ h3 { font-size: 1.1rem; }
 /* ─── Utility ────────────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
-/* ─── Top Bar (login / get your page) ───────────────────────────────────────── */
+/* ─── Device Login Modal ───────────────────────────────────────────────────── */
+#device-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+#device-modal.hidden { display: none !important; }
+
+#device-modal-box {
+  width: 100%;
+  max-width: 360px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+#device-modal-hint {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+#device-code {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 1.5rem;
+  font-family: monospace;
+}
+
+#device-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#device-open-btn {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: opacity var(--transition);
+}
+#device-open-btn:hover { opacity: 0.85; text-decoration: none; }
+
+#device-modal-status {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  min-height: 1.2em;
+}
+
+
 #top-bar {
   position: fixed;
   top: 0.75rem;
