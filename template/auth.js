@@ -105,10 +105,8 @@
   // ─── GitHub App Installation Flow ────────────────────────────────────────────
   // Called when owner wants to enter edit mode and has no active session
   function redirectToGitHubApp() {
-    // Use OAuth authorize flow — works whether app is already installed or not,
-    // and always redirects back to callback with installation_id
     const callbackUrl = encodeURIComponent(`${location.origin}/callback.html`);
-    location.href = `https://github.com/login/oauth/authorize?client_id=Iv23liDBARfsjA2e1odh&redirect_uri=${callbackUrl}&scope=`;
+    location.href = `https://github.com/apps/${GITHUB_APP}/installations/new`;
   }
 
   // Called on callback.html after GitHub redirects back with installation_id

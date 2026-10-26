@@ -3,7 +3,9 @@
 [![Built by Amazon Q](https://img.shields.io/badge/Built%20by-Amazon%20Q-FF9900?style=flat&logo=amazonaws&logoColor=white)](https://aws.amazon.com/q/)
 [![Idea by Shannon](https://img.shields.io/badge/Idea%20by-Shannon-e94560?style=flat&logoColor=white)](https://autonom.page)
 [![Hosted on GitHub Pages](https://img.shields.io/badge/Hosted%20on-GitHub%20Pages-181717?style=flat&logo=github&logoColor=white)](https://pages.github.com)
-[![Powered by Autonom](https://img.shields.io/badge/Powered%20by-Autonom-0f3460?style=flat)](https://autonom.page)
+[![Powered by Autonom](https://img.shields.io/badge/Powered%20by-Autonom-0f3460?style=flat)](https://autonom.page) 
+[![Backed by Loyal9 LLC](https://img.shields.io/badge/Backed%20by-Loyal9%20LLC-04aa6d?style=flat)](https://autonom.page)
+
 
 ---
 

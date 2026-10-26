@@ -8,62 +8,68 @@ Log pass/fail, console errors, and any fix applied with commit hash.
 ## Priority 1 — Must Pass Before Public Launch
 
 ### Onboarding Flow
-- [ ] TOS checkbox enables Connect button
-- [ ] Connect GitHub redirects to OAuth
-- [ ] OAuth callback redirects to install step
-- [ ] Install step scroll-into-view works
-- [ ] App install redirects back to form step
-- [ ] Form step scroll-into-view works
-- [ ] Deploy button disabled while deploying
-- [ ] Progress steps animate correctly (pending → done)
-- [ ] Repo created on GitHub
-- [ ] All template files committed in single commit
-- [ ] README.md present in user repo and renders on GitHub homepage
-- [ ] GitHub Pages enabled automatically
-- [ ] Site comes online within 3 minutes
-- [ ] Redirect to `username.github.io` with token in hash
-- [ ] Token read from hash and stored in sessionStorage
-- [ ] Hash stripped from URL after read
+- [ X ] TOS checkbox enables Connect button
+- [ X ] Connect GitHub redirects to OAuth
+- [ X ] OAuth callback redirects to install step
+- [ X ] Install step scroll-into-view works
+- [ X ] App install redirects back to form step
+- [ X ] Form step scroll-into-view works
+- [ X ] Deploy button disabled while deploying
+- [ X ] Progress steps animate correctly (pending → done)
+- [ X ] Repo created on GitHub
+- [ X ] All template files committed in single commit
+- [ X ] README.md present in user repo and renders on GitHub homepage
+- [ X ] GitHub Pages enabled automatically
+- [ X ] Site comes online within 3 minutes
+- [ X ] Redirect to `username.github.io` with token in hash
+- [ X ] Token read from hash and stored in sessionStorage
+- [ X ] Hash stripped from URL after read
 
 ### First-Time Wizard
-- [ ] Wizard appears on first land (not to visitors)
-- [ ] Status field saves to site-config.json
-- [ ] Cover photo upload commits to assets/cover.webp
-- [ ] Page toggles save correctly
-- [ ] Save & Finish dismisses wizard and shows success toast
-- [ ] Skip for now dismisses wizard without saving
-- [ ] Wizard does not appear on reload after dismiss
+- [ X ] Wizard appears on first land (not to visitors)
+- [ X ] Status field saves to site-config.json
+- [ X ] Cover photo upload commits to assets/cover.webp
+- [ X ] Page toggles save correctly
+- [ X ] Save & Finish dismisses wizard and shows success toast
+- [ X ] Skip for now dismisses wizard without saving
+- [ X ] Wizard does not appear on reload after dismiss
 
 ### Edit Mode
-- [ ] Edit buttons visible when logged in as owner
-- [ ] Edit buttons hidden from visitors
-- [ ] Cover photo upload commits and updates live
-- [ ] Profile photo upload commits and updates live
-- [ ] Bio edit saves and persists after reload
-- [ ] Status edit saves and persists after reload
-- [ ] Log Out clears session and hides edit buttons
-- [ ] Preview as Visitor hides all edit UI
-- [ ] Exit Preview restores edit UI
+- [ X ] Edit buttons visible when logged in as owner
+- [ X ] Edit buttons hidden from visitors
+- [ X ] Cover photo upload commits and updates live
+- [ X ] Profile photo upload commits and updates live
+- [ X ] Bio edit saves and persists after reload
+- [ X ] Status edit saves and persists after reload
+- [ X ] Log Out clears session and hides edit buttons
+- [ X ] Preview as Visitor hides all edit UI
+- [ X ] Exit Preview restores edit UI
 
 ### Customization Panel
 - [ ] Theme toggle (dark/light) applies immediately
-- [ ] Background solid color saves and applies
+after light is selected from drop, have to scroll to bottom to save changes. Need to move save changes button to a more easy access location. White/light text needs to change to blackish. Such as " Pages
+ Gallery  Music  Videos  Friends  Guestbook"
+- [ X ] Background solid color saves and applies
 - [ ] Background image upload saves and applies
-- [ ] Background type select shows/hides correct input
+no. goes back to original dark blue solid color state.
+- [ ] Background type select shows/hides correct input no. gradiant goes to previous solid color picked with no options for gradiant effects.
 - [ ] Custom CSS field saves and applies
+no, and has no explaination of what it is supose to do.
 - [ ] Page toggles save and update nav
-- [ ] Save Changes commits and persists after reload
-- [ ] Switch to Business Mode works
+no. unslected pages and they remained in the nav.
+- [ X] Save Changes commits and persists after reload yes. however I need to note when viewing as a guest "Videos" is always present on the page.
+- [] Switch to Business Mode works
+note. price range has $, $$, $$$, $$$$ as options and not explained why. Business mode is not saved and never shows on guest page.
 - [ ] Switch back to Personal Mode restores previous state
 
 ### Admin Panel
 - [ ] Storage meter loads repo size
 - [ ] Export / Backup opens zip download
-- [ ] Share My Page copies URL to clipboard
-- [ ] QR code generates and displays
-- [ ] QR code download link works
-- [ ] Directory label reads "List your domain in the directory"
-- [ ] Domain input pre-populated with username.github.io
+- [ X ] Share My Page copies URL to clipboard
+- [ X ] QR code generates and displays
+- [ X ] QR code download link works
+- [ X ] Directory label reads "List your domain in the directory" thinking how this opens up potential spam into our directory.Should have a yes/no toggle. No input. 
+- [ X ] Domain input pre-populated with username.github.io thinking how if they decided to point to a paid domain, they are now a profession of some type. Not part of autonom community. Shouldn't be able to list that custom domain
 - [ ] Save Domain commits CNAME file
 - [ ] DNS helper appears after domain saved
 - [ ] Directory toggle saves to site-config.json
