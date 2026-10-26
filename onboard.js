@@ -191,7 +191,7 @@
       'assets/packman-black.svg',
       'assets/snake-white.svg',
       'assets/snake-black.svg',
-      'assets/breakout-color.svg',
+      'assets/breakout-white.svg',
       'assets/breakout-black.svg',
       'assets/space-invaders-white.svg',
       'assets/space-invaders-black.svg',
