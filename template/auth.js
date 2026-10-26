@@ -135,40 +135,46 @@
     codeEl.textContent = deviceData.user_code;
     document.getElementById('device-open-btn').href = deviceData.verification_uri;
 
-    const interval = (deviceData.interval || 5) * 1000;
-    _devicePollTimer = setInterval(async () => {
-      try {
-        const res  = await fetch(LAMBDA_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ device_code: deviceData.device_code }),
-        });
-        const data = await res.json();
-        statusEl.textContent = data.error || (data.token ? 'approved' : 'waiting...');
+    let pollInterval = interval;
 
-        if (data.token && data.login) {
-          clearInterval(_devicePollTimer);
-          setSession(data.token, data.login);
-          modal.classList.add('hidden');
-          location.reload();
-        } else if (data.error === 'access_denied') {
-          clearInterval(_devicePollTimer);
-          statusEl.textContent = 'Login cancelled.';
-        } else if (data.error === 'expired_token') {
-          clearInterval(_devicePollTimer);
-          statusEl.textContent = 'Code expired — please try again.';
-        } else if (data.error && data.error !== 'authorization_pending' && data.error !== 'slow_down') {
-          clearInterval(_devicePollTimer);
-          statusEl.textContent = `Login failed — ${data.error}`;
+    function schedulePoll() {
+      _devicePollTimer = setTimeout(async () => {
+        try {
+          const res  = await fetch(LAMBDA_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ device_code: deviceData.device_code }),
+          });
+          const data = await res.json();
+          statusEl.textContent = data.error === 'authorization_pending' ? 'Waiting for approval...' : (data.error || (data.token ? 'approved' : 'waiting...'));
+
+          if (data.token && data.login) {
+            setSession(data.token, data.login);
+            modal.classList.add('hidden');
+            location.reload();
+          } else if (data.error === 'slow_down') {
+            pollInterval += 5000;
+            schedulePoll();
+          } else if (data.error === 'access_denied') {
+            statusEl.textContent = 'Login cancelled.';
+          } else if (data.error === 'expired_token') {
+            statusEl.textContent = 'Code expired — please try again.';
+          } else if (data.error && data.error !== 'authorization_pending') {
+            statusEl.textContent = `Login failed — ${data.error}`;
+          } else {
+            schedulePoll();
+          }
+        } catch (e) {
+          statusEl.textContent = `Network error — retrying...`;
+          schedulePoll();
         }
-      } catch (e) {
-        statusEl.textContent = `Network error — retrying... (${e.message})`;
-        // keep polling on network blips
-      }
-    }, interval);
+      }, pollInterval);
+    }
+
+    schedulePoll();
 
     cancelBtn.onclick = () => {
-      clearInterval(_devicePollTimer);
+      clearTimeout(_devicePollTimer);
       modal.classList.add('hidden');
     };
   }
