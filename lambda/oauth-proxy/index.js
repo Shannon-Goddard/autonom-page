@@ -8,7 +8,7 @@ const GITHUB_CLIENT_ID   = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 function getCorsHeaders(origin) {
-  const allowed = origin === ALLOWED_ORIGIN || /^https:\/\/[a-z0-9-]+\.github\.io$/.test(origin);
+  const allowed = origin && origin.startsWith('https://');
   return {
     'Access-Control-Allow-Origin':  allowed ? origin : ALLOWED_ORIGIN,
     'Access-Control-Allow-Methods': 'POST',
@@ -155,7 +155,7 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const isAllowed = origin === ALLOWED_ORIGIN || /^https:\/\/[a-z0-9-]+\.github\.io$/.test(origin);
+  const isAllowed = origin && origin.startsWith('https://');
   if (!isAllowed) {
     return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Forbidden' }) };
   }
