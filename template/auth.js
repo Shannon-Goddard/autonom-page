@@ -152,7 +152,7 @@
           if (data.token && data.login) {
             setSession(data.token, data.login);
             modal.classList.add('hidden');
-            const doReload = () => location.href = location.pathname + '?_=' + Date.now();
+            const doReload = () => location.reload();
             if (document.visibilityState === 'visible') {
               doReload();
             } else {
