@@ -604,11 +604,14 @@
 
     const coverSection = document.getElementById('cover-section');
     if (coverSection) {
-      coverSection.addEventListener('click', () => {
+      coverSection.addEventListener('click', e => {
         if (!Autonom.isOwner()) return;
+        // Only fire if click is within the cover photo bounds, not the overlapping identity section
+        const rect = document.getElementById('cover-photo')?.getBoundingClientRect();
+        if (!rect || e.clientY > rect.bottom) return;
         const input = document.createElement('input');
         input.type = 'file'; input.accept = 'image/*';
-        input.onchange = e => Autonom.handleCoverPhotoUpload(e.target.files[0]);
+        input.onchange = ev => Autonom.handleCoverPhotoUpload(ev.target.files[0]);
         input.click();
       });
     }

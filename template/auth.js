@@ -72,6 +72,7 @@
     document.body.classList.remove('edit-mode');
     document.getElementById('edit-profile-btn')?.classList.add('hidden');
     document.getElementById('edit-cover')?.classList.add('hidden');
+    document.getElementById('cover-section')?.classList.remove('owner');
     document.getElementById('profile-photo-wrap')?.classList.remove('owner');
   }
 
@@ -151,10 +152,11 @@
           if (data.token && data.login) {
             setSession(data.token, data.login);
             modal.classList.add('hidden');
+            const doReload = () => location.href = location.pathname + '?_=' + Date.now();
             if (document.visibilityState === 'visible') {
-              location.reload();
+              doReload();
             } else {
-              document.addEventListener('visibilitychange', () => location.reload(), { once: true });
+              document.addEventListener('visibilitychange', doReload, { once: true });
             }
           } else if (data.error === 'slow_down') {
             pollInterval += 5000;

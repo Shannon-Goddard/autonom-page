@@ -144,6 +144,14 @@ h3 { font-size: 1.1rem; }
   min-height: 1.2em;
 }
 
+#device-modal-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 280px;
+  text-align: center;
+}
+
 
 #top-bar {
   position: fixed;
@@ -528,9 +536,6 @@ h3 { font-size: 1.1rem; }
 #cover-section.owner {
   cursor: pointer;
 }
-#cover-section.owner:hover #edit-cover {
-  opacity: 1;
-}
 #cover-photo {
   width: 100%;
   height: 100%;
@@ -553,6 +558,7 @@ h3 { font-size: 1.1rem; }
   transition: opacity var(--transition);
   pointer-events: none;
 }
+#cover-section.owner:hover #edit-cover { opacity: 1; }
 #edit-cover img { display: block; pointer-events: none; }
 
 /* ─── Profile Section ────────────────────────────────────────────────────────── */
