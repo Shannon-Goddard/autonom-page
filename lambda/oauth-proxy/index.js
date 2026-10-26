@@ -1,18 +1,21 @@
 const jwt = require('jsonwebtoken');
 const https = require('https');
 
-const ALLOWED_ORIGIN    = process.env.ALLOWED_ORIGIN;
-const GITHUB_APP_ID     = process.env.GITHUB_APP_ID;
+const ALLOWED_ORIGIN     = process.env.ALLOWED_ORIGIN;
+const GITHUB_APP_ID      = process.env.GITHUB_APP_ID;
 const GITHUB_PRIVATE_KEY = process.env.GITHUB_PRIVATE_KEY.replace(/\\n/g, '\n');
-const GITHUB_CLIENT_ID  = process.env.GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_ID   = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin':  ALLOWED_ORIGIN,
-  'Access-Control-Allow-Methods': 'POST',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
-};
+function getCorsHeaders(origin) {
+  const allowed = origin === ALLOWED_ORIGIN || /^https:\/\/[a-z0-9-]+\.github\.io$/.test(origin);
+  return {
+    'Access-Control-Allow-Origin':  allowed ? origin : ALLOWED_ORIGIN,
+    'Access-Control-Allow-Methods': 'POST',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json',
+  };
+}
 
 function signAppJWT() {
   const now = Math.floor(Date.now() / 1000);
@@ -35,25 +38,6 @@ function httpsRequest(options, body) {
   });
 }
 
-// Exchange OAuth code for user access token
-async function exchangeOAuthCode(code) {
-  const body = JSON.stringify({ client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code });
-  const { status, body: data } = await httpsRequest({
-    hostname: 'github.com',
-    path: '/login/oauth/access_token',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'autonom-oauth-proxy',
-      'Content-Length': Buffer.byteLength(body),
-    },
-  }, body);
-  if (status !== 200 || data.error) throw new Error(data.error_description || 'OAuth exchange failed');
-  return data; // { access_token, token_type, scope }
-}
-
-// Get username from user token
 async function getLogin(userToken) {
   const { status, body } = await httpsRequest({
     hostname: 'api.github.com',
@@ -69,7 +53,6 @@ async function getLogin(userToken) {
   return body.login;
 }
 
-// Exchange installation_id for installation access token
 async function exchangeInstallation(installationId) {
   const appJWT = signAppJWT();
   const { status, body } = await httpsRequest({
@@ -84,50 +67,9 @@ async function exchangeInstallation(installationId) {
     },
   });
   if (status !== 201) throw new Error(body.message || 'Installation token exchange failed');
-  return body; // { token, expires_at }
+  return body;
 }
 
-// Device flow — request user+device code
-async function requestDeviceCode() {
-  const body = JSON.stringify({ client_id: GITHUB_CLIENT_ID });
-  const { status, body: data } = await httpsRequest({
-    hostname: 'github.com',
-    path: '/login/device/code',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'autonom-oauth-proxy',
-      'Content-Length': Buffer.byteLength(body),
-    },
-  }, body);
-  if (status !== 200 || data.error) throw new Error(data.error || 'Device code request failed');
-  return data; // { device_code, user_code, verification_uri, expires_in, interval }
-}
-
-// Device flow — poll for access token
-async function pollDeviceToken(deviceCode) {
-  const body = JSON.stringify({
-    client_id: GITHUB_CLIENT_ID,
-    device_code: deviceCode,
-    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-  });
-  const { status, body: data } = await httpsRequest({
-    hostname: 'github.com',
-    path: '/login/oauth/access_token',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'autonom-oauth-proxy',
-      'Content-Length': Buffer.byteLength(body),
-    },
-  }, body);
-  if (status !== 200) throw new Error('Poll failed');
-  return data; // { access_token } or { error: 'authorization_pending' } etc.
-}
-
-// Get installation token from a user OAuth token
 async function userTokenToInstallToken(userToken) {
   const login = await getLogin(userToken);
   const appJWT = signAppJWT();
@@ -146,67 +88,115 @@ async function userTokenToInstallToken(userToken) {
   return { token: installData.token, expires_at: installData.expires_at, login };
 }
 
+async function requestDeviceCode() {
+  const body = JSON.stringify({ client_id: GITHUB_CLIENT_ID });
+  const { status, body: data } = await httpsRequest({
+    hostname: 'github.com',
+    path: '/login/device/code',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'autonom-oauth-proxy',
+      'Content-Length': Buffer.byteLength(body),
+    },
+  }, body);
+  if (status !== 200 || data.error) throw new Error(data.error || 'Device code request failed');
+  return data;
+}
+
+async function pollDeviceToken(deviceCode) {
+  const body = JSON.stringify({
+    client_id: GITHUB_CLIENT_ID,
+    device_code: deviceCode,
+    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+  });
+  const { status, body: data } = await httpsRequest({
+    hostname: 'github.com',
+    path: '/login/oauth/access_token',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'autonom-oauth-proxy',
+      'Content-Length': Buffer.byteLength(body),
+    },
+  }, body);
+  if (status !== 200) throw new Error('Poll failed');
+  return data;
+}
+
+async function exchangeOAuthCode(code) {
+  const body = JSON.stringify({ client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code });
+  const { status, body: data } = await httpsRequest({
+    hostname: 'github.com',
+    path: '/login/oauth/access_token',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'autonom-oauth-proxy',
+      'Content-Length': Buffer.byteLength(body),
+    },
+  }, body);
+  if (status !== 200 || data.error) throw new Error(data.error_description || 'OAuth exchange failed');
+  return data;
+}
+
 exports.handler = async (event) => {
+  const origin = event.headers?.origin || event.headers?.Origin || '';
+  const CORS = getCorsHeaders(origin);
+
   if (event.requestContext?.http?.method === 'OPTIONS') {
-    return { statusCode: 204, headers: CORS_HEADERS, body: '' };
+    return { statusCode: 204, headers: CORS, body: '' };
   }
 
   if (event.requestContext?.http?.method !== 'POST') {
-    return { statusCode: 405, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const origin = event.headers?.origin || event.headers?.Origin || '';
-  if (origin !== ALLOWED_ORIGIN) {
-    return { statusCode: 403, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Forbidden' }) };
+  const isAllowed = origin === ALLOWED_ORIGIN || /^https:\/\/[a-z0-9-]+\.github\.io$/.test(origin);
+  if (!isAllowed) {
+    return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Forbidden' }) };
   }
 
   let body;
   try { body = JSON.parse(event.body || '{}'); }
-  catch { return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+  catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
   try {
     // Device flow step 1 — request device+user code
     if (body.device_flow) {
       const data = await requestDeviceCode();
-      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify(data) };
+      return { statusCode: 200, headers: CORS, body: JSON.stringify(data) };
     }
 
-    // Device flow step 2 — poll for token, exchange for installation token
+    // Device flow step 2 — poll, then exchange user token for installation token
     if (body.device_code) {
       const data = await pollDeviceToken(body.device_code);
-      // Pass through pending/denied/expired errors to client
       if (data.error) {
-        return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ error: data.error }) };
+        return { statusCode: 200, headers: CORS, body: JSON.stringify({ error: data.error }) };
       }
-      // Got user token — exchange for installation token
       const result = await userTokenToInstallToken(data.access_token);
-      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify(result) };
+      return { statusCode: 200, headers: CORS, body: JSON.stringify(result) };
     }
 
-    // OAuth code exchange — returns user token + login for repo creation
+    // OAuth code exchange — for onboarding repo creation
     if (body.code) {
       const data  = await exchangeOAuthCode(body.code);
       const login = await getLogin(data.access_token);
-      return {
-        statusCode: 200,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ user_token: data.access_token, login }),
-      };
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ user_token: data.access_token, login }) };
     }
 
-    // Installation token exchange — returns scoped token for content writes
+    // Installation token exchange — for onboarding content writes
     if (body.installation_id) {
       const data = await exchangeInstallation(body.installation_id);
-      return {
-        statusCode: 200,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ token: data.token, expires_at: data.expires_at }),
-      };
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ token: data.token, expires_at: data.expires_at }) };
     }
 
-    return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Missing code or installation_id' }) };
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Missing required parameter' }) };
 
   } catch (err) {
-    return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: err.message }) };
   }
 };
