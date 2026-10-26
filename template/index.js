@@ -34,6 +34,7 @@
       populateCustomizationPanel();
       document.getElementById('edit-profile-btn')?.classList.remove('hidden');
       document.getElementById('edit-cover')?.classList.remove('hidden');
+      document.getElementById('cover-section')?.classList.add('owner');
       document.getElementById('profile-photo-wrap')?.classList.add('owner');
     }
   }
@@ -601,12 +602,16 @@
       input.click();
     });
 
-    document.getElementById('edit-cover')?.addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file'; input.accept = 'image/*';
-      input.onchange = e => Autonom.handleCoverPhotoUpload(e.target.files[0]);
-      input.click();
-    });
+    const coverSection = document.getElementById('cover-section');
+    if (coverSection) {
+      coverSection.addEventListener('click', () => {
+        if (!Autonom.isOwner()) return;
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*';
+        input.onchange = e => Autonom.handleCoverPhotoUpload(e.target.files[0]);
+        input.click();
+      });
+    }
 
     document.getElementById('login-btn')?.addEventListener('click', () => Autonom.enterEditMode());
     document.getElementById('logout-btn')?.addEventListener('click', () => Autonom.logout());
