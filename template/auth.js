@@ -135,7 +135,7 @@
     codeEl.textContent = deviceData.user_code;
     document.getElementById('device-open-btn').href = deviceData.verification_uri;
 
-    let pollInterval = interval;
+    let pollInterval = Math.max((deviceData.interval || 5) * 1000, 10000);
 
     function schedulePoll() {
       _devicePollTimer = setTimeout(async () => {
