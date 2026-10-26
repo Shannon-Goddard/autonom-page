@@ -151,7 +151,11 @@
           if (data.token && data.login) {
             setSession(data.token, data.login);
             modal.classList.add('hidden');
-            location.reload();
+            if (document.visibilityState === 'visible') {
+              location.reload();
+            } else {
+              document.addEventListener('visibilitychange', () => location.reload(), { once: true });
+            }
           } else if (data.error === 'slow_down') {
             pollInterval += 5000;
             schedulePoll();
