@@ -1200,3 +1200,25 @@ END:VCARD
 - `site-config.json` gets a new optional `vcard` object for fields the owner wants pre-filled next time: `{ phone, socialHandles: { twitter, instagram, linkedin } }` — owner can save these from the modal with a "Remember these" checkbox
 - QR code in modal reuses the existing `api.qrserver.com` image tag — no new code
 - Keyboard accessible: Tab through fields, Enter to download, Escape to close
+
+## Device Flow Login (Replaces Redirect-Based Login)
+
+- **Redirect-based login broken — sessionStorage doesn't cross domains** — `callback.html` on `autonom.page` couldn't pass the token back to `username.github.io` via sessionStorage. Multiple fix attempts (return URL in sessionStorage, hash redirect via `login.github.io`) all had CSP or cross-domain issues. Reverted to `c429c5c` baseline as `3d152f4`.
+
+- **Device flow implementation** — Replaced redirect-based login entirely with GitHub Device Flow. Owner clicks "Log in" → Lambda requests a device code → modal shows the code + "Open GitHub →" button → user opens GitHub in a new tab, selects account, enters code, authorizes → Lambda polls for approval every 10s+ → on success token stored in sessionStorage, modal closes, page reloads. No redirect, no cross-domain token passing. Lambda updated with `requestDeviceCode()`, `pollDeviceToken()`, `userTokenToInstallToken()`. API Gateway CORS set to `AllowOrigins: *` at gateway level (OPTIONS preflight handled before Lambda runs). Pushed across multiple commits up to `6a0fcde`.
+
+- **`slow_down` error from GitHub** — Poll was firing too fast. GitHub returns `slow_down` when interval is too short. Fixed by switching from `setInterval` to recursive `setTimeout`, adding 5s on each `slow_down` response, enforcing 10s minimum base interval. Committed as `6a0fcde`.
+
+- **`ReferenceError: interval is not defined`** — Old `auth.js` with bare `interval` variable was cached in the SW `dynamic-v1` cache. Fixed by bumping SW cache to `dynamic-v2` and cleaning up old dynamic caches on activate. `onboard.js` now patches both `shell-v` and `dynamic-v` with a unique timestamp on every deploy so all old caches are evicted on first load of a new deploy. Committed as `5b6a1e2`, `75c1a0f`.
+
+- **Cover photo button hit area** — Camera icon only had pointer on a tiny area. Rearchitected: `#cover-section` is now the click target (not the button inside it). `owner` class added to section on login, removed on logout. Click handler checks `e.clientY > rect.bottom` to avoid firing in the overlapping profile identity area below the photo. Camera icon (`#edit-cover`) is pure visual overlay — `pointer-events: none`, fades in on hover via `#cover-section.owner:hover #edit-cover`. `#cover-photo` also has `pointer-events: none`. Committed across `19d171a`, `9ebde90`.
+
+- **Modal UX copy** — Added sub-hint paragraph to device modal explaining the full flow: choose account on GitHub, authorize the app, when GitHub says "Congratulations, you're all set!" close that tab and return to the page. Committed as `9ebde90`.
+
+- **Page reload after login** — `location.reload()` fired immediately when poll got the token, while the GitHub tab was still in focus. Page reloaded in the background, then user returned to a page that had already reloaded without the cover photo. Fixed by waiting for `visibilitychange` event before reloading — page only reloads when the user actually returns to the tab. Committed as `94eee5b`.
+
+- **Cover photo missing after login reload** — Cover photo saved via wizard was gone after login + reload. Root cause: SW was caching `assets/cover.webp`, `assets/profile.webp`, and `assets/background.webp` in `dynamic-v2`. On reload the SW served the old cached version from before the wizard upload. Fixed by adding explicit bypass in SW fetch handler for all three user-editable assets — always fetches fresh from network, only falls back to cache if offline. Committed as `a011b21`.
+
+- **Wizard re-showing after login reload** — Wizard save commits `firstTimeSetup: false` to GitHub, but GitHub Pages takes ~30s to rebuild. On login reload, `site-config.json` was still serving the old version with `firstTimeSetup: true`. Fixed by storing `autonom_wizard_done` flag in `localStorage` immediately when wizard is saved or dismissed. `init()` checks both `config.firstTimeSetup` and `!localStorage.getItem('autonom_wizard_done')` before showing wizard. Committed as `38d59f3`.
+
+- **SW caching `site-config.json`** — SW `networkFirstWithIndicator` was caching JSON responses in `DYNAMIC_CACHE`. Replaced with a direct `fetch(request, { cache: 'no-store' })` for all `.json` and `.xml` requests — never stored in any cache, only falls back to cache if network is completely unavailable. Committed as part of `a011b21` sw.js rewrite.
