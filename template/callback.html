@@ -16,51 +16,6 @@
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <script src="auth.js"></script>
-  <script>
-    (async () => {
-      const status = document.getElementById('callback-status');
-      const params = new URLSearchParams(location.search);
-      const installationId = params.get('installation_id');
-
-      if (!installationId) {
-        status.textContent = 'Login failed — no installation ID received.';
-        return;
-      }
-
-      const result = await Autonom.exchangeInstallationToken(installationId);
-
-      if (!result) {
-        status.textContent = 'Login failed — could not exchange token. Please try again.';
-        return;
-      }
-
-      // Fetch the authenticated GitHub username to store alongside token
-      const res = await fetch('https://api.github.com/user', {
-        headers: {
-          Authorization: `token ${result.token}`,
-          Accept: 'application/vnd.github+json',
-        },
-      });
-
-      if (!res.ok) {
-        status.textContent = 'Login failed — could not verify GitHub identity.';
-        return;
-      }
-
-      const { login } = await res.json();
-      Autonom.setSession(result.token, login);
-
-      status.textContent = 'Logged in! Redirecting...';
-      const returnUrl = sessionStorage.getItem('autonom_return_url');
-      sessionStorage.removeItem('autonom_return_url');
-      const t = encodeURIComponent(result.token);
-      const u = encodeURIComponent(login);
-      setTimeout(() => {
-        location.href = returnUrl
-          ? `${returnUrl}#autonom_token=${t}|${u}`
-          : `index.html`;
-      }, 800);
-    })();
-  </script>
+  <script src="callback.js"></script>
 </body>
 </html>

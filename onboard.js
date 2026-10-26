@@ -162,7 +162,7 @@
     const textFiles = [
       'auth.js', 'nav.js', 'theme.js', 'styles.css', 'sw.js',
       'github-api.js', 'media.js', 'feeds.js', 'business.js', 'admin.js',
-      'index.js', 'index.html', 'callback.html',
+      'index.js', 'index.html', 'callback.html', 'callback.js',
       'gallery.html', 'gallery.js',
       'music.html', 'music.js',
       'videos.html', 'videos.js',
