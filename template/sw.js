@@ -1,5 +1,5 @@
 const SHELL_VERSION = 'shell-v2';
-const DYNAMIC_CACHE = 'dynamic-v1';
+const DYNAMIC_CACHE = 'dynamic-v2';
 
 // Only truly static assets that never change after deploy
 const SHELL_ASSETS = [
@@ -52,7 +52,7 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(
         keys
-          .filter(k => k.startsWith('shell-') && k !== SHELL_VERSION)
+          .filter(k => (k.startsWith('shell-') && k !== SHELL_VERSION) || (k.startsWith('dynamic-') && k !== DYNAMIC_CACHE))
           .map(k => caches.delete(k))
       )
     ).then(() => self.clients.claim())
