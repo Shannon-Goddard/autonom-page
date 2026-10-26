@@ -201,7 +201,11 @@
       let content = textContents[i];
       if (file === 'index.html') content = patchIndexHtml(content, displayName, bio, username);
       if (file === 'manifest.json') content = patchManifest(content, displayName);
-      if (file === 'sw.js') content = content.replace(/shell-v\d+/, `shell-v${Date.now()}`);
+      if (file === 'sw.js') {
+        const ts = Date.now();
+        content = content.replace(/shell-v\d+/, `shell-v${ts}`);
+        content = content.replace(/dynamic-v\d+/, `dynamic-v${ts}`);
+      }
       const destPath = file === 'AUTONOM.md' ? 'README.md' : file;
       treeItems.push({ path: destPath, mode: '100644', type: 'blob', content });
     });

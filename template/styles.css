@@ -533,19 +533,25 @@ h3 { font-size: 1.1rem; }
 }
 #edit-cover {
   position: absolute;
-  bottom: 0.75rem;
-  right: 0.75rem;
-  background: rgba(0,0,0,0.5);
+  inset: 0;
+  background: transparent;
   border: none;
-  border-radius: 999px;
-  padding: 0.45rem 0.6rem;
+  border-radius: 0;
+  padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-end;
   transition: background var(--transition);
 }
-#edit-cover:hover { background: rgba(0,0,0,0.75); opacity: 1; }
-#edit-cover img { display: block; }
+#edit-cover:hover { background: rgba(0,0,0,0.25); opacity: 1; }
+#edit-cover img {
+  display: block;
+  margin: 0.75rem;
+  background: rgba(0,0,0,0.55);
+  border-radius: 999px;
+  padding: 0.45rem 0.6rem;
+  box-sizing: content-box;
+}
 
 /* ─── Profile Section ────────────────────────────────────────────────────────── */
 #profile-section {
