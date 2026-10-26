@@ -139,13 +139,26 @@ exports.handler = async (event) => {
       };
     }
 
-    // Installation token exchange — returns scoped token for content writes
+    // Installation token exchange — returns scoped token + login for content writes
     if (body.installation_id) {
       const data = await exchangeInstallation(body.installation_id);
+      // Get login via App JWT — installation tokens can't call /user
+      const appJWT = signAppJWT();
+      const { status, body: inst } = await httpsRequest({
+        hostname: 'api.github.com',
+        path: `/app/installations/${body.installation_id}`,
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${appJWT}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'autonom-oauth-proxy',
+        },
+      });
+      const login = status === 200 ? inst.account?.login : null;
       return {
         statusCode: 200,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ token: data.token, expires_at: data.expires_at }),
+        body: JSON.stringify({ token: data.token, expires_at: data.expires_at, login }),
       };
     }
 

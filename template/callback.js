@@ -10,33 +10,26 @@
   }
 
   let result;
-
-  if (installationId) {
-    // First-time install — exchange installation_id directly
-    result = await Autonom.exchangeInstallationToken(installationId);
-    if (!result) { status.textContent = 'Login failed — could not exchange token.'; return; }
-
-    const res = await fetch('https://api.github.com/user', {
-      headers: { Authorization: `token ${result.token}`, Accept: 'application/vnd.github+json' },
+  try {
+    const res = await fetch(Autonom.LAMBDA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(installationId ? { installation_id: installationId } : { code }),
     });
-    if (!res.ok) { status.textContent = 'Login failed — could not verify identity.'; return; }
-    const { login } = await res.json();
-    result.login = login;
-
-  } else {
-    // Re-auth via OAuth code — Lambda resolves code → login → installation token
-    try {
-      const res = await fetch(Autonom.LAMBDA_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
-      if (!res.ok) { status.textContent = 'Login failed — token exchange error.'; return; }
-      result = await res.json(); // { token, expires_at, login }
-    } catch {
-      status.textContent = 'Login failed — network error.';
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      status.textContent = `Login failed — ${err.error || res.status}`;
       return;
     }
+    result = await res.json(); // { token, expires_at, login }
+  } catch {
+    status.textContent = 'Login failed — network error.';
+    return;
+  }
+
+  if (!result.token || !result.login) {
+    status.textContent = 'Login failed — incomplete response.';
+    return;
   }
 
   Autonom.setSession(result.token, result.login);
