@@ -1222,3 +1222,35 @@ END:VCARD
 - **Wizard re-showing after login reload** — Wizard save commits `firstTimeSetup: false` to GitHub, but GitHub Pages takes ~30s to rebuild. On login reload, `site-config.json` was still serving the old version with `firstTimeSetup: true`. Fixed by storing `autonom_wizard_done` flag in `localStorage` immediately when wizard is saved or dismissed. `init()` checks both `config.firstTimeSetup` and `!localStorage.getItem('autonom_wizard_done')` before showing wizard. Committed as `38d59f3`.
 
 - **SW caching `site-config.json`** — SW `networkFirstWithIndicator` was caching JSON responses in `DYNAMIC_CACHE`. Replaced with a direct `fetch(request, { cache: 'no-store' })` for all `.json` and `.xml` requests — never stored in any cache, only falls back to cache if network is completely unavailable. Committed as part of `a011b21` sw.js rewrite.
+
+## Template Testing — Confirmed Working (Post Device Flow)
+
+- Cover photo upload via wizard ✅
+- Cover photo upload via cover section click (owner only, full area clickable) ✅
+- Profile photo upload ✅
+- First-time wizard (shows once, never re-shows after save/dismiss) ✅
+- Login / logout top bar ✅
+- Device flow modal (code display, GitHub tab, return + reload) ✅
+- Edit Profile drawer ✅
+
+## Games Page — Build & Fixes
+
+- **SVG icons on game tiles** — Added white/black SVG variants for all 5 games to `template/assets/`. Tiles updated to show icon above label. CSS swaps dark/light variant via `[data-theme="light"]`. `breakout-color.svg` replaced with `breakout-white.svg` after asset revision. Committed as `e629527`, `b81d4be`.
+
+- **Empty canvas box on load** — `#game-viewport` was missing `class="hidden"` in HTML, rendering an empty bordered canvas before any game was selected. Fixed. Committed as `e629527`.
+
+- **`window.Games` undefined on load** — Each game file (`tetris.js`, `pacman.js`, `snake.js`, `breakout.js`, `spaceinvaders.js`) assigned to `window.Games.name` before `games.js` had a chance to initialize `window.Games = {}`. Fixed by adding `window.Games = window.Games || {}` at the top of each game file. Committed as `023c66d`.
+
+- **SVG assets missing from onboard deploy** — Game SVGs were not in `onboard.js` `binaryFiles` list, so new user deploys got 404s on all game icons. Added all 10 SVGs to the manifest. Committed as `023c66d`, updated for `breakout-white` as `b81d4be`.
+
+- **Mobile touch controls** — Added on-screen controls that appear only on touch devices (`'ontouchstart' in window`). D-pad (3×3 grid) for Tetris, Snake, Pac-Man — up/down/left/right + center action button. Left/Right/FIRE row for Space Invaders. Breakout uses `touchmove` on canvas to drag the paddle — no buttons needed. All controls dispatch synthetic `keydown`/`keyup` events so game logic is unchanged. CSS: chunky semi-transparent buttons with `rgba(255,255,255,0.12)` background, `border-radius: 10px`, FIRE button in accent red. Committed as `f40ff8e`.
+
+## Sub-Page Live Test — Confirmed Working
+
+- Games: all 5 load and play correctly on desktop ✅
+- Games: mobile touch controls render and function (d-pad, shooter, breakout drag) ✅
+- Photos: pending live test
+- Music: pending live test
+- Videos: pending live test
+- Friends: pending live test
+- Guestbook: pending live test
