@@ -1028,12 +1028,26 @@ main {
   font-size: 1rem;
   font-weight: 600;
   transition: background var(--transition), transform var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
 }
 .game-tile:hover {
   background: var(--surface-2);
   transform: translateY(-2px);
   opacity: 1;
 }
+
+.game-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  display: block;
+}
+.game-icon-light { display: none; }
+[data-theme="light"] .game-icon-dark  { display: none; }
+[data-theme="light"] .game-icon-light { display: block; }
 
 #game-viewport {
   margin-top: 1.5rem;

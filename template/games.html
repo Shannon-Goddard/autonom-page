@@ -20,14 +20,34 @@
     <h1>Games</h1>
 
     <div id="game-picker" aria-label="Game selection">
-      <button class="game-tile" data-game="tetris" aria-label="Play Tetris">Tetris</button>
-      <button class="game-tile" data-game="pacman" aria-label="Play Pac-Man">Pac-Man</button>
-      <button class="game-tile" data-game="snake" aria-label="Play Snake">Snake</button>
-      <button class="game-tile" data-game="breakout" aria-label="Play Breakout">Breakout</button>
-      <button class="game-tile" data-game="spaceinvaders" aria-label="Play Space Invaders">Space Invaders</button>
+      <button class="game-tile" data-game="tetris" aria-label="Play Tetris">
+        <img class="game-icon game-icon-dark" src="assets/tetris-white.svg" alt="">
+        <img class="game-icon game-icon-light" src="assets/tetris-black.svg" alt="">
+        <span>Tetris</span>
+      </button>
+      <button class="game-tile" data-game="pacman" aria-label="Play Pac-Man">
+        <img class="game-icon game-icon-dark" src="assets/packman-white.svg" alt="">
+        <img class="game-icon game-icon-light" src="assets/packman-black.svg" alt="">
+        <span>Pac-Man</span>
+      </button>
+      <button class="game-tile" data-game="snake" aria-label="Play Snake">
+        <img class="game-icon game-icon-dark" src="assets/snake-white.svg" alt="">
+        <img class="game-icon game-icon-light" src="assets/snake-black.svg" alt="">
+        <span>Snake</span>
+      </button>
+      <button class="game-tile" data-game="breakout" aria-label="Play Breakout">
+        <img class="game-icon game-icon-dark" src="assets/breakout-color.svg" alt="">
+        <img class="game-icon game-icon-light" src="assets/breakout-black.svg" alt="">
+        <span>Breakout</span>
+      </button>
+      <button class="game-tile" data-game="spaceinvaders" aria-label="Play Space Invaders">
+        <img class="game-icon game-icon-dark" src="assets/space-invaders-white.svg" alt="">
+        <img class="game-icon game-icon-light" src="assets/space-invaders-black.svg" alt="">
+        <span>Space Invaders</span>
+      </button>
     </div>
 
-    <div id="game-viewport" aria-label="Game viewport">
+    <div id="game-viewport" class="hidden" aria-label="Game viewport">
       <canvas id="game-canvas" aria-label="Game canvas"></canvas>
       <button id="game-back" class="hidden" aria-label="Back to game picker">&#8592; Back</button>
     </div>
