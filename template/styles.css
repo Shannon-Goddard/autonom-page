@@ -542,6 +542,7 @@ h3 { font-size: 1.1rem; }
   align-items: flex-end;
   justify-content: flex-end;
   transition: background var(--transition);
+  cursor: pointer;
 }
 #edit-cover:hover { background: rgba(0,0,0,0.25); opacity: 1; }
 #edit-cover img {
@@ -551,6 +552,7 @@ h3 { font-size: 1.1rem; }
   border-radius: 999px;
   padding: 0.45rem 0.6rem;
   box-sizing: content-box;
+  pointer-events: none;
 }
 
 /* ─── Profile Section ────────────────────────────────────────────────────────── */
