@@ -791,6 +791,7 @@
 
     document.getElementById('wizard-dismiss')?.addEventListener('click', async () => {
       document.getElementById('first-time-wizard')?.classList.add('hidden');
+      localStorage.setItem('autonom_wizard_done', '1');
       await Autonom.saveConfig(config, { firstTimeSetup: false }, 'Dismiss setup wizard');
     });
     document.getElementById('wizard-cover-btn')?.addEventListener('click', () =>
@@ -808,6 +809,7 @@
       });
       const updates = { firstTimeSetup: false, pages: { ...config.pages, ...pages } };
       if (status) { updates.status = status; setText('status', status); setText('about-status', status); }
+      localStorage.setItem('autonom_wizard_done', '1');
       await Autonom.saveConfig(config, updates, 'First-time setup');
       try { if (status) await Autonom.regenerateRSS(config); }  catch { /* non-fatal */ }
       try { await Autonom.regenerateSitemap(config); }           catch { /* non-fatal */ }
@@ -839,7 +841,7 @@
       if (config.mode !== 'business') {
         Autonom.rewriteIndexHead(config, Autonom.generatePersonJSONLD(config)).catch(() => {});
       }
-      if (config.firstTimeSetup) {
+      if (config.firstTimeSetup && !localStorage.getItem('autonom_wizard_done')) {
         document.getElementById('first-time-wizard')?.classList.remove('hidden');
       }
     }
