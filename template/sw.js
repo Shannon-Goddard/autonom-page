@@ -63,9 +63,13 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = e.request.url;
 
-  // Always bypass cache for .json and .xml
+  // Always bypass cache for .json and .xml — never store site-config.json
   if (url.endsWith('.json') || url.endsWith('.xml')) {
-    e.respondWith(networkFirstWithIndicator(e.request));
+    e.respondWith(fetch(e.request, { cache: 'no-store' }).catch(() => {
+      return caches.match(e.request).then(cached =>
+        cached || new Response('{}', { status: 503, headers: { 'Content-Type': 'application/json' } })
+      );
+    }));
     return;
   }
 
@@ -78,6 +82,12 @@ self.addEventListener('fetch', e => {
   // HTML/JS/CSS — network first, fall back to cache
   if (isNetworkFirstShell(url)) {
     e.respondWith(networkFirstDynamic(e.request));
+    return;
+  }
+
+  // User-editable assets — always fetch fresh
+  if (url.includes('/assets/cover.webp') || url.includes('/assets/profile.webp') || url.includes('/assets/background.webp')) {
+    e.respondWith(fetch(e.request, { cache: 'no-store' }).catch(() => caches.match(e.request)));
     return;
   }
 
