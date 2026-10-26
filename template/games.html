@@ -50,6 +50,22 @@
     <div id="game-viewport" class="hidden" aria-label="Game viewport">
       <canvas id="game-canvas" aria-label="Game canvas"></canvas>
       <button id="game-back" class="hidden" aria-label="Back to game picker">&#8592; Back</button>
+      <!-- D-pad: tetris, snake, pacman -->
+      <div id="ctrl-dpad" class="touch-controls hidden" aria-hidden="true">
+        <div class="dpad">
+          <button class="dpad-btn dpad-up"   data-key="ArrowUp">&#9650;</button>
+          <button class="dpad-btn dpad-left" data-key="ArrowLeft">&#9664;</button>
+          <button class="dpad-btn dpad-right"data-key="ArrowRight">&#9654;</button>
+          <button class="dpad-btn dpad-down" data-key="ArrowDown">&#9660;</button>
+          <button class="dpad-btn dpad-fire" data-key=" ">&#9632;</button>
+        </div>
+      </div>
+      <!-- Left/Right/Fire: space invaders -->
+      <div id="ctrl-shooter" class="touch-controls hidden" aria-hidden="true">
+        <button class="shoot-btn" data-key="ArrowLeft">&#9664;</button>
+        <button class="shoot-btn shoot-fire" data-key=" ">FIRE</button>
+        <button class="shoot-btn" data-key="ArrowRight">&#9654;</button>
+      </div>
     </div>
   </main>
 
