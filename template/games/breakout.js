@@ -1,4 +1,5 @@
 (() => {
+  window.Games = window.Games || {};
   let ctx, W, H, paddle, ball, bricks, score, hi, lives, raf, running;
 
   const BRICK_ROWS = 5, BRICK_COLS = 10, BRICK_H = 16, BRICK_PAD = 4;

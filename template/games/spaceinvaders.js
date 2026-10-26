@@ -1,4 +1,5 @@
 (() => {
+  window.Games = window.Games || {};
   let ctx, W, H, player, aliens, bullets, bombs, shields, score, hi, lives, raf, running, alienDir, alienSpeed, dropPending, wave;
 
   function start(canvas) {

@@ -1,4 +1,5 @@
 (() => {
+  window.Games = window.Games || {};
   // Simplified Pac-Man: tile-based maze, 4 ghosts, pellets, power pellets
   const CELL = 16;
   // 0=path, 1=wall, 2=pellet, 3=power pellet

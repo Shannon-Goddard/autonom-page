@@ -185,6 +185,16 @@
       'assets/cover.webp',
       'assets/profile.webp',
       'assets/photo-icon.svg',
+      'assets/tetris-white.svg',
+      'assets/tetris-black.svg',
+      'assets/packman-white.svg',
+      'assets/packman-black.svg',
+      'assets/snake-white.svg',
+      'assets/snake-black.svg',
+      'assets/breakout-color.svg',
+      'assets/breakout-black.svg',
+      'assets/space-invaders-white.svg',
+      'assets/space-invaders-black.svg',
     ];
 
     // Fetch all files in parallel

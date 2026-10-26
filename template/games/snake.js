@@ -1,4 +1,5 @@
 (() => {
+  window.Games = window.Games || {};
   const CELL = 20;
   let raf, snake, dir, next, food, score, hi, ctx, cols, rows, running;
 

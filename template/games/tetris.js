@@ -1,4 +1,5 @@
 (() => {
+  window.Games = window.Games || {};
   const COLS = 10, ROWS = 20, CELL = 28;
   const COLORS = ['#e94560','#04AA6D','#f4a261','#457b9d','#e9c46a','#a8dadc','#9b5de5'];
   const SHAPES = [
