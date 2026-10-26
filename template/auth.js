@@ -149,20 +149,21 @@
           clearInterval(_devicePollTimer);
           setSession(data.token, data.login);
           modal.classList.add('hidden');
-          if (data.login === REPO_OWNER) {
-            unlockEditMode();
-            toast('Logged in', 'success');
-          } else {
-            toast(`Logged in as ${data.login} — not the owner of this page`, 'error');
-          }
+          location.reload();
         } else if (data.error === 'access_denied') {
           clearInterval(_devicePollTimer);
           statusEl.textContent = 'Login cancelled.';
         } else if (data.error === 'expired_token') {
           clearInterval(_devicePollTimer);
           statusEl.textContent = 'Code expired — please try again.';
+        } else if (data.error && data.error !== 'authorization_pending' && data.error !== 'slow_down') {
+          clearInterval(_devicePollTimer);
+          statusEl.textContent = `Login failed — ${data.error}`;
         }
-      } catch { /* network blip — keep polling */ }
+      } catch (e) {
+        clearInterval(_devicePollTimer);
+        statusEl.textContent = `Login failed — ${e.message}`;
+      }
     }, interval);
 
     cancelBtn.onclick = () => {
