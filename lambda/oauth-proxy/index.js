@@ -35,10 +35,11 @@ function httpsRequest(options, body) {
   });
 }
 
-// Exchange OAuth code for user access token
-async function exchangeOAuthCode(code) {
-  const body = JSON.stringify({ client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code });
-  const { status, body: data } = await httpsRequest({
+// Exchange OAuth code → user token → login → installation_id → installation token
+async function exchangeCodeForInstallToken(code) {
+  // Step 1: exchange code for user token
+  const oauthBody = JSON.stringify({ client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code });
+  const { status: s1, body: d1 } = await httpsRequest({
     hostname: 'github.com',
     path: '/login/oauth/access_token',
     method: 'POST',
@@ -46,11 +47,33 @@ async function exchangeOAuthCode(code) {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'User-Agent': 'autonom-oauth-proxy',
-      'Content-Length': Buffer.byteLength(body),
+      'Content-Length': Buffer.byteLength(oauthBody),
     },
-  }, body);
-  if (status !== 200 || data.error) throw new Error(data.error_description || 'OAuth exchange failed');
-  return data; // { access_token, token_type, scope }
+  }, oauthBody);
+  if (s1 !== 200 || d1.error) throw new Error(d1.error_description || 'OAuth exchange failed');
+  const userToken = d1.access_token;
+
+  // Step 2: get login
+  const login = await getLogin(userToken);
+
+  // Step 3: find their installation via App JWT
+  const appJWT = signAppJWT();
+  const { status: s3, body: d3 } = await httpsRequest({
+    hostname: 'api.github.com',
+    path: `/users/${login}/installation`,
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${appJWT}`,
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'autonom-oauth-proxy',
+    },
+  });
+  if (s3 !== 200) throw new Error('No installation found for this user — please install the GitHub App first');
+  const installationId = d3.id;
+
+  // Step 4: exchange installation_id for scoped token
+  const data = await exchangeInstallation(installationId);
+  return { token: data.token, expires_at: data.expires_at, login };
 }
 
 // Get username from user token
@@ -106,14 +129,13 @@ exports.handler = async (event) => {
   catch { return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
   try {
-    // OAuth code exchange — returns user token + login for repo creation
+    // OAuth code exchange — get installation token via code → login → installation
     if (body.code) {
-      const data  = await exchangeOAuthCode(body.code);
-      const login = await getLogin(data.access_token);
+      const data = await exchangeCodeForInstallToken(body.code);
       return {
         statusCode: 200,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ user_token: data.access_token, login }),
+        body: JSON.stringify({ token: data.token, expires_at: data.expires_at, login: data.login }),
       };
     }
 
