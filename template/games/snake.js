@@ -1,16 +1,17 @@
 (() => {
   window.Games = window.Games || {};
   const CELL = 20;
-  let raf, snake, dir, next, food, score, hi, ctx, cols, rows, running;
+  let raf, snake, dir, next, food, score, hi, ctx, cols, rows, running, paused, onNewHi;
 
-  function start(canvas) {
+  function start(canvas, hiCallback) {
     cols = Math.floor(canvas.width  / CELL) || 20;
     rows = Math.floor(canvas.height / CELL) || 20;
     canvas.width  = cols * CELL;
     canvas.height = rows * CELL;
     ctx = canvas.getContext('2d');
     hi  = parseInt(localStorage.getItem('snake-hi') || '0');
-
+    onNewHi = hiCallback || null;
+    paused = false;
     reset();
     document.addEventListener('keydown', onKey);
     loop();
@@ -22,12 +23,26 @@
     document.removeEventListener('keydown', onKey);
   }
 
+  function pause() {
+    if (!running) return;
+    paused = true;
+    cancelAnimationFrame(raf);
+    drawPaused();
+  }
+
+  function resume() {
+    if (!paused) return;
+    paused = false;
+    loop();
+  }
+
   function reset() {
     snake   = [{ x: 10, y: 10 }];
     dir     = { x: 1, y: 0 };
     next    = { x: 1, y: 0 };
     score   = 0;
     running = true;
+    paused  = false;
     placeFood();
   }
 
@@ -39,7 +54,7 @@
 
   let last = 0;
   function loop(ts = 0) {
-    if (!running) return;
+    if (!running || paused) return;
     raf = requestAnimationFrame(loop);
     if (ts - last < 120) return;
     last = ts;
@@ -55,7 +70,11 @@
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
       score++;
-      if (score > hi) { hi = score; localStorage.setItem('snake-hi', hi); }
+      if (score > hi) {
+        hi = score;
+        localStorage.setItem('snake-hi', hi);
+        onNewHi?.(hi);
+      }
       placeFood();
     } else {
       snake.pop();
@@ -79,6 +98,17 @@
     ctx.fillText(`Score: ${score}  Best: ${hi}`, 8, 18);
   }
 
+  function drawPaused() {
+    draw();
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, cols * CELL, rows * CELL);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Paused', cols * CELL / 2, rows * CELL / 2);
+    ctx.textAlign = 'left';
+  }
+
   function gameOver() {
     running = false;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -86,11 +116,23 @@
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 24px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('Game Over', cols * CELL / 2, rows * CELL / 2 - 16);
+    ctx.fillText('Game Over', cols * CELL / 2, rows * CELL / 2 - 30);
     ctx.font = '16px monospace';
-    ctx.fillText(`Score: ${score}`, cols * CELL / 2, rows * CELL / 2 + 12);
-    ctx.fillText('Press Space to restart', cols * CELL / 2, rows * CELL / 2 + 36);
+    ctx.fillText(`Score: ${score}`, cols * CELL / 2, rows * CELL / 2);
+    const bx = cols*CELL/2 - 60, by = rows*CELL/2 + 20, bw = 120, bh = 34;
+    ctx.fillStyle = '#e94560';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 8);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 15px monospace';
+    ctx.fillText('Play Again', cols * CELL / 2, by + 22);
     ctx.textAlign = 'left';
+    ctx.canvas._restartBtn = { x: bx, y: by, w: bw, h: bh };
+  }
+
+  function setDir(d) {
+    if (!(d.x === -dir.x && d.y === -dir.y)) next = d;
   }
 
   function onKey(e) {
@@ -101,9 +143,10 @@
       ArrowRight: { x: 1, y: 0 }, d: { x: 1, y: 0 },
     };
     const n = map[e.key];
-    if (n && !(n.x === -dir.x && n.y === -dir.y)) { next = n; e.preventDefault(); }
+    if (n) { setDir(n); e.preventDefault(); }
+    if (e.key === 'p' || e.key === 'P') { paused ? resume() : pause(); }
     if (e.key === ' ') { e.preventDefault(); if (!running) { reset(); loop(); } }
   }
 
-  window.Games.snake = { start, stop };
+  window.Games.snake = { start, stop, pause, resume, setDir };
 })();

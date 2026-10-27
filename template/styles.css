@@ -1053,16 +1053,16 @@ main {
   margin-top: 1.5rem;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.75rem;
+  width: 100%;
 }
 
-#game-canvas {
-  display: block;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  max-width: 100%;
-  image-rendering: pixelated;
+#game-hud {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
 }
 
 #game-back {
@@ -1072,7 +1072,41 @@ main {
   font-size: 0.9rem;
 }
 
-/* ─── Touch Controls ─────────────────────────────────────────────────────────── */
+#game-pause {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  padding: 0.35rem 0.8rem;
+}
+
+#orient-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.3rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%;
+}
+
+#game-canvas {
+  display: block;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  max-width: 100%;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+
+#game-login-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ─── Touch Controls ──────────────────────────────────────────────────────────── */
 .touch-controls { user-select: none; -webkit-user-select: none; }
 
 /* D-pad */
@@ -1081,7 +1115,6 @@ main {
   grid-template-columns: 64px 64px 64px;
   grid-template-rows: 64px 64px 64px;
   gap: 4px;
-  margin-top: 1rem;
 }
 
 .dpad-btn {
@@ -1101,21 +1134,16 @@ main {
 
 .dpad-up    { grid-column: 2; grid-row: 1; }
 .dpad-left  { grid-column: 1; grid-row: 2; }
-.dpad-fire  { grid-column: 2; grid-row: 2; font-size: 1rem; }
+.dpad-drop  { grid-column: 2; grid-row: 2; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; }
 .dpad-right { grid-column: 3; grid-row: 2; }
 .dpad-down  { grid-column: 2; grid-row: 3; }
 
 /* Shooter controls */
-.ctrl-shooter-wrap {
-  display: flex;
-  gap: 8px;
-  margin-top: 1rem;
-}
-
 #ctrl-shooter {
   display: flex;
   gap: 8px;
-  margin-top: 1rem;
+  justify-content: center;
+  width: 100%;
 }
 
 .shoot-btn {
@@ -1141,6 +1169,14 @@ main {
   letter-spacing: 0.05em;
   background: rgba(233,69,96,0.35);
   border-color: rgba(233,69,96,0.6);
+}
+
+/* Tile high score */
+.tile-score {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  min-height: 1em;
 }
 
 /* ─── 404 ──────────────────────────────────────────────────────────────────── */

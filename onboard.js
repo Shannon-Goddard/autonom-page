@@ -352,6 +352,7 @@
       rss: { enabled: true },
       lastUpdated: new Date().toISOString(),
       firstTimeSetup: true,
+      highScores: { tetris: 0, pacman: 0, snake: 0, breakout: 0, spaceinvaders: 0 },
       mode: 'personal',
       personalModeSnapshot: null,
       configVersion: 1,

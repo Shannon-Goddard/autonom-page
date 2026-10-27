@@ -48,23 +48,28 @@
     </div>
 
     <div id="game-viewport" class="hidden" aria-label="Game viewport">
+      <div id="game-hud">
+        <button id="game-back" class="hidden" aria-label="Back to game picker">&#8592; Back</button>
+        <button id="game-pause" class="hidden" aria-label="Pause game">&#9208;</button>
+      </div>
+      <div id="orient-hint" class="hidden">&#8635; Rotate for best experience</div>
       <canvas id="game-canvas" aria-label="Game canvas"></canvas>
-      <button id="game-back" class="hidden" aria-label="Back to game picker">&#8592; Back</button>
+      <div id="game-login-hint" class="hidden">Log in to save your high score to your page</div>
       <!-- D-pad: tetris, snake, pacman -->
       <div id="ctrl-dpad" class="touch-controls hidden" aria-hidden="true">
         <div class="dpad">
-          <button class="dpad-btn dpad-up"   data-key="ArrowUp">&#9650;</button>
-          <button class="dpad-btn dpad-left" data-key="ArrowLeft">&#9664;</button>
-          <button class="dpad-btn dpad-right"data-key="ArrowRight">&#9654;</button>
-          <button class="dpad-btn dpad-down" data-key="ArrowDown">&#9660;</button>
-          <button class="dpad-btn dpad-fire" data-key=" ">&#9632;</button>
+          <button class="dpad-btn dpad-up"    data-key="ArrowUp">&#9650;</button>
+          <button class="dpad-btn dpad-left"  data-key="ArrowLeft">&#9664;</button>
+          <button class="dpad-btn dpad-right" data-key="ArrowRight">&#9654;</button>
+          <button class="dpad-btn dpad-down"  data-key="ArrowDown">&#9660;</button>
+          <button class="dpad-btn dpad-drop"  data-key=" ">DROP</button>
         </div>
       </div>
       <!-- Left/Right/Fire: space invaders -->
       <div id="ctrl-shooter" class="touch-controls hidden" aria-hidden="true">
-        <button class="shoot-btn" data-key="ArrowLeft">&#9664;</button>
-        <button class="shoot-btn shoot-fire" data-key=" ">FIRE</button>
-        <button class="shoot-btn" data-key="ArrowRight">&#9654;</button>
+        <button id="si-left"  class="shoot-btn">&#9664;</button>
+        <button id="si-fire"  class="shoot-btn shoot-fire">FIRE</button>
+        <button id="si-right" class="shoot-btn">&#9654;</button>
       </div>
     </div>
   </main>

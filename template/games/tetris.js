@@ -12,13 +12,15 @@
     [[1,1,0],[0,1,1]],
   ];
 
-  let ctx, board, piece, score, hi, level, lines, raf, running, dropInterval, last;
+  let ctx, board, piece, score, hi, level, lines, raf, running, paused, dropInterval, last, onNewHi;
 
-  function start(canvas) {
+  function start(canvas, hiCallback) {
     canvas.width  = COLS * CELL;
     canvas.height = ROWS * CELL;
     ctx = canvas.getContext('2d');
     hi  = parseInt(localStorage.getItem('tetris-hi') || '0');
+    onNewHi = hiCallback || null;
+    paused = false;
     newGame();
     document.addEventListener('keydown', onKey);
   }
@@ -29,6 +31,20 @@
     document.removeEventListener('keydown', onKey);
   }
 
+  function pause() {
+    if (!running) return;
+    paused = true;
+    cancelAnimationFrame(raf);
+    drawPaused();
+  }
+
+  function resume() {
+    if (!paused) return;
+    paused = false;
+    last = 0;
+    loop();
+  }
+
   function newGame() {
     board        = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     score        = 0;
@@ -36,6 +52,7 @@
     lines        = 0;
     dropInterval = 600;
     running      = true;
+    paused       = false;
     last         = 0;
     piece        = newPiece();
     loop();
@@ -47,7 +64,7 @@
   }
 
   function loop(ts = 0) {
-    if (!running) return;
+    if (!running || paused) return;
     raf = requestAnimationFrame(loop);
     if (ts - last < dropInterval) { draw(); return; }
     last = ts;
@@ -58,6 +75,11 @@
     piece.y++;
     if (collides()) { piece.y--; return false; }
     return true;
+  }
+
+  function hardDrop() {
+    while (moveDown());
+    lock();
   }
 
   function lock() {
@@ -86,7 +108,11 @@
     lines += cleared;
     level  = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(80, 600 - (level - 1) * 50);
-    if (score > hi) { hi = score; localStorage.setItem('tetris-hi', hi); }
+    if (score > hi) {
+      hi = score;
+      localStorage.setItem('tetris-hi', hi);
+      onNewHi?.(hi);
+    }
   }
 
   function collides() {
@@ -129,28 +155,50 @@
     ctx.fillText(`Score: ${score}  Best: ${hi}  Lv: ${level}`, 4, 14);
   }
 
+  function drawPaused() {
+    draw();
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, COLS*CELL, ROWS*CELL);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Paused', COLS*CELL/2, ROWS*CELL/2);
+    ctx.textAlign = 'left';
+  }
+
   function showGameOver() {
     ctx.fillStyle = 'rgba(0,0,0,0.65)';
     ctx.fillRect(0, 0, COLS*CELL, ROWS*CELL);
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 22px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('Game Over', COLS*CELL/2, ROWS*CELL/2 - 20);
+    ctx.fillText('Game Over', COLS*CELL/2, ROWS*CELL/2 - 30);
     ctx.font = '14px monospace';
-    ctx.fillText(`Score: ${score}`, COLS*CELL/2, ROWS*CELL/2 + 8);
-    ctx.fillText('Space to restart', COLS*CELL/2, ROWS*CELL/2 + 30);
+    ctx.fillText(`Score: ${score}`, COLS*CELL/2, ROWS*CELL/2);
+    // Restart button
+    const bx = COLS*CELL/2 - 60, by = ROWS*CELL/2 + 20, bw = 120, bh = 34;
+    ctx.fillStyle = '#e94560';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 8);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 15px monospace';
+    ctx.fillText('Play Again', COLS*CELL/2, by + 22);
     ctx.textAlign = 'left';
+    ctx.canvas._restartBtn = { x: bx, y: by, w: bw, h: bh };
   }
 
   function onKey(e) {
     if (!running && e.key === ' ') { e.preventDefault(); newGame(); return; }
-    if (!running) return;
+    if (e.key === 'p' || e.key === 'P') { paused ? resume() : pause(); return; }
+    if (!running || paused) return;
     if (e.key === 'ArrowLeft')  { piece.x--; if (collides()) piece.x++; e.preventDefault(); }
     if (e.key === 'ArrowRight') { piece.x++; if (collides()) piece.x--; e.preventDefault(); }
     if (e.key === 'ArrowDown')  { moveDown(); e.preventDefault(); }
     if (e.key === 'ArrowUp' || e.key === 'x') { rotate(); e.preventDefault(); }
-    if (e.key === ' ')          { while (moveDown()); lock(); e.preventDefault(); }
+    if (e.key === ' ')          { hardDrop(); e.preventDefault(); }
   }
 
-  window.Games.tetris = { start, stop };
+  window.Games.tetris = { start, stop, pause, resume, newGame,
+    handleDrop: hardDrop, handleRotate: rotate };
 })();
