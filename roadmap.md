@@ -1239,16 +1239,28 @@ END:VCARD
 
 - **Empty canvas box on load** — `#game-viewport` was missing `class="hidden"` in HTML, rendering an empty bordered canvas before any game was selected. Fixed. Committed as `e629527`.
 
-- **`window.Games` undefined on load** — Each game file (`tetris.js`, `pacman.js`, `snake.js`, `breakout.js`, `spaceinvaders.js`) assigned to `window.Games.name` before `games.js` had a chance to initialize `window.Games = {}`. Fixed by adding `window.Games = window.Games || {}` at the top of each game file. Committed as `023c66d`.
+- **`window.Games` undefined on load** — Each game file assigned to `window.Games.name` before `games.js` initialized `window.Games = {}`. Fixed by adding `window.Games = window.Games || {}` at the top of each game file. Committed as `023c66d`.
 
-- **SVG assets missing from onboard deploy** — Game SVGs were not in `onboard.js` `binaryFiles` list, so new user deploys got 404s on all game icons. Added all 10 SVGs to the manifest. Committed as `023c66d`, updated for `breakout-white` as `b81d4be`.
+- **SVG assets missing from onboard deploy** — Game SVGs not in `onboard.js` `binaryFiles` list. Added all 10 SVGs. Committed as `023c66d`, updated for `breakout-white` as `b81d4be`.
 
-- **Mobile touch controls** — Added on-screen controls that appear only on touch devices (`'ontouchstart' in window`). D-pad (3×3 grid) for Tetris, Snake, Pac-Man — up/down/left/right + center action button. Left/Right/FIRE row for Space Invaders. Breakout uses `touchmove` on canvas to drag the paddle — no buttons needed. All controls dispatch synthetic `keydown`/`keyup` events so game logic is unchanged. CSS: chunky semi-transparent buttons with `rgba(255,255,255,0.12)` background, `border-radius: 10px`, FIRE button in accent red. Committed as `f40ff8e`.
+- **Mobile touch controls** — D-pad for Tetris/Snake/Pac-Man, Left/Right/FIRE for Space Invaders, `touchmove` drag for Breakout. Synthetic `keydown`/`keyup` events — game logic unchanged. Committed as `f40ff8e`.
+
+- **Full games overhaul** — All 5 games rewritten with: `pause()`/`resume()` support, "Play Again" button drawn on canvas game over screen (tap/click to restart), "Space to restart" text removed, high score callback `onNewHi(score)`. `games.js` rewritten with: pause button in HUD (⏸/▶), high scores loaded from `site-config.json` and displayed on tiles as "Best: X", new personal best silently saves to repo via `saveConfig` when owner is logged in, login hint shown to owner when not logged in, swipe gestures for Snake and Pac-Man, orientation hint for Breakout and Space Invaders on portrait mobile, DROP button on Tetris d-pad center (hidden for Snake/Pac-Man), Space Invaders touch fixed — `setDx()`/`fire()` called directly instead of synthetic keyup. `highScores` object added to `site-config.json` schema in `onboard.js`. Committed as `88aa31b`.
+
+- **Pause/resume frozen** — `resume()` in Pac-Man, Snake, and Space Invaders called `loop()` without resetting `last` timestamp. On resume `ts - last` was negative, loop exited immediately on first frame. Fixed by adding `last = 0` before `loop()` in all three `resume()` functions. Committed as `c5e90c0`.
+
+- **DROP button showing on wrong games** — Center d-pad button labeled DROP was visible for Snake and Pac-Man where it has no function. Fixed in `showControls()` — DROP button hidden for all games except Tetris. Committed as `979f536`.
+
+- **Wizard 409 conflict on save** — `rewriteIndexHead` (runs silently on every owner page load) and wizard save both fetched the same `site-config.json` SHA and raced to write. GitHub rejected the second write with 409. Fixed by adding a write queue in `github-api.js` — all `commitFile` calls are serialized via a promise chain, each fetching a fresh SHA only after the previous write completes. Committed as `ef590f3`.
+
+- **Build time** — Increased from ~55s to ~85s after adding 10 game SVGs to `onboard.js` `binaryFiles`. Expected — each binary requires a separate blob API call before the tree commit. Still well under 2 minutes.
 
 ## Sub-Page Live Test — Confirmed Working
 
 - Games: all 5 load and play correctly on desktop ✅
-- Games: mobile touch controls render and function (d-pad, shooter, breakout drag) ✅
+- Games: Tetris pause/resume ✅
+- Games: mobile touch controls render and function ✅
+- Games: Pac-Man/Snake/Space Invaders pause fix — pending retest after `c5e90c0`
 - Photos: pending live test
 - Music: pending live test
 - Videos: pending live test
