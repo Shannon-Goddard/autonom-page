@@ -185,7 +185,11 @@
     ctrlDpad?.classList.add('hidden');
     ctrlShooter?.classList.add('hidden');
     if (!isTouch) return;
-    if (DPAD_GAMES.includes(name))    ctrlDpad?.classList.remove('hidden');
+    if (DPAD_GAMES.includes(name)) {
+      ctrlDpad?.classList.remove('hidden');
+      const dropBtn = document.querySelector('.dpad-drop');
+      if (dropBtn) dropBtn.classList.toggle('hidden', name !== 'tetris');
+    }
     if (SHOOTER_GAMES.includes(name)) ctrlShooter?.classList.remove('hidden');
   }
 
