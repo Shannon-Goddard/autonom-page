@@ -59,6 +59,7 @@
   function resume() {
     if (!paused) return;
     paused = false;
+    last = 0;
     loop();
   }
 
