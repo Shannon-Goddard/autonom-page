@@ -90,15 +90,24 @@
     return btoa(binary);
   }
 
+  // ─── Write queue — serializes all commits to prevent 409 races ─────────────
+  let writeQueue = Promise.resolve();
+  function enqueue(fn) {
+    writeQueue = writeQueue.then(fn).catch(() => {});
+    return writeQueue;
+  }
+
   async function commitFile(filePath, content, message, isBinary = false) {
-    const sha = await getFileSHA(filePath);
-    const encoded = isBinary
-      ? arrayBufferToBase64(content)
-      : btoa(unescape(encodeURIComponent(content)));
-    await ghPut(`/repos/${OWNER}/${REPO}/contents/${filePath}`, {
-      message,
-      content: encoded,
-      ...(sha ? { sha } : {}),
+    return enqueue(async () => {
+      const sha = await getFileSHA(filePath);
+      const encoded = isBinary
+        ? arrayBufferToBase64(content)
+        : btoa(unescape(encodeURIComponent(content)));
+      await ghPut(`/repos/${OWNER}/${REPO}/contents/${filePath}`, {
+        message,
+        content: encoded,
+        ...(sha ? { sha } : {}),
+      });
     });
   }
 
