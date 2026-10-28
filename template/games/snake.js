@@ -38,7 +38,9 @@
   }
 
   function newGame() {
+    cancelAnimationFrame(raf);
     reset();
+    last = 0;
     loop();
   }
 

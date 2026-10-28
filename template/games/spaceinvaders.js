@@ -46,6 +46,7 @@
   }
 
   function newGame() {
+    cancelAnimationFrame(raf);
     wave        = 1;
     score       = 0;
     lives       = 3;
@@ -56,6 +57,7 @@
     paused      = false;
     buildAliens();
     buildShields();
+    last = 0;
     loop();
   }
 

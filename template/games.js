@@ -104,22 +104,31 @@
 
   pauseBtn?.addEventListener('click', togglePause);
 
-  // ─── Canvas click — restart button + swipe origin ───────────────────────────
-  canvas.addEventListener('click', e => {
+  // ─── Canvas click — restart button ──────────────────────────────────────────
+  function checkRestartHit(clientX, clientY) {
     const btn = canvas._restartBtn;
     if (!btn) return;
     const rect   = canvas.getBoundingClientRect();
     const scaleX = canvas.width  / rect.width;
     const scaleY = canvas.height / rect.height;
-    const cx = (e.clientX - rect.left) * scaleX;
-    const cy = (e.clientY - rect.top)  * scaleY;
+    const cx = (clientX - rect.left) * scaleX;
+    const cy = (clientY - rect.top)  * scaleY;
     if (cx >= btn.x && cx <= btn.x + btn.w && cy >= btn.y && cy <= btn.y + btn.h) {
       canvas._restartBtn = null;
       isPaused = false;
       if (pauseBtn) pauseBtn.textContent = '⏸';
       window.Games[activeGame]?.newGame?.();
     }
-  });
+  }
+
+  canvas.addEventListener('click', e => checkRestartHit(e.clientX, e.clientY));
+
+  canvas.addEventListener('touchend', e => {
+    if (!canvas._restartBtn) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    checkRestartHit(t.clientX, t.clientY);
+  }, { passive: false });
 
   // ─── Swipe for Snake & Pac-Man ───────────────────────────────────────────────
   let swipeStart = null;

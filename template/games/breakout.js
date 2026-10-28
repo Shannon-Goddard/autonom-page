@@ -39,6 +39,7 @@
   }
 
   function newGame() {
+    cancelAnimationFrame(raf);
     paddle  = { x: W/2 - 40, y: H - 24, w: 80, h: 10, dx: 0 };
     ball    = { x: W/2, y: H - 40, r: 7, dx: 3, dy: -4 };
     score   = 0;
