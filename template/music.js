@@ -145,6 +145,7 @@
 
     const updatedTracks = [...existing, ...added];
     await Autonom.saveConfig(config, { tracks: updatedTracks }, 'Upload tracks');
+    config.tracks = updatedTracks;
     await Autonom.regenerateRSS(config);
 
     renderTrackList();
