@@ -1438,8 +1438,20 @@ main {
 }
 
 /* ─── Music Track List ───────────────────────────────────────────────────────── */
-#track-list {
+#track-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-top: 1.5rem;
+}
+#track-filters select {
+  flex: 1;
+  min-width: 120px;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+}
+
+
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -1531,7 +1543,9 @@ main {
 }
 
 .track-edit-title,
-.track-edit-artist {
+.track-edit-artist,
+.track-edit-album,
+.track-edit-playlist {
   width: 100%;
   font-size: 0.85rem;
   padding: 0.2rem 0.4rem;
