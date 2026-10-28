@@ -68,7 +68,7 @@
     if (!running || paused) return;
     raf = requestAnimationFrame(loop);
     update();
-    draw();
+    if (running) draw();
   }
 
   function update() {
