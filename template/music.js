@@ -7,7 +7,17 @@
   async function init() {
     try {
       const res = await fetch('site-config.json', { cache: 'no-store' });
-      if (res.ok) config = await res.json();
+      if (res.ok) {
+        config = await res.json();
+        // GitHub Pages rebuild lag — if fetched config has fewer tracks than
+        // locally cached, use the local copy until Pages catches up
+        const cached = JSON.parse(localStorage.getItem('music-tracks') || 'null');
+        if (cached && cached.length > (config.tracks?.length || 0)) {
+          config.tracks = cached;
+        } else if (config.tracks?.length) {
+          localStorage.setItem('music-tracks', JSON.stringify(config.tracks));
+        }
+      }
     } catch { /* offline */ }
 
     renderTrackList();
@@ -186,6 +196,7 @@
     const updatedTracks = [...existing, ...added];
     await Autonom.saveConfig(config, { tracks: updatedTracks }, 'Upload tracks');
     config.tracks = updatedTracks;
+    localStorage.setItem('music-tracks', JSON.stringify(updatedTracks));
     try { await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
 
     renderTrackList();
@@ -208,6 +219,7 @@
     const updated = list.filter((_, i) => i !== index);
     await Autonom.saveConfig(config, { tracks: updated }, `Remove track ${t.filename}`);
     config.tracks = updated;
+    localStorage.setItem('music-tracks', JSON.stringify(updated));
 
     if (currentIndex >= updated.length) currentIndex = Math.max(0, updated.length - 1);
     renderTrackList();

@@ -92,7 +92,13 @@ self.addEventListener('fetch', e => {
   }
 
   // Gallery images, MP3, posts — network first, cache on success
-  if (url.includes('/assets/gallery/') || url.includes('/assets/music/') || url.includes('/assets/posts/')) {
+  // Audio files get 206 partial responses which Cache API rejects — skip caching, just fetch
+  if (url.includes('/assets/music/')) {
+    e.respondWith(fetch(e.request).catch(() => new Response('Offline', { status: 503 })));
+    return;
+  }
+
+  if (url.includes('/assets/gallery/') || url.includes('/assets/posts/')) {
     e.respondWith(networkFirstDynamic(e.request));
     return;
   }
