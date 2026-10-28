@@ -168,12 +168,13 @@
     }
 
     const btn = document.getElementById('upload-track-btn');
-    if (btn) btn.disabled = true;
+    if (btn) { btn.disabled = true; btn.textContent = 'Uploading…'; }
 
     const existing = config.tracks || [];
     const added = [];
 
-    for (const file of files) {
+    for (const [i, file] of files.entries()) {
+      if (btn) btn.textContent = `Uploading ${i + 1} of ${files.length}…`;
       const filename = file.name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase();
       const buf      = await file.arrayBuffer();
       await Autonom.commitFile(`assets/music/${filename}`, buf, `Upload track ${filename}`, true);
@@ -181,15 +182,16 @@
       added.push({ filename, title, artist: '' });
     }
 
+    if (btn) btn.textContent = 'Saving…';
     const updatedTracks = [...existing, ...added];
     await Autonom.saveConfig(config, { tracks: updatedTracks }, 'Upload tracks');
     config.tracks = updatedTracks;
-    await Autonom.regenerateRSS(config);
+    try { await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
 
     renderTrackList();
     if (!existing.length) loadTrack(0);
     Autonom.toast(`${added.length} track${added.length > 1 ? 's' : ''} uploaded`, 'success');
-    if (btn) btn.disabled = false;
+    if (btn) { btn.disabled = false; btn.textContent = 'Upload Tracks'; }
     fileInput.value = '';
   }
 
