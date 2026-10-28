@@ -21,7 +21,14 @@
     } catch { /* offline */ }
 
     renderTrackList();
-    loadTrack(currentIndex);
+    // Set placeholder state if no tracks yet
+    if (!tracks().length) {
+      setText('track-title', 'No tracks yet');
+      setText('track-artist', '');
+      document.getElementById('player')?.classList.add('no-track');
+    } else {
+      loadTrack(0);
+    }
     wirePlayer();
 
     if (Autonom.isOwner()) {
@@ -35,10 +42,7 @@
 
   function loadTrack(index) {
     const list = tracks();
-    if (!list.length) {
-      document.getElementById('player')?.classList.add('hidden');
-      return;
-    }
+    if (!list.length) return;
     currentIndex = Math.max(0, Math.min(index, list.length - 1));
     const t = list[currentIndex];
     audio.src = `assets/music/${t.filename}`;
@@ -46,13 +50,13 @@
     setText('track-artist', t.artist || '');
     const dl = document.getElementById('download-track');
     if (dl) { dl.href = `assets/music/${t.filename}`; dl.download = t.filename; }
-    document.getElementById('player')?.classList.remove('hidden');
     const playBtn = document.getElementById('play-pause');
     if (playBtn) playBtn.textContent = 'Play';
     setText('time-current', '0:00');
     setText('time-total',   '0:00');
     const seekBar = document.getElementById('seek-bar');
     if (seekBar) seekBar.value = 0;
+    document.getElementById('player')?.classList.remove('no-track');
     highlightActive();
   }
 
@@ -200,10 +204,7 @@
     try { await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
 
     renderTrackList();
-    if (!existing.length) {
-      // Don't auto-load — file needs Pages rebuild before it's servable
-      document.getElementById('player')?.classList.add('hidden');
-    }
+    // Never auto-load — user clicks a track when ready
     Autonom.toast(`${added.length} track${added.length > 1 ? 's' : ''} uploaded`, 'success');
     if (btn) { btn.disabled = false; btn.textContent = 'Upload Tracks'; }
     fileInput.value = '';

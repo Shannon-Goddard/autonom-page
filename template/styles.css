@@ -669,7 +669,14 @@ main {
   box-shadow: var(--shadow);
 }
 
-#track-info { text-align: center; }
+#player.no-track #player-controls,
+#player.no-track #download-track {
+  opacity: 0.35;
+  pointer-events: none;
+}
+#player.no-track #track-title { color: var(--text-muted); }
+
+
 #track-title  { font-size: 1.1rem; font-weight: 600; }
 #track-artist { font-size: 0.9rem; color: var(--text-muted); margin-top: 0.2rem; }
 
