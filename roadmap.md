@@ -1255,12 +1255,28 @@ END:VCARD
 
 - **Build time** — Increased from ~55s to ~85s after adding 10 game SVGs to `onboard.js` `binaryFiles`. Expected — each binary requires a separate blob API call before the tree commit. Still well under 2 minutes.
 
+- **Snake Play Again not firing** — `newGame()` called `loop()` with default arg `ts=0`. `last` still held the previous game's timestamp (~50000ms), so `0 - last < 120` → loop exited immediately, never scheduled next rAF. Game silently died. Fixed by adding `last = 0` before `loop()` in `newGame()`. Committed as `e50c91a`.
+
+- **Space Invaders frozen on return** — Same `last` problem. `dt = Math.min(0 - largeNumber, 50)` = large negative → `update(-50000)` → aliens teleported, immediate game over on frame 1. Fixed: `last = 0` in `newGame()`. Committed as `e50c91a`.
+
+- **Mobile Play Again tap not registering** — `click` events on canvas suppressed by some mobile browsers after a touch sequence. Added dedicated `touchend` handler on canvas that checks `_restartBtn` coordinates directly with `preventDefault()`. Both `click` and `touchend` now route through shared `checkRestartHit()`. Committed as `e50c91a`.
+
+- **`cancelAnimationFrame` safety** — Added `cancelAnimationFrame(raf)` at the top of `newGame()` in all three games (Snake, Breakout, SI) to prevent any stale rAF callbacks from firing after restart. Committed as `e50c91a`.
+
+- **Breakout game over overlay wiped** — `loop()` structure: schedule next rAF → `update()` → `draw()`. When `update()` detected `lives <= 0`, it called `cancelAnimationFrame`, `draw()`, then `showGameOver()` — overlay drawn. Then `loop()` continued and called `draw()` again immediately, clearing the overlay. Fixed: `loop()` now checks `if (running) draw()` — game over sets `running = false` inside `update()`, so the extra `draw()` is skipped. Committed as `e98cb0f`.
+
+- **Onboard build wait copy** — "this takes about a minute" updated to "this takes a couple of minutes" to match actual ~85s build time. Committed as `ebdc872`.
+
 ## Sub-Page Live Test — Confirmed Working
 
 - Games: all 5 load and play correctly on desktop ✅
-- Games: Tetris pause/resume ✅
-- Games: mobile touch controls render and function ✅
-- Games: Pac-Man/Snake/Space Invaders pause fix — pending retest after `c5e90c0`
+- Games: Tetris — play, pause/resume, hard drop, Play Again ✅
+- Games: Snake — play, pause/resume, Play Again (mobile tap + desktop click) ✅
+- Games: Pac-Man — play, pause/resume ✅
+- Games: Space Invaders — play, pause/resume, Play Again, touch controls ✅
+- Games: Breakout — play, pause/resume, game over overlay, Play Again ✅
+- Games: mobile touch controls (d-pad, shooter, swipe, drag) ✅
+- Games: high scores displayed on tiles ✅
 - Photos: pending live test
 - Music: pending live test
 - Videos: pending live test
