@@ -1462,6 +1462,66 @@ main {
 .track-row-title  { flex: 1; font-size: 0.9rem; font-weight: 600; }
 .track-row-artist { font-size: 0.8rem; color: var(--text-muted); }
 
+.track-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.drag-handle {
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 0 0.3rem;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  user-select: none;
+}
+.drag-handle:active { cursor: grabbing; }
+
+.track-move-up,
+.track-move-dn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.3rem;
+  line-height: 1;
+}
+.track-move-up:hover,
+.track-move-dn:hover { color: var(--accent); opacity: 1; }
+.track-move-up:disabled,
+.track-move-dn:disabled { opacity: 0.2; pointer-events: none; }
+
+.track-row.dragging  { opacity: 0.4; }
+.track-row.drag-over { border-color: var(--accent); background: var(--surface-2); }
+
+#player-row2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+#player-row2 #volume { flex: 1; }
+
+.player-btn-active {
+  color: var(--accent) !important;
+  opacity: 1 !important;
+}
+
+#shuffle-btn,
+#repeat-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  padding: 0.2rem 0.3rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  line-height: 1;
+}
+#shuffle-btn:hover,
+#repeat-btn:hover { color: var(--text); opacity: 1; }
+
 .track-row-meta {
   flex: 1;
   display: flex;
