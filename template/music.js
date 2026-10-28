@@ -375,26 +375,34 @@
     const files     = Array.from(fileInput?.files || []);
     if (!files.length) { Autonom.toast('Select at least one audio file', 'error'); return; }
 
-    const oversized = files.filter(f => f.size > 20 * 1024 * 1024);
-    if (oversized.length) {
-      Autonom.toast(`${oversized.map(f => f.name).join(', ')} exceed 20MB limit`, 'error');
-      return;
-    }
+    const LIMIT = 50 * 1024 * 1024;
+    const tooBig  = files.filter(f => f.size > LIMIT);
+    const toUpload = files.filter(f => f.size <= LIMIT);
+    if (tooBig.length)
+      Autonom.toast(`Skipped (over 50MB): ${tooBig.map(f => f.name).join(', ')}`, 'error');
+    if (!toUpload.length) { Autonom.toast('No files to upload', 'error'); return; }
 
     const btn = document.getElementById('upload-track-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Uploading…'; }
 
     const existing = config.tracks || [];
     const added    = [];
+    const failed   = [];
 
-    for (const [i, file] of files.entries()) {
-      if (btn) btn.textContent = `Uploading ${i + 1} of ${files.length}…`;
+    for (const [i, file] of toUpload.entries()) {
+      if (btn) btn.textContent = `Uploading ${i + 1} of ${toUpload.length}…`;
       const filename = file.name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase();
-      const buf      = await file.arrayBuffer();
-      await Autonom.commitFile(`assets/music/${filename}`, buf, `Upload track ${filename}`, true);
-      const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-      added.push({ filename, title, artist: '', album: '', playlist: '' });
+      try {
+        const buf = await file.arrayBuffer();
+        await Autonom.commitFile(`assets/music/${filename}`, buf, `Upload track ${filename}`, true);
+        const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+        added.push({ filename, title, artist: '', album: '', playlist: '' });
+      } catch {
+        failed.push(file.name);
+      }
     }
+    if (failed.length)
+      Autonom.toast(`Failed to upload: ${failed.join(', ')}`, 'error');
 
     if (btn) btn.textContent = 'Saving…';
     const updatedTracks = [...existing, ...added];
@@ -430,14 +438,24 @@
     };
 
     markRow('⏳ deploying…');
+    let attempts = 0;
     const interval = setInterval(async () => {
+      if (++attempts > 60) {
+        clearInterval(interval);
+        markRow('⚠️ deploy timed out');
+        return;
+      }
       try {
         const res = await fetch(`assets/music/${filename}`, { method: 'HEAD', cache: 'no-store' });
         if (res.ok) {
           clearInterval(interval);
           markRow(null);
           const i = trackIndex();
-          if (i !== -1) { loadTrack(i); Autonom.toast(`${filename} ready`, 'success'); }
+          if (i !== -1) {
+            const label = tracks()[i]?.title || filename;
+            loadTrack(i);
+            Autonom.toast(`“${label}” ready`, 'success');
+          }
         }
       } catch { /* network error, keep polling */ }
     }, 5000);
