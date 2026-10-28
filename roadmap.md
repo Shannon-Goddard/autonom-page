@@ -954,10 +954,11 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - Drag-and-drop + arrow reorder (owner only, hidden when filter or non-default sort active)
 - Multi-file upload: `accept="audio/*"`, per-file progress counter, 50MB per-file limit (oversized skipped individually with toast), per-file error catch (rest of batch continues)
 - Deploy polling: `HEAD` ping every 5s per new track, pulsing ⏳ badge on row, auto-loads on 200, ⚠️ timeout after 60 attempts (~5 min)
-- `localStorage` caches track list to survive hard refresh during GitHub Pages rebuild window
+- Metadata saves debounced — 1.5s timer per track, all four fields batched into one commit, silent on success (error toast only)
+- Volume persisted to `localStorage` — restored on every page load
 - `media-src 'self' blob:` in CSP; audio files bypass SW cache entirely (HTTP 206 range requests)
 - `music.html` script order: `auth.js` → `github-api.js` → `feeds.js` → `nav.js` → `music.js`
-- Commits: `664cfde` (initial), `992dfc7` (playlist rewrite), `cb9bdc1` (album/playlist/filter/sort/scoped queue), `383c59f` (deploy polling), `dbd6129` (50MB limit, per-file error catch, poll timeout, media-src blob)
+- Commits: `664cfde` (initial), `992dfc7` (playlist rewrite), `cb9bdc1` (album/playlist/filter/sort/scoped queue), `383c59f` (deploy polling), `dbd6129` (50MB limit, per-file error catch, poll timeout, media-src blob), `d5f575b` (debounced metadata saves, silent toast, persist volume)
 
 ### `template/videos.js`
 - Reads `config.videos` array from `site-config.json` — same `youtubeId()` regex as `index.js`
