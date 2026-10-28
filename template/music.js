@@ -406,9 +406,41 @@
     try { await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
 
     renderTrackList();
-    Autonom.toast(`${added.length} track${added.length > 1 ? 's' : ''} uploaded`, 'success');
+    Autonom.toast(`${added.length} track${added.length > 1 ? 's' : ''} uploaded — deploying…`, 'success');
     if (btn) { btn.disabled = false; btn.textContent = 'Upload Tracks'; }
     fileInput.value = '';
+    added.forEach(t => pollDeploy(t.filename));
+  }
+
+  // ─── Poll deploy ──────────────────────────────────────────────────────────────
+  function pollDeploy(filename) {
+    const trackIndex = () => tracks().findIndex(t => t.filename === filename);
+    const markRow = label => {
+      const i = trackIndex();
+      const row = document.querySelector(`.track-row[data-index="${i}"]`);
+      if (!row) return;
+      let badge = row.querySelector('.deploy-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'deploy-badge';
+        row.querySelector('.track-row-actions')?.prepend(badge);
+      }
+      if (label) badge.textContent = label;
+      else badge.remove();
+    };
+
+    markRow('⏳ deploying…');
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`assets/music/${filename}`, { method: 'HEAD', cache: 'no-store' });
+        if (res.ok) {
+          clearInterval(interval);
+          markRow(null);
+          const i = trackIndex();
+          if (i !== -1) { loadTrack(i); Autonom.toast(`${filename} ready`, 'success'); }
+        }
+      } catch { /* network error, keep polling */ }
+    }, 5000);
   }
 
   // ─── Remove track ─────────────────────────────────────────────────────────────

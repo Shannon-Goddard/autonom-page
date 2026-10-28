@@ -1591,6 +1591,17 @@ main {
 
 .music-empty { color: var(--text-muted); margin-top: 1rem; }
 
+.deploy-badge {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
 #player-controls {
   display: flex;
   flex-wrap: wrap;
