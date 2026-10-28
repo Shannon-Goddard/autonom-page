@@ -512,19 +512,33 @@ Generated block injected into `<head>` of `index.html`:
 
 ---
 
-## Phase 2L: Music Page (`music.html`)
+## Phase 2L: Music Page (`music.html`) — Current State
 
 ### Public View
-- Retro cassette/deck styled MP3 player
-- Play, pause, seek, volume controls
-- Download button — direct download of raw MP3 from repo to user's device
-- Track title and artist displayed
+- Full playlist player: play/pause, prev/next, seek bar with current/total time, volume slider
+- Shuffle (scoped to filtered set), repeat off/all/one
+- Player always visible — grayed out when no tracks loaded
+- Track subtitle: Artist — Album, just one if only one exists, nothing if neither
+- Download button for current track
+- Track list below player — click any row to load and play, active row highlighted
+- Filter bar: Playlist / Album / Artist / Sort dropdowns, populated dynamically from track data
+- Sort: Default Order, Title A–Z, Artist A–Z, Album A–Z
+- Playback queue scoped to filtered set
 
 ### Edit Mode
-- Upload one MP3 at a time — replaces previous track in `/assets/music/`
-- Client-side file size warning on upload (recommend under 10MB)
-- Track metadata fields (title, artist) — writes to `site-config.json`
-- "Current Track" framing — intentional, curated, feels like a MySpace profile song status
+- Four inline edit inputs per track row: Title, Artist, Album, Playlist — blur to save
+- Filter dropdowns refresh after every metadata save
+- Remove track button — confirms, deletes file from repo, removes from config
+- Drag-and-drop + arrow reorder (hidden when filter or non-default sort active)
+- Multi-file upload: any audio format, per-file progress counter
+- 50MB per-file limit — oversized files skipped individually, rest of batch continues
+- Per-file error catch — failed uploads reported, rest continue
+- Deploy polling: pulsing badge per new track, HEAD ping every 5s, auto-loads on ready, times out after ~5 min
+- `localStorage` caches track list to survive GitHub Pages rebuild lag
+
+### CSP / SW
+- `connect-src` + `media-src 'self' blob:` in CSP
+- Audio files bypass SW cache entirely (HTTP 206 range requests incompatible with Cache API)
 
 ---
 
@@ -928,14 +942,22 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - Delete button rendered only for owner, fades in on hover via CSS — clean public view
 - `gallery.html` script order: `auth.js` → `github-api.js` → `media.js` → `nav.js` → `gallery.js`
 
-### `template/music.js` (rewritten as playlist)
-- `tracks[]` array replaces single `currentTrack` object in `site-config.json`
-- Multi-file upload: select multiple MP3s, all committed and appended to playlist in one save
-- Track list renders below player — click any row to jump, active row highlighted with accent border, remove button per track (owner only)
-- Prev/Next buttons, auto-advances to next track on `ended` event
-- Title auto-derived from filename on upload (strips extension, replaces dashes/underscores with spaces)
-- 20MB cap per file enforced before any upload attempt
-- `music.html` script order: `auth.js` → `github-api.js` → `nav.js` → `music.js`
+### `template/music.js` (full playlist player)
+- `tracks[]` array in `site-config.json` — each track: `{ filename, title, artist, album, playlist }`
+- Player: play/pause, prev/next, seek bar with time display, volume, shuffle (scoped to filtered set), repeat off/all/one
+- Player always visible — `no-track` gray state when no tracks loaded
+- Subtitle: `Artist — Album` if both, just one if only one, nothing if neither
+- Track list: click any row to load+play, active row highlighted, owner gets four inline edit inputs (title/artist/album/playlist), blur to save
+- Remove track: confirms, deletes file from repo via `deleteFile()`, removes from config
+- Filter bar: four dropdowns (Playlist / Album / Artist / Sort) — populated dynamically from track data, refresh after every metadata save
+- Sort: Default, Title A–Z, Artist A–Z, Album A–Z
+- Drag-and-drop + arrow reorder (owner only, hidden when filter or non-default sort active)
+- Multi-file upload: `accept="audio/*"`, per-file progress counter, 50MB per-file limit (oversized skipped individually with toast), per-file error catch (rest of batch continues)
+- Deploy polling: `HEAD` ping every 5s per new track, pulsing ⏳ badge on row, auto-loads on 200, ⚠️ timeout after 60 attempts (~5 min)
+- `localStorage` caches track list to survive hard refresh during GitHub Pages rebuild window
+- `media-src 'self' blob:` in CSP; audio files bypass SW cache entirely (HTTP 206 range requests)
+- `music.html` script order: `auth.js` → `github-api.js` → `feeds.js` → `nav.js` → `music.js`
+- Commits: `664cfde` (initial), `992dfc7` (playlist rewrite), `cb9bdc1` (album/playlist/filter/sort/scoped queue), `383c59f` (deploy polling), `dbd6129` (50MB limit, per-file error catch, poll timeout, media-src blob)
 
 ### `template/videos.js`
 - Reads `config.videos` array from `site-config.json` — same `youtubeId()` regex as `index.js`
@@ -985,7 +1007,7 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 8. `index.html` profile page — layout, edit mode, customization panel, admin utilities, share/QR, last updated timestamp, favicon auto-generation on photo upload, Personal/Business mode toggle, OG tag auto-rewrite on bio/name edit, business profile form + JSON-LD generation. **Refactored into 6 modules:** `github-api.js`, `media.js`, `feeds.js`, `business.js`, `admin.js`, `index.js` (orchestrator). Committed as `9d2cf19`.
 9. First-time setup wizard overlay — CSS + full 3-step wizard HTML (status, cover photo, page toggles). `dismissWizard()` and `saveWizard()` wired in `index.js`. Shown only to owner when `firstTimeSetup: true`. Committed as `3061e98`.
 10. `gallery.html` + `gallery.js` — photo grid, WebP upload (200kb cap), delete with SHA fetch, owner-only controls. Gallery CSS in `styles.css`. Committed as `3061e98`.
-11. `music.html` + `music.js` — player (play/pause/seek/volume), MP3 upload (20MB cap), track metadata saved to `site-config.json`, `regenerateRSS` on upload, live player update without reload. Music CSS in `styles.css`. Committed as `664cfde`.
+11. `music.html` + `music.js` — full playlist player, multi-file upload, deploy polling, filter/sort, drag reorder, inline metadata editing. Commits: `664cfde` → `992dfc7` → `cb9bdc1` → `383c59f` → `dbd6129`. ✅
 12. `videos.html` + `videos.js` — YouTube embed grid, add/remove URLs saved to `site-config.json`, Enter key support, 16:9 iframe wrapper CSS. Committed as `f23eb63`.
 13. `friends.html` + `friends.js` + `friends.json` — `normalisedUrl()` accepts bare username/partial/full URL, fetches friend profile via raw static `username.github.io/site-config.json` (no API calls), `onerror` fallback on avatar, saves to `friends.json` via `commitFile`. Friends card CSS in `styles.css`. Committed as `e7e85e8`.
 14. `guestbook.html` + `guestbook.js` — Issues API moderation + visitor modal + platform membership check + approve/reject flow + `ghPost`/`ghPatch` added to `github-api.js`. Committed as `f6dcd87`.
@@ -1278,7 +1300,7 @@ END:VCARD
 - Games: mobile touch controls (d-pad, shooter, swipe, drag) ✅
 - Games: high scores displayed on tiles ✅
 - Photos: pending live test
-- Music: pending live test
+- Music: upload, deploy polling, metadata edit, filter/sort, playback ✅
 - Videos: pending live test
 - Friends: pending live test
 - Guestbook: pending live test
