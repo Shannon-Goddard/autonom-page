@@ -200,7 +200,10 @@
     try { await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
 
     renderTrackList();
-    if (!existing.length) loadTrack(0);
+    if (!existing.length) {
+      // Don't auto-load — file needs Pages rebuild before it's servable
+      document.getElementById('player')?.classList.add('hidden');
+    }
     Autonom.toast(`${added.length} track${added.length > 1 ? 's' : ''} uploaded`, 'success');
     if (btn) { btn.disabled = false; btn.textContent = 'Upload Tracks'; }
     fileInput.value = '';
