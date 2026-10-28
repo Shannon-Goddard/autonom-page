@@ -5,6 +5,7 @@
   let repeatMode   = 'off'; // 'off' | 'all' | 'one'
   let shuffleOrder = [];
   let dragSrcIndex = null;
+  const metaTimers = {}; // debounce timers keyed by track index
 
   // Active filters & sort
   let filterPlaylist = '';
@@ -227,13 +228,14 @@
         );
         wireDragDrop(el);
       }
-      ['title','artist','album','playlist'].forEach(field => {
-        el.querySelectorAll(`.track-edit-${field}`).forEach(input =>
-          input.addEventListener('blur', () => {
-            saveTrackMeta(+input.dataset.index, field, input.value.trim());
-          })
-        );
-      });
+      el.querySelectorAll('.track-edit-title, .track-edit-artist, .track-edit-album, .track-edit-playlist')
+        .forEach(input => {
+          input.addEventListener('input', () => {
+            const idx = +input.dataset.index;
+            clearTimeout(metaTimers[idx]);
+            metaTimers[idx] = setTimeout(() => flushTrackMeta(idx), 1500);
+          });
+        });
     }
   }
 
@@ -297,18 +299,37 @@
     await Autonom.saveConfig(config, { tracks: list }, 'Reorder tracks');
   }
 
-  // ─── Save track metadata inline ───────────────────────────────────────────────
-  async function saveTrackMeta(index, field, value) {
+  // ─── Save track metadata (debounced, batches all fields per track) ───────────
+  async function flushTrackMeta(index) {
     const list = tracks();
-    if (!list[index] || list[index][field] === value) return;
-    list[index][field] = value;
+    if (!list[index]) return;
+    const row = document.querySelector(`.track-row[data-index="${index}"]`);
+    if (!row) return;
+
+    const fields = ['title', 'artist', 'album', 'playlist'];
+    let changed = false;
+    fields.forEach(f => {
+      const input = row.querySelector(`.track-edit-${f}`);
+      if (!input) return;
+      const val = input.value.trim();
+      if (list[index][f] !== val) { list[index][f] = val; changed = true; }
+    });
+    if (!changed) return;
+
     if (index === currentIndex) {
-      if (field === 'title')  setText('track-title', value || list[index].filename);
-      if (field === 'artist' || field === 'album')
-        setText('track-artist', [list[index].artist, list[index].album].filter(Boolean).join(' — '));
+      setText('track-title',  list[index].title  || list[index].filename);
+      setText('track-artist', [list[index].artist, list[index].album].filter(Boolean).join(' — '));
     }
-    await Autonom.saveConfig(config, { tracks: list }, `Update track ${field}`);
-    populateFilters(); // refresh dropdowns with any new values
+    config.tracks = list;
+    config.lastUpdated = new Date().toISOString();
+    config.configVersion = (config.configVersion || 1) + 1;
+    localStorage.setItem('music-tracks', JSON.stringify(list));
+    try {
+      await Autonom.commitFile('site-config.json', JSON.stringify(config, null, 2), 'Update track metadata');
+    } catch (e) {
+      Autonom.toast(`Save failed — ${e.message}`, 'error');
+    }
+    populateFilters();
   }
 
   // ─── Player controls ──────────────────────────────────────────────────────────
@@ -352,7 +373,13 @@
     seekBar?.addEventListener('input', () => {
       if (audio.duration) audio.currentTime = (seekBar.value / 100) * audio.duration;
     });
-    volBar?.addEventListener('input', () => { audio.volume = volBar.value; });
+    const savedVol = parseFloat(localStorage.getItem('music-volume') ?? '1');
+    audio.volume = savedVol;
+    if (volBar) volBar.value = savedVol;
+    volBar?.addEventListener('input', () => {
+      audio.volume = volBar.value;
+      localStorage.setItem('music-volume', volBar.value);
+    });
 
     shuffleBtn?.addEventListener('click', () => {
       shuffleOn = !shuffleOn;
