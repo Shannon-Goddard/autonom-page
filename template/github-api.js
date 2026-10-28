@@ -111,6 +111,14 @@
     });
   }
 
+  async function deleteFile(filePath, message) {
+    return enqueue(async () => {
+      const sha = await getFileSHA(filePath);
+      if (!sha) return; // already gone
+      await ghDelete(`/repos/${OWNER}/${REPO}/contents/${filePath}`, { message, sha });
+    });
+  }
+
   async function saveConfig(configRef, updates, commitMsg) {
     Object.assign(configRef, updates);
     configRef.lastUpdated   = new Date().toISOString();
@@ -134,6 +142,7 @@
     ghDelete,
     getFileSHA,
     commitFile,
+    deleteFile,
     saveConfig,
   });
 })();

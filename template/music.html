@@ -29,16 +29,20 @@
         <button id="prev-track" aria-label="Previous track">&#9664;&#9664;</button>
         <button id="play-pause" aria-label="Play or pause">Play</button>
         <button id="next-track" aria-label="Next track">&#9654;&#9654;</button>
-        <input type="range" id="seek-bar" value="0" aria-label="Seek" />
+        <div id="seek-row">
+          <span id="time-current">0:00</span>
+          <input type="range" id="seek-bar" value="0" aria-label="Seek" />
+          <span id="time-total">0:00</span>
+        </div>
         <input type="range" id="volume" value="1" min="0" max="1" step="0.05" aria-label="Volume" />
       </div>
-      <a id="download-track" aria-label="Download track">Download</a>
+      <a id="download-track" aria-label="Download track">&#8681; Download</a>
     </div>
 
     <div id="track-list" aria-label="Track list"></div>
 
     <div id="upload-track-controls" class="hidden" aria-label="Upload track controls">
-      <input type="file" id="track-upload" accept="audio/mpeg,audio/mp3" multiple aria-label="Upload MP3s" />
+      <input type="file" id="track-upload" accept="audio/*" multiple aria-label="Upload audio files" />
       <button id="upload-track-btn" aria-label="Upload tracks">Upload Tracks</button>
     </div>
   </main>

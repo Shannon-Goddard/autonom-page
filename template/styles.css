@@ -1455,6 +1455,48 @@ main {
 .track-row-title  { flex: 1; font-size: 0.9rem; font-weight: 600; }
 .track-row-artist { font-size: 0.8rem; color: var(--text-muted); }
 
+.track-row-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.track-edit-title,
+.track-edit-artist {
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.4rem;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+.track-edit-title { font-weight: 600; }
+.track-edit-artist { color: var(--text-muted); font-size: 0.78rem; }
+.track-edit-title:focus,
+.track-edit-artist:focus {
+  border-color: var(--accent);
+  outline: none;
+  background: var(--surface);
+}
+
+#seek-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+#seek-row #seek-bar { flex: 1; }
+#time-current,
+#time-total {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 2.5rem;
+}
+
 .remove-track {
   background: transparent;
   color: var(--text-muted);

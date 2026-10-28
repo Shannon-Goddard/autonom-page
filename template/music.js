@@ -39,6 +39,10 @@
     document.getElementById('player')?.classList.remove('hidden');
     const playBtn = document.getElementById('play-pause');
     if (playBtn) playBtn.textContent = 'Play';
+    setText('time-current', '0:00');
+    setText('time-total',   '0:00');
+    const seekBar = document.getElementById('seek-bar');
+    if (seekBar) seekBar.value = 0;
     highlightActive();
   }
 
@@ -49,25 +53,41 @@
     if (!el) return;
     if (!list.length) { el.innerHTML = '<p class="music-empty">No tracks yet.</p>'; return; }
 
+    const isOwner = Autonom.isOwner();
     el.innerHTML = list.map((t, i) => `
       <div class="track-row${i === currentIndex ? ' track-active' : ''}" data-index="${i}">
-        <span class="track-row-title">${t.title || t.filename}</span>
-        <span class="track-row-artist">${t.artist || ''}</span>
-        ${Autonom.isOwner()
-          ? `<button class="remove-track" data-index="${i}" aria-label="Remove ${t.title || t.filename}">&times;</button>`
-          : ''}
+        <div class="track-row-meta">
+          ${isOwner
+            ? `<input class="track-edit-title" data-index="${i}" value="${escAttr(t.title || '')}" placeholder="Title" aria-label="Edit title" />
+               <input class="track-edit-artist" data-index="${i}" value="${escAttr(t.artist || '')}" placeholder="Artist" aria-label="Edit artist" />`
+            : `<span class="track-row-title">${esc(t.title || t.filename)}</span>
+               <span class="track-row-artist">${esc(t.artist || '')}</span>`
+          }
+        </div>
+        ${isOwner ? `<button class="remove-track" data-index="${i}" aria-label="Remove ${escAttr(t.title || t.filename)}">&times;</button>` : ''}
       </div>`).join('');
 
     el.querySelectorAll('.track-row').forEach(row =>
       row.addEventListener('click', e => {
         if (e.target.classList.contains('remove-track')) return;
+        if (e.target.classList.contains('track-edit-title')) return;
+        if (e.target.classList.contains('track-edit-artist')) return;
         loadTrack(+row.dataset.index);
         audio.play();
         document.getElementById('play-pause').textContent = 'Pause';
       })
     );
+
     el.querySelectorAll('.remove-track').forEach(btn =>
       btn.addEventListener('click', () => removeTrack(+btn.dataset.index))
+    );
+
+    // Inline edit — save on blur
+    el.querySelectorAll('.track-edit-title').forEach(input =>
+      input.addEventListener('blur', () => saveTrackMeta(+input.dataset.index, 'title', input.value.trim()))
+    );
+    el.querySelectorAll('.track-edit-artist').forEach(input =>
+      input.addEventListener('blur', () => saveTrackMeta(+input.dataset.index, 'artist', input.value.trim()))
     );
   }
 
@@ -75,6 +95,19 @@
     document.querySelectorAll('.track-row').forEach((row, i) =>
       row.classList.toggle('track-active', i === currentIndex)
     );
+  }
+
+  // ─── Save track title / artist inline ────────────────────────────────────────
+  async function saveTrackMeta(index, field, value) {
+    const list = tracks();
+    if (!list[index] || list[index][field] === value) return;
+    list[index][field] = value;
+    // Update player display if this is the active track
+    if (index === currentIndex) {
+      if (field === 'title')  setText('track-title',  value || list[index].filename);
+      if (field === 'artist') setText('track-artist', value);
+    }
+    await Autonom.saveConfig(config, { tracks: list }, `Update track ${field}`);
   }
 
   // ─── Player controls ──────────────────────────────────────────────────────────
@@ -106,21 +139,27 @@
       }
     });
 
-    audio.addEventListener('timeupdate', () => {
-      if (!audio.duration || !seekBar) return;
-      seekBar.value = (audio.currentTime / audio.duration) * 100;
+    audio.addEventListener('loadedmetadata', () => {
+      setText('time-total', formatTime(audio.duration));
     });
+
+    audio.addEventListener('timeupdate', () => {
+      if (!audio.duration) return;
+      if (seekBar) seekBar.value = (audio.currentTime / audio.duration) * 100;
+      setText('time-current', formatTime(audio.currentTime));
+    });
+
     seekBar?.addEventListener('input', () => {
       if (audio.duration) audio.currentTime = (seekBar.value / 100) * audio.duration;
     });
     volBar?.addEventListener('input', () => { audio.volume = volBar.value; });
   }
 
-  // ─── Upload multiple tracks ───────────────────────────────────────────────────
+  // ─── Upload tracks ────────────────────────────────────────────────────────────
   async function uploadTracks() {
     const fileInput = document.getElementById('track-upload');
     const files     = Array.from(fileInput?.files || []);
-    if (!files.length) { Autonom.toast('Select at least one MP3', 'error'); return; }
+    if (!files.length) { Autonom.toast('Select at least one audio file', 'error'); return; }
 
     const oversized = files.filter(f => f.size > 20 * 1024 * 1024);
     if (oversized.length) {
@@ -138,7 +177,6 @@
       const filename = file.name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase();
       const buf      = await file.arrayBuffer();
       await Autonom.commitFile(`assets/music/${filename}`, buf, `Upload track ${filename}`, true);
-      // Derive title from filename — strip extension, replace dashes/underscores
       const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
       added.push({ filename, title, artist: '' });
     }
@@ -155,13 +193,20 @@
     fileInput.value = '';
   }
 
-  // ─── Remove track ─────────────────────────────────────────────────────────────
+  // ─── Remove track + delete file from repo ────────────────────────────────────
   async function removeTrack(index) {
     const list = tracks();
     const t    = list[index];
     if (!t || !confirm(`Remove "${t.title || t.filename}"?`)) return;
+
+    try {
+      await Autonom.deleteFile(`assets/music/${t.filename}`, `Remove track ${t.filename}`);
+    } catch { /* file may already be gone */ }
+
     const updated = list.filter((_, i) => i !== index);
     await Autonom.saveConfig(config, { tracks: updated }, `Remove track ${t.filename}`);
+    config.tracks = updated;
+
     if (currentIndex >= updated.length) currentIndex = Math.max(0, updated.length - 1);
     renderTrackList();
     loadTrack(currentIndex);
@@ -172,6 +217,16 @@
     const el = document.getElementById(id);
     if (el) el.textContent = val;
   }
+
+  function formatTime(s) {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = String(Math.floor(s % 60)).padStart(2, '0');
+    return `${m}:${sec}`;
+  }
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escAttr(s) { return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
   init();
 })();
