@@ -89,7 +89,13 @@
 
     if (ball.y - ball.r > H) {
       lives--;
-      if (lives <= 0) { running = false; showGameOver(); return; }
+      if (lives <= 0) {
+        running = false;
+        cancelAnimationFrame(raf);
+        draw();
+        showGameOver();
+        return;
+      }
       ball = { x: W/2, y: H - 40, r: 7, dx: 3, dy: -4 };
     }
 

@@ -97,9 +97,18 @@
     aliens.forEach(a => {
       if (!a.alive) return;
       a.x += alienDir * alienSpeed * dt * 0.1;
-      if (a.x + a.w > W - 10 || a.x < 10) hitWall = true;
+      if (!hitWall && (a.x + a.w > W - 10 || a.x < 10)) hitWall = true;
     });
-    if (hitWall) { alienDir *= -1; aliens.forEach(a => { if (a.alive) a.y += 12; }); }
+    if (hitWall) {
+      alienDir *= -1;
+      // Push all aliens back in bounds then drop
+      aliens.forEach(a => {
+        if (!a.alive) return;
+        if (a.x < 10) a.x = 10;
+        if (a.x + a.w > W - 10) a.x = W - 10 - a.w;
+        a.y += 12;
+      });
+    }
 
     if (Math.random() < 0.002 * dt) {
       const live = aliens.filter(a => a.alive);

@@ -37,6 +37,11 @@
     loop();
   }
 
+  function newGame() {
+    reset();
+    loop();
+  }
+
   function reset() {
     snake   = [{ x: 10, y: 10 }];
     dir     = { x: 1, y: 0 };
@@ -149,5 +154,5 @@
     if (e.key === ' ') { e.preventDefault(); if (!running) { reset(); loop(); } }
   }
 
-  window.Games.snake = { start, stop, pause, resume, setDir };
+  window.Games.snake = { start, stop, pause, resume, setDir, newGame };
 })();
