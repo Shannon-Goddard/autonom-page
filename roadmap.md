@@ -536,8 +536,20 @@ Generated block injected into `<head>` of `index.html`:
 - Deploy polling: pulsing badge per new track, HEAD ping every 5s, auto-loads on ready, times out after ~5 min
 - `localStorage` caches track list to survive GitHub Pages rebuild lag
 
+### Cloudflare R2 Storage Expansion (Owner Only)
+- Accordion below upload controls — "Need more storage for your music collection?" — collapsed by default, owner only
+- Accordion body: plain English explanation of GitHub's ~1GB limit vs R2's 10GB free tier, ⚠️ localStorage-only credential warning
+- Wizard modal: 3-step Cloudflare setup instructions + 5 credential fields (Account ID, Access Key ID, Secret Access Key, Bucket Name, Public Bucket URL), Save & Connect, Cancel, Disconnect buttons
+- Credentials stored in `localStorage` only — never written to repo
+- Status bar: shows ✅ Cloudflare R2 connected — uploads go to [url] when connected
+- Upload routing: R2 creds present → S3 Signature V4 PUT directly to R2, 500MB limit. No creds → GitHub `commitFile`, 50MB limit
+- Track `url` field: R2 tracks store full public URL; `loadTrack` and download link use `t.url` when present
+- No deploy polling for R2 tracks — R2 files available instantly, no 30s wait
+- Remove track: skips `deleteFile` for R2 tracks — file stays in R2 bucket, only removed from config
+
 ### CSP / SW
-- `connect-src` + `media-src 'self' blob:` in CSP
+- `connect-src` includes `https://*.r2.cloudflarestorage.com` and `https://*.r2.dev` for R2 uploads
+- `media-src 'self' blob:` in CSP
 - Audio files bypass SW cache entirely (HTTP 206 range requests incompatible with Cache API)
 
 ---
@@ -943,7 +955,7 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - `gallery.html` script order: `auth.js` → `github-api.js` → `media.js` → `nav.js` → `gallery.js`
 
 ### `template/music.js` (full playlist player)
-- `tracks[]` array in `site-config.json` — each track: `{ filename, title, artist, album, playlist }`
+- `tracks[]` array in `site-config.json` — each track: `{ filename, title, artist, album, playlist }` for GitHub tracks; R2 tracks also have `url` (full public URL)
 - Player: play/pause, prev/next, seek bar with time display, volume, shuffle (scoped to filtered set), repeat off/all/one
 - Player always visible — `no-track` gray state when no tracks loaded
 - Subtitle: `Artist — Album` if both, just one if only one, nothing if neither
@@ -956,9 +968,14 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 - Deploy polling: `HEAD` ping every 5s per new track, pulsing ⏳ badge on row, auto-loads on 200, ⚠️ timeout after 60 attempts (~5 min)
 - Metadata saves debounced — 1.5s timer per track, all four fields batched into one commit, silent on success (error toast only)
 - Volume persisted to `localStorage` — restored on every page load
-- `media-src 'self' blob:` in CSP; audio files bypass SW cache entirely (HTTP 206 range requests)
+- R2 functions: `getR2Creds()`, `saveR2Creds()`, `clearR2Creds()`, `setR2StatusBar()`, `wireR2()`, `uploadToR2()` (S3 Signature V4), `sha256Hex()`, `hmacKey()`, `hmacHex()`
+- `uploadTracks()` routes to R2 or GitHub based on creds; 500MB limit when R2 connected, 50MB otherwise
+- `loadTrack()` uses `t.url || assets/music/${t.filename}` — R2 tracks play from their public URL
+- `removeTrack()` skips `deleteFile` for R2 tracks; `pollDeploy` only fires for GitHub-hosted tracks
+- `wireR2()` called from `init()` when owner — wires accordion toggle, wizard open/save/cancel/disconnect
+- `media-src 'self' blob:` in CSP; `connect-src` includes `https://*.r2.cloudflarestorage.com` and `https://*.r2.dev`; audio files bypass SW cache entirely (HTTP 206 range requests)
 - `music.html` script order: `auth.js` → `github-api.js` → `feeds.js` → `nav.js` → `music.js`
-- Commits: `664cfde` (initial), `992dfc7` (playlist rewrite), `cb9bdc1` (album/playlist/filter/sort/scoped queue), `383c59f` (deploy polling), `dbd6129` (50MB limit, per-file error catch, poll timeout, media-src blob), `d5f575b` (debounced metadata saves, silent toast, persist volume)
+- Commits: `664cfde` (initial), `992dfc7` (playlist rewrite), `cb9bdc1` (album/playlist/filter/sort/scoped queue), `383c59f` (deploy polling), `dbd6129` (50MB limit, per-file error catch, poll timeout, media-src blob), `d5f575b` (debounced metadata saves, silent toast, persist volume), `ea5dc49` (Cloudflare R2 accordion, wizard, S3v4 upload routing)
 
 ### `template/videos.js`
 - Reads `config.videos` array from `site-config.json` — same `youtubeId()` regex as `index.js`
@@ -1008,7 +1025,7 @@ Browser-to-browser direct audio streaming between connected friends when both ar
 8. `index.html` profile page — layout, edit mode, customization panel, admin utilities, share/QR, last updated timestamp, favicon auto-generation on photo upload, Personal/Business mode toggle, OG tag auto-rewrite on bio/name edit, business profile form + JSON-LD generation. **Refactored into 6 modules:** `github-api.js`, `media.js`, `feeds.js`, `business.js`, `admin.js`, `index.js` (orchestrator). Committed as `9d2cf19`.
 9. First-time setup wizard overlay — CSS + full 3-step wizard HTML (status, cover photo, page toggles). `dismissWizard()` and `saveWizard()` wired in `index.js`. Shown only to owner when `firstTimeSetup: true`. Committed as `3061e98`.
 10. `gallery.html` + `gallery.js` — photo grid, WebP upload (200kb cap), delete with SHA fetch, owner-only controls. Gallery CSS in `styles.css`. Committed as `3061e98`.
-11. `music.html` + `music.js` — full playlist player, multi-file upload, deploy polling, filter/sort, drag reorder, inline metadata editing. Commits: `664cfde` → `992dfc7` → `cb9bdc1` → `383c59f` → `dbd6129`. ✅
+11. `music.html` + `music.js` — full playlist player, multi-file upload, deploy polling, filter/sort, drag reorder, inline metadata editing, debounced metadata saves, volume persistence, Cloudflare R2 accordion + wizard + S3v4 upload routing. Commits: `664cfde` → `992dfc7` → `cb9bdc1` → `383c59f` → `dbd6129` → `d5f575b` → `ea5dc49`. ✅
 12. `videos.html` + `videos.js` — YouTube embed grid, add/remove URLs saved to `site-config.json`, Enter key support, 16:9 iframe wrapper CSS. Committed as `f23eb63`.
 13. `friends.html` + `friends.js` + `friends.json` — `normalisedUrl()` accepts bare username/partial/full URL, fetches friend profile via raw static `username.github.io/site-config.json` (no API calls), `onerror` fallback on avatar, saves to `friends.json` via `commitFile`. Friends card CSS in `styles.css`. Committed as `e7e85e8`.
 14. `guestbook.html` + `guestbook.js` — Issues API moderation + visitor modal + platform membership check + approve/reject flow + `ghPost`/`ghPatch` added to `github-api.js`. Committed as `f6dcd87`.
@@ -1302,6 +1319,7 @@ END:VCARD
 - Games: high scores displayed on tiles ✅
 - Photos: pending live test
 - Music: upload, deploy polling, metadata edit, filter/sort, playback ✅
+- Music: Cloudflare R2 accordion, wizard, S3v4 upload routing — pending live test
 - Videos: pending live test
 - Friends: pending live test
 - Guestbook: pending live test
