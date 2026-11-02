@@ -47,6 +47,7 @@
     if (Autonom.isOwner()) {
       document.getElementById('upload-track-controls')?.classList.remove('hidden');
       document.getElementById('upload-track-btn')?.addEventListener('click', uploadTracks);
+      wireR2();
     }
   }
 
@@ -120,11 +121,11 @@
     if (!list.length) return;
     currentIndex = Math.max(0, Math.min(index, list.length - 1));
     const t = list[currentIndex];
-    audio.src = `assets/music/${t.filename}`;
+    audio.src = t.url || `assets/music/${t.filename}`;
     setText('track-title',  t.title  || t.filename);
     setText('track-artist', [t.artist, t.album].filter(Boolean).join(' — '));
     const dl = document.getElementById('download-track');
-    if (dl) { dl.href = `assets/music/${t.filename}`; dl.download = t.filename; }
+    if (dl) { dl.href = t.url || `assets/music/${t.filename}`; dl.download = t.filename; }
     const playBtn = document.getElementById('play-pause');
     if (playBtn) playBtn.textContent = 'Play';
     setText('time-current', '0:00');
@@ -396,17 +397,153 @@
     });
   }
 
-  // ─── Upload tracks ────────────────────────────────────────────────────────────
+  // ─── R2 credentials ──────────────────────────────────────────────────────────
+  function getR2Creds() {
+    try { return JSON.parse(localStorage.getItem('r2-creds') || 'null'); } catch { return null; }
+  }
+  function saveR2Creds(creds) { localStorage.setItem('r2-creds', JSON.stringify(creds)); }
+  function clearR2Creds()     { localStorage.removeItem('r2-creds'); }
+
+  function setR2StatusBar() {
+    const bar = document.getElementById('r2-status-bar');
+    if (!bar) return;
+    const creds = getR2Creds();
+    if (creds) {
+      bar.textContent = `\u2705 Cloudflare R2 connected \u2014 uploads go to ${creds.publicUrl}`;
+      bar.classList.remove('hidden');
+    } else {
+      bar.classList.add('hidden');
+    }
+  }
+
+  function wireR2() {
+    const accordion  = document.getElementById('r2-accordion');
+    const toggle     = document.getElementById('r2-accordion-toggle');
+    const body       = document.getElementById('r2-accordion-body');
+    const chevron    = document.getElementById('r2-accordion-chevron');
+    const wizardBtn  = document.getElementById('r2-wizard-btn');
+    const wizard     = document.getElementById('r2-wizard');
+    const saveBtn    = document.getElementById('r2-wizard-save');
+    const cancelBtn  = document.getElementById('r2-wizard-cancel');
+    const disconnBtn = document.getElementById('r2-wizard-disconnect');
+
+    if (!accordion) return;
+    accordion.classList.remove('hidden');
+    setR2StatusBar();
+
+    toggle.addEventListener('click', () => {
+      const open = !body.classList.contains('hidden');
+      body.classList.toggle('hidden', open);
+      toggle.setAttribute('aria-expanded', String(!open));
+      chevron.innerHTML = open ? '&#9660;' : '&#9650;';
+    });
+
+    wizardBtn.addEventListener('click', () => {
+      const creds = getR2Creds();
+      if (creds) {
+        document.getElementById('r2-account-id').value  = creds.accountId;
+        document.getElementById('r2-access-key').value  = creds.accessKey;
+        document.getElementById('r2-secret-key').value  = creds.secretKey;
+        document.getElementById('r2-bucket').value      = creds.bucket;
+        document.getElementById('r2-public-url').value  = creds.publicUrl;
+        disconnBtn.classList.remove('hidden');
+      } else {
+        disconnBtn.classList.add('hidden');
+      }
+      wizard.classList.remove('hidden');
+    });
+
+    cancelBtn.addEventListener('click', () => wizard.classList.add('hidden'));
+    wizard.addEventListener('click', e => { if (e.target === wizard) wizard.classList.add('hidden'); });
+
+    saveBtn.addEventListener('click', () => {
+      const creds = {
+        accountId: document.getElementById('r2-account-id').value.trim(),
+        accessKey: document.getElementById('r2-access-key').value.trim(),
+        secretKey: document.getElementById('r2-secret-key').value.trim(),
+        bucket:    document.getElementById('r2-bucket').value.trim(),
+        publicUrl: document.getElementById('r2-public-url').value.trim().replace(/\/$/, ''),
+      };
+      if (!creds.accountId || !creds.accessKey || !creds.secretKey || !creds.bucket || !creds.publicUrl) {
+        Autonom.toast('All fields are required', 'error'); return;
+      }
+      saveR2Creds(creds);
+      setR2StatusBar();
+      wizard.classList.add('hidden');
+      Autonom.toast('Cloudflare R2 connected', 'success');
+    });
+
+    disconnBtn.addEventListener('click', () => {
+      if (!confirm('Disconnect R2? Future uploads will go to GitHub.')) return;
+      clearR2Creds();
+      setR2StatusBar();
+      wizard.classList.add('hidden');
+      Autonom.toast('R2 disconnected', 'success');
+    });
+  }
+
+  // ─── Upload to R2 via S3-compatible API (AWS Signature V4) ───────────────────
+  async function uploadToR2(creds, filename, buf, mimeType) {
+    const host   = `${creds.bucket}.${creds.accountId}.r2.cloudflarestorage.com`;
+    const url    = `https://${host}/${filename}`;
+    const region = 'auto';
+    const service = 's3';
+
+    const now    = new Date();
+    const date   = now.toISOString().replace(/[:\-]|\.\d{3}/g, '').slice(0, 15) + 'Z'; // YYYYMMDDTHHmmssZ
+    const dateStamp = date.slice(0, 8);
+
+    const payloadHash = await sha256Hex(buf);
+    const headers = {
+      'host': host,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': date,
+      'content-type': mimeType,
+    };
+    const signedHeaders = Object.keys(headers).sort().join(';');
+    const canonicalHeaders = Object.keys(headers).sort().map(k => `${k}:${headers[k]}`).join('\n') + '\n';
+    const canonicalRequest = ['PUT', `/${filename}`, '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
+    const credScope  = `${dateStamp}/${region}/${service}/aws4_request`;
+    const strToSign  = ['AWS4-HMAC-SHA256', date, credScope, await sha256Hex(canonicalRequest)].join('\n');
+    const signingKey = await hmacKey(
+      await hmacKey(await hmacKey(await hmacKey(`AWS4${creds.secretKey}`, dateStamp), region), service), 'aws4_request'
+    );
+    const signature  = await hmacHex(signingKey, strToSign);
+    const authHeader = `AWS4-HMAC-SHA256 Credential=${creds.accessKey}/${credScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { ...headers, 'Authorization': authHeader },
+      body: buf,
+    });
+    if (!res.ok) throw new Error(`R2 upload failed: ${res.status}`);
+  }
+
+  async function sha256Hex(data) {
+    const buf = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  async function hmacKey(key, data) {
+    const keyBuf = typeof key === 'string' ? new TextEncoder().encode(key) : key;
+    const k = await crypto.subtle.importKey('raw', keyBuf, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    return new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(data)));
+  }
+  async function hmacHex(key, data) {
+    const buf = await hmacKey(key, data);
+    return Array.from(buf).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
   async function uploadTracks() {
     const fileInput = document.getElementById('track-upload');
     const files     = Array.from(fileInput?.files || []);
     if (!files.length) { Autonom.toast('Select at least one audio file', 'error'); return; }
 
-    const LIMIT = 50 * 1024 * 1024;
+    const r2 = getR2Creds();
+    const LIMIT = r2 ? 500 * 1024 * 1024 : 50 * 1024 * 1024;
     const tooBig  = files.filter(f => f.size > LIMIT);
     const toUpload = files.filter(f => f.size <= LIMIT);
     if (tooBig.length)
-      Autonom.toast(`Skipped (over 50MB): ${tooBig.map(f => f.name).join(', ')}`, 'error');
+      Autonom.toast(`Skipped (over ${r2 ? '500MB' : '50MB'}): ${tooBig.map(f => f.name).join(', ')}`, 'error');
     if (!toUpload.length) { Autonom.toast('No files to upload', 'error'); return; }
 
     const btn = document.getElementById('upload-track-btn');
@@ -421,9 +558,14 @@
       const filename = file.name.replace(/[^a-z0-9._-]/gi, '-').toLowerCase();
       try {
         const buf = await file.arrayBuffer();
-        await Autonom.commitFile(`assets/music/${filename}`, buf, `Upload track ${filename}`, true);
+        if (r2) {
+          await uploadToR2(r2, filename, buf, file.type || 'audio/mpeg');
+        } else {
+          await Autonom.commitFile(`assets/music/${filename}`, buf, `Upload track ${filename}`, true);
+        }
         const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-        added.push({ filename, title, artist: '', album: '', playlist: '' });
+        const url   = r2 ? `${r2.publicUrl}/${filename}` : null;
+        added.push({ filename, title, artist: '', album: '', playlist: '', ...(url ? { url } : {}) });
       } catch {
         failed.push(file.name);
       }
@@ -441,10 +583,10 @@
     try { await Autonom.regenerateRSS(config); } catch { /* non-fatal */ }
 
     renderTrackList();
-    Autonom.toast(`${added.length} track${added.length > 1 ? 's' : ''} uploaded — deploying…`, 'success');
+    Autonom.toast(`${added.length} track${added.length > 1 ? 's' : ''} uploaded${r2 ? '' : ' — deploying…'}`, 'success');
     if (btn) { btn.disabled = false; btn.textContent = 'Upload Tracks'; }
     fileInput.value = '';
-    added.forEach(t => pollDeploy(t.filename));
+    if (!r2) added.forEach(t => pollDeploy(t.filename));
   }
 
   // ─── Poll deploy ──────────────────────────────────────────────────────────────
@@ -494,8 +636,9 @@
     const t    = list[index];
     if (!t || !confirm(`Remove "${t.title || t.filename}"?`)) return;
 
-    try { await Autonom.deleteFile(`assets/music/${t.filename}`, `Remove track ${t.filename}`); }
-    catch { /* already gone */ }
+    try {
+      if (!t.url) await Autonom.deleteFile(`assets/music/${t.filename}`, `Remove track ${t.filename}`);
+    } catch { /* already gone */ }
 
     const updated = list.filter((_, i) => i !== index);
     await Autonom.saveConfig(config, { tracks: updated }, `Remove track ${t.filename}`);

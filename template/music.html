@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data: blob:; media-src 'self' blob:; frame-src https://www.youtube.com; connect-src 'self' https://api.github.com https://f8rcwlcsz8.execute-api.us-east-1.amazonaws.com;" />
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https: data: blob:; media-src 'self' blob:; frame-src https://www.youtube.com; connect-src 'self' https://api.github.com https://f8rcwlcsz8.execute-api.us-east-1.amazonaws.com https://*.r2.cloudflarestorage.com https://*.r2.dev;" />
   <title>Music</title>
   <link rel="icon" href="assets/favicon.ico" />
   <link rel="manifest" href="manifest.json" />
@@ -58,8 +58,41 @@
     <div id="track-list" aria-label="Track list"></div>
 
     <div id="upload-track-controls" class="hidden" aria-label="Upload track controls">
+      <div id="r2-status-bar" class="hidden"></div>
       <input type="file" id="track-upload" accept="audio/*" multiple aria-label="Upload audio files" />
       <button id="upload-track-btn" aria-label="Upload tracks">Upload Tracks</button>
+    </div>
+
+    <div id="r2-accordion" class="hidden">
+      <button id="r2-accordion-toggle" aria-expanded="false" aria-controls="r2-accordion-body">
+        Need more storage for your music collection? <span id="r2-accordion-chevron">&#9660;</span>
+      </button>
+      <div id="r2-accordion-body" class="hidden">
+        <p>GitHub stores up to ~1GB total across your whole site. For most people that’s plenty. If you have a large music collection, you can connect a free <strong>Cloudflare R2</strong> bucket — 10GB free, no fees to stream your music, takes about 2 minutes to set up.</p>
+        <p class="r2-cred-note">⚠️ Your R2 credentials will be stored on this device only. Keep them safe — if you clear your browser storage you’ll need to re-enter them.</p>
+        <button id="r2-wizard-btn">Connect Cloudflare R2 →</button>
+      </div>
+    </div>
+
+    <div id="r2-wizard" class="hidden" role="dialog" aria-modal="true" aria-label="Cloudflare R2 setup">
+      <div id="r2-wizard-box" class="glass">
+        <h2>Connect Cloudflare R2</h2>
+        <ol id="r2-wizard-steps">
+          <li>Create a free account at <a href="https://cloudflare.com" target="_blank" rel="noopener">cloudflare.com</a>, then go to <strong>R2 Object Storage</strong> and create a bucket.</li>
+          <li>In your bucket settings, enable <strong>Public Access</strong> and copy the public bucket URL.</li>
+          <li>Go to <strong>Manage R2 API Tokens</strong>, create a token with <strong>Object Read &amp; Write</strong> permission scoped to your bucket. Copy the Account ID, Access Key ID, and Secret Access Key.</li>
+        </ol>
+        <div class="r2-field"><label for="r2-account-id">Account ID</label><input id="r2-account-id" type="text" placeholder="abc123..." autocomplete="off" /></div>
+        <div class="r2-field"><label for="r2-access-key">Access Key ID</label><input id="r2-access-key" type="text" placeholder="..." autocomplete="off" /></div>
+        <div class="r2-field"><label for="r2-secret-key">Secret Access Key</label><input id="r2-secret-key" type="password" placeholder="..." autocomplete="off" /></div>
+        <div class="r2-field"><label for="r2-bucket">Bucket Name</label><input id="r2-bucket" type="text" placeholder="my-music" autocomplete="off" /></div>
+        <div class="r2-field"><label for="r2-public-url">Public Bucket URL</label><input id="r2-public-url" type="url" placeholder="https://pub-abc123.r2.dev" autocomplete="off" /></div>
+        <div class="r2-wizard-actions">
+          <button id="r2-wizard-save">Save &amp; Connect</button>
+          <button id="r2-wizard-cancel" class="btn-ghost">Cancel</button>
+          <button id="r2-wizard-disconnect" class="btn-ghost r2-disconnect-btn hidden">Disconnect R2</button>
+        </div>
+      </div>
     </div>
   </main>
 

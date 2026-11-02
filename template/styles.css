@@ -1591,6 +1591,103 @@ main {
 
 .music-empty { color: var(--text-muted); margin-top: 1rem; }
 
+/* ─── R2 Accordion & Wizard ─────────────────────────────────────────────────────── */
+#r2-status-bar {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.4rem 0;
+  word-break: break-all;
+}
+
+#r2-accordion {
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+#r2-accordion-toggle {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: none;
+  border-radius: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#r2-accordion-toggle:hover { background: var(--surface-2); opacity: 1; color: var(--text); }
+
+#r2-accordion-body {
+  padding: 1rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+#r2-accordion-body p { line-height: 1.6; }
+.r2-cred-note { font-size: 0.8rem; color: var(--text-muted); }
+
+#r2-wizard {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+#r2-wizard.hidden { display: none !important; }
+
+#r2-wizard-box {
+  width: 100%;
+  max-width: 440px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+#r2-wizard-box h2 { font-size: 1.2rem; }
+
+#r2-wizard-steps {
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+#r2-wizard-steps a { color: var(--accent); }
+
+.r2-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.r2-field label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.r2-wizard-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+.r2-disconnect-btn { color: var(--accent); border-color: var(--accent); }
+
 .deploy-badge {
   font-size: 0.72rem;
   color: var(--text-muted);
